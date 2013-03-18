@@ -71,12 +71,10 @@ class Family(family.WikimediaFamily):
 
         self.namespaces[102] = {
             'de': u'Wahl',
-            'it': u'Elezione',
         }
 
         self.namespaces[103] = {
             'de': u'Wahl Diskussion',
-            'it': u'Discussioni elezione',
         }
 
         self.namespaces[104] = {
@@ -91,12 +89,10 @@ class Family(family.WikimediaFamily):
 
         self.namespaces[106] = {
             'de': u'Nachrichten',
-            'it': u'Notizie',
         }
 
         self.namespaces[107] = {
             'de': u'Nachrichten Diskussion',
-            'it': u'Discussioni notizie',
         }
 
         # Global bot allowed languages on http://meta.wikimedia.org/wiki/Bot_policy/Implementation#Current_implementation
