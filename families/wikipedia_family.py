@@ -1009,18 +1009,6 @@ class Family(family.WikimediaFamily):
             'en': u'TimedText talk',
         }
 
-        self.namespaces[828] = {
-            'en': u'Module',
-            'fr': u'Module',
-            'hu': u'Module',
-        }
-
-        self.namespaces[829] = {
-            'en': u'Module talk',
-            'fr': u'Module talk',
-            'hu': u'Module talk',
-        }
-
         self.category_redirect_templates = {
             '_default': (),
             'ar': (u'تحويل تصنيف',
