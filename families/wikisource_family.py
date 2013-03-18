@@ -645,20 +645,6 @@ class Family(family.WikimediaFamily):
             'zh-min-nan': u'Index talk',
         }
 
-        self.namespaces[828] = {
-            'cs': u'Module',
-            'en': u'Module',
-            'fr': u'Module',
-            'it': u'Module',
-        }
-
-        self.namespaces[829] = {
-            'cs': u'Module talk',
-            'en': u'Module talk',
-            'fr': u'Discussion module',
-            'it': u'Module talk',
-        }
-
         # Global bot allowed languages on http://meta.wikimedia.org/wiki/Bot_policy/Implementation#Current_implementation
         self.cross_allowed = [
             'ca', 'el', 'fa', 'it', 'ko', 'no', 'pl', 'vi', 'zh',

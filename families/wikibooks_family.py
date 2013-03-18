@@ -417,16 +417,6 @@ class Family(family.WikimediaFamily):
             'si': u'කණිෂ්ඨ විකි සාකච්ඡාව',
         }
 
-        self.namespaces[828] = {
-            'cs': u'Module',
-            'pt': u'Module',
-        }
-
-        self.namespaces[829] = {
-            'cs': u'Module talk',
-            'pt': u'Module talk',
-        }
-
         # Global bot allowed languages on http://meta.wikimedia.org/wiki/Bot_policy/Implementation#Current_implementation
         self.cross_allowed = [
             'af', 'ang', 'ca', 'fa', 'fy', 'it', 'nl', 'ru', 'th', 'zh',
