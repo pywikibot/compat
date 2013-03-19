@@ -118,6 +118,7 @@ n_txt = {
     'ja': u'{{subst:Nld}}',
     'ko': u'{{subst:nld}}',
     'ta': u'{{subst:nld}}',
+    'ur': u'{{subst:حقوق نسخہ تصویر نامعلوم}}',
     'zh': u'{{subst:No license/auto}}',
 }
 
@@ -132,13 +133,14 @@ txt_find =  {
     'ar': [u'{{لت', u'{{لا ترخيص'],
     'de': [u'{{DÜP', u'{{Düp', u'{{Dateiüberprüfung'],
     'en': [u'{{nld', u'{{no license'],
-    'fa': [u'{{حق تکثیر تصویر نامعلوم۲'],
+    'fa': [u'{{حق تکثیر تصویر نامعلوم'],
     'ga': [u'{{Ceadúnas de dhíth', u'{{Ceadúnas de dhíth'],
     'hu': [u'{{nincsforrás',u'{{nincslicenc'],
     'it': [u'{{unverdata', u'{{unverified'],
     'ja': [u'{{no source', u'{{unknown', u'{{non free', u'<!--削除についての議論が終了するまで',],
     'ta': [u'{{no source', u'{{nld', u'{{no license'],
     'ko': [u'{{출처 없음', u'{{라이선스 없음',u'{{Unknown',],
+    'ur': [u'{{ناحوالہ', u'{{اجازہ نامعلوم',u'{{Di-no',],
     'zh': [u'{{no source', u'{{unknown', u'{{No license',],
 }
 
@@ -157,6 +159,7 @@ msg_comm = {
     'ja': u'ロボットによる:著作権情報なしの画像をタグ',
     'ko': u'로봇:라이선스 없음',
     'ta': u'தானியங்கி:காப்புரிமை வழங்கப்படா படிமத்தை சுட்டுதல்',
+    'ur': u'روبالہ:نشان زدگی جدید زبراثقال شدہ املاف',
     'zh': u'機器人:標示新上傳且未包含必要資訊的檔案',
 }
 
@@ -175,6 +178,7 @@ empty = {
     'ja': u'{{subst:Welcome/intro}}\n{{subst:welcome|--~~~~}}\n',
     'ko': u'{{환영}}--~~~~\n',
     'ta': u'{{welcome}}\n~~~~\n',
+    'ur': u'{{خوش آمدید}}\n~~~~\n',    
     'zh': u'{{subst:welcome|sign=~~~~}}',
 }
 
@@ -191,6 +195,7 @@ msg_comm2 = {
     'ja': u'ロボットによる:著作権情報明記のお願い',
     'ko': u'로봇:라이선스 정보 요청',
     'ta': u'தானியங்கி:மூலம் வழங்கப்படா படிமத்தை சுட்டுதல்',
+    'ur': u'روبالہ:درخواست ماخذ تصویر',    
     'zh': u'機器人：告知用戶',
 }
 
@@ -207,6 +212,7 @@ delete_immediately = {
     'ja': u'{{db|知らないファイルフォーマット %s}}',
     'ko': u'{{delete|잘못된 파일 형식 (.%s)}}',
     'ta': u'{{delete|இந்தக் கோப்பு .%s என்றக் கோப்பு நீட்சியைக் கொண்டுள்ளது.}}',
+    'ur': u"{{سریع حذف شدگی|اس ملف میں .%s بطور توسیع موجود ہے۔ }}", 
     'zh': u'{{delete|未知檔案格式%s}}',
 }
 
@@ -222,6 +228,7 @@ delete_immediately_head = {
     'it': u'\n\n== File non specificato ==\n',
     'ko': u'\n== 잘못된 파일 형식 ==\n',
     'ta': u'\n== இனங்காணப்படாத கோப்பு நீட்சி! ==\n',
+    'ur': u"\n== نامعلوم توسیع! ==\n",   
     'zh': u'\n==您上載的檔案格式可能有誤==\n',
 }
 
@@ -237,6 +244,7 @@ delete_immediately_notification = {
     'it': u'{{subst:Progetto:Coordinamento/Immagini/Bot/Messaggi/Ext|%s|__botnick__}} --~~~~',
     'ko': u'[[:그림:%s]]의 파일 형식이 잘못되었습니다. 확인 바랍니다.--~~~~',
     'ta': u'[[:படிமம்:%s]] இனங்காணப்படாத கோப்பு நீட்சியை கொண்டுள்ளது தயவு செய்து ஒரு முறை சரி பார்க்கவும் ~~~~',
+    'ur': u'ملف [[:File:%s]] کی توسیع شاید درست نہیں ہے، براہ کرم جانچ لیں۔ ~~~~', 
     'zh'    :u'您好，你上傳的[[:File:%s]]無法被識別，請檢查您的檔案，謝謝。--~~~~',
 }
 
@@ -254,6 +262,7 @@ msg_del_comm = {
     'ja': u'ロボットによる: 追加 %s',
     'ko': u'로봇 : %s 추가',
     'ta': u'Bot: Adding %s',
+    'ur': u'روبالہ: اضافہ %s',
     'zh': u'機器人: 正在新增 %s',
 }
 
@@ -263,10 +272,12 @@ nothing_head = {
     'ar': u"\n== صورة بدون ترخيص ==\n",
     'de': u"\n== Bild ohne Lizenz ==\n",
     'en': u"\n== Image without license ==\n",
+    'fa': u"\n== تصویر بدون اجازہ ==\n",
     'ga': u"\n== Comhad gan ceadúnas ==\n",
     'fr': u"\n== Fichier sans licence ==\n",
     'hu': u"\n== Licenc nélküli kép ==\n",
     'it': u"\n\n== File senza licenza ==\n",
+    'ur': u"\n== تصویر بدون اجازہ ==\n",
     }
 # That's the text that the bot will add if it doesn't find the license.
 # Note: every __botnick__ will be repleaced with your bot's nickname (feel free not to use if you don't need it)
@@ -284,6 +295,7 @@ nothing_notification = {
     'ja': u"\n{{subst:Image copyright|File:%s}}--~~~~",
     'ko': u'\n{{subst:User:Kwjbot IV/untagged|%s}} --~~~~',
     'ta': u'\n{{subst:Di-no license-notice|படிமம்:%s}} ~~~~ ',
+    'ur': u"{{subst:ماخذ تصویر|File:%s}}--~~~~",
     'zh': u'\n{{subst:Uploadvionotice|File:%s}} ~~~~ ',
 }
 
@@ -300,6 +312,7 @@ bot_list = {
     'ja': [u'Alexbot'],
     'ko': [u'Kwjbot IV'],
     'ta': [u'TrengarasuBOT'],
+    'ur': [u'Shuaib-bot', u'Tahir-bot', u'SAMI.bot'], 
     'zh': [u'Alexbot'],
 }
 
@@ -332,6 +345,7 @@ report_page = {
     'ja': u'User:Alexbot/report',
     'ko': u'User:Kwjbot IV/Report',
     'ta': u'User:Trengarasu/commonsimages',
+    'ur': u'صارف:محمد شعیب/درخواست تصویر', 
     'zh': u'User:Alexsh/checkimagereport',
 }
 
@@ -351,6 +365,7 @@ report_text = {
     'ja': u"\n*[[:File:%s]] " + timeselected,
     'ko': u"\n*[[:그림:%s]] " + timeselected,
     'ta': u"\n*[[:படிமம்:%s]] " + timeselected,
+    'ur': u"\n*[[:تصویر:%s]] " + timeselected, 
     'zh': u"\n*[[:File:%s]] " + timeselected,
 }
 
@@ -368,6 +383,7 @@ msg_comm10 = {
     'ja': u'ロボットによる:更新',
     'ko': u'로봇:로그 업데이트',
     'ta': u'தானியங்கி:பட்டியலை இற்றைப்படுத்தல்',
+    'ur': u'روبالہ: تجدید نوشتہ',
     'zh': u'機器人:更新記錄',
 }
 
@@ -393,6 +409,7 @@ HiddenTemplate = {
     'ja': [u'Template:Information'],
     'ko': [u'Template:그림 정보'],
     'ta': [u'Template:Information'],
+    'ur': [u'Template:معلومات'],
     'zh': [u'Template:Information'],
 }
 
@@ -445,6 +462,7 @@ duplicates_user_talk_text = {
 duplicates_comment_talk = {
     'commons': u'Bot: Dupe file found',
     'ar': u'بوت: ملف مكرر تم العثور عليه',
+    'fa': u'ربات: تصویر تکراری یافت شد',
     'it': u"Bot: Notifico il file doppio trovato",
 }
 
@@ -453,6 +471,7 @@ duplicates_comment_image = {
     'commons': u'Bot: Tagging dupe file',
     'de': u'Bot: Datei liegt auf Commons',
     'ar': u'بوت: وسم ملف مكرر',
+    'fa': u'ربات: برچسب زدن بر تصویر تکراری',
     'it': u'Bot: File doppio, da cancellare',
 }
 
@@ -475,6 +494,7 @@ category_with_licenses = {
     'ja': 'Category:画像の著作権表示テンプレート',
     'ko': '분류:위키백과 그림 저작권 틀',
     'ta': 'Category:காப்புரிமை வார்ப்புருக்கள்',
+    'ur': u'زمرہ:ویکیپیڈیا سانچہ جات حقوق تصاویر',
     'zh': 'Category:版權申告模板',
 }
 
@@ -504,7 +524,7 @@ serviceTemplates = {
 
 # Add your project (in alphabetical order) if you want that the bot starts
 project_inserted = ['ar', 'commons', 'de', 'en', 'fa', 'ga', 'hu', 'it', 'ja',
-                    'ko', 'ta', 'zh']
+                    'ko', 'ta', 'ur', 'zh']
 
 ################################################################################
 # <--------------------------- Change only above! ---------------------------> #
