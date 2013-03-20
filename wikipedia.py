@@ -2627,7 +2627,7 @@ u'Page %s is semi-protected. Getting edit page to find out if we are allowed to 
         data=datas['query']['pages'].values()[0]['protection']
         return data
 
-    def interwiki(self):
+    def interwiki(self, api=False):
         """Return a list of interwiki links in the page text.
 
         This will retrieve the page to do its work, so it can raise
@@ -2639,7 +2639,30 @@ u'Page %s is semi-protected. Getting edit page to find out if we are allowed to 
         """
         if hasattr(self, "_interwikis"):
             return self._interwikis
+        if api:
+            params = {
+                'action': 'query',
+                'prop'  : 'langlinks',
+                'titles' : self.title(),
+            }
+            if not self.site().isAllowed('apihighlimits') and config.special_page_limit > 500:
+                params['cllimit'] = 500
+            allDone = False
+            iwlinks=[]
+            while not allDone:
+                datas = query.GetData(params, self.site())
+                data=datas['query']['pages'].values()[0]
+                if "langlinks" in data:
+                    for c in data['langlinks']:
+                        llpage = Page(getSite(c["lang"]),c["*"])
+                        iwlinks.append(llpage)
 
+                if 'query-continue' in datas:
+                    if 'langlinks' in datas['query-continue']:
+                        params.update(datas['query-continue']['langlinks'])
+                else:
+                    allDone = True
+            return iwlinks
         text = self.get()
 
         # Replace {{PAGENAME}} by its value
