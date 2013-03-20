@@ -4147,9 +4147,11 @@ class DataPage(Page):
             'summary': self._encodeArg(summary, 'summary'),
         }
         params['site'] = self._siteTitle
+        output(self._title)
+        output(self._originTitle)
         if self._title:
             del params['site']
-            params['id']=params['title']
+            params['id']=self._title.replace("Q","")
             del params['title']
         params['format'] = 'jsonfm'
         if items['type'] == u'item':
