@@ -178,7 +178,11 @@ class SubsterBot(basic.AutoBasicBot):
         self._ConfCSSpostprocPage = pywikibot.Page(self.site, bot_config['ConfCSSpostproc'])
         self._ConfCSSconfigPage   = pywikibot.Page(self.site, bot_config['ConfCSSconfig'])
         self.pagegen     = pagegenerators.ReferringPageGenerator(self._userListPage, onlyTemplateInclusion=True)
-        if not (self.site.family.name == 'wikidata'):
+        if (self.site.family.name == 'wikidata'):
+            # http://www.mediawiki.org/wiki/Special:Code/pywikipedia/11070
+            # http://www.mediawiki.org/wiki/Special:Code/pywikipedia/11071
+            self.site = self.site.data_repository()
+        else:
             # DRTRIGON-130; skip this for test-repo
             self._code       = self._ConfCSSpostprocPage.get()
             pywikibot.output(u'Imported postproc %s rev %s from %s' %\
@@ -218,7 +222,7 @@ class SubsterBot(basic.AutoBasicBot):
             # output result to page or return directly
             if sim:
                 return substed_content
-            elif (self.site.family.name == 'wikidata'):     # DRTRIGON-130
+            elif self.site.is_data_repository():            # DRTRIGON-130
                 # convert talk page result to wikidata(base)
                 data = self.WD_convertContent(substed_content)
                 datapage = pywikibot.DataPage(self.site, page.title())
