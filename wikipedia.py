@@ -4097,11 +4097,11 @@ class DataPage(Page):
     Supports the same interface as Page, with the following added methods:
 
     setitem          : Setting item(s) on a page
-    setclaimvalue    : Set the value of a Wikibase claim
-    createclaim      : Create Wikibase claims
+    editclaim        : Create and/or set the value of a Wikibase claim
     createitem       : Create an item
-    getentity        : Getting item(s) of a page
+    get              : Getting item(s) of a page (like entity, ...)
     getentities      : Get the data for multiple Wikibase entities
+                       DEPRECATED: please use get() instead of getentities()
     searchentities   : Search for entities
 
     """
@@ -4339,6 +4339,7 @@ class DataPage(Page):
                 if data['success'] == u"1":
                     return 302, response.msg, data['success']
             return response.code, response.msg, data
+
     def editclaim(self, WDproperty, value,raw_value=False, refs=None, comment=None, token=None, sysop=False,botflag=True):
         if isinstance(WDproperty,int):
             propertyID=WDproperty
@@ -4358,9 +4359,11 @@ class DataPage(Page):
         else:
             raise RuntimeError("Unknown property type: %s" % WDproperty)
         if not raw_value:      
-            if isinstance(value,int):
-                pass
-            elif isinstance(value,basestring):
+            if isinstance(value, int):             # for 'quantity' entity-type
+                value="{\"entity-type\":\"item\",\"numeric-id\":%s}" % value
+            elif isinstance(value, unicode):       # for 'string' entity-type
+                value = json.dumps(value)
+            elif isinstance(value, basestring):    # for 'quantity' entity-type
                 try:
                     value=int(value)
                 except ValueError:
@@ -4373,9 +4376,10 @@ class DataPage(Page):
                         pass
                 else:
                     pass
-            else:
+                value="{\"entity-type\":\"item\",\"numeric-id\":%s}" % value
+            else:                                  # otherwise
                 raise RuntimeError("Unknown property type: %s" % value)
-            value="{\"entity-type\":\"item\",\"numeric-id\":%s}" % value
+                value="{\"entity-type\":\"item\",\"numeric-id\":%s}" % value
         else:
             pass
         claims=self.get()['claims']
@@ -4413,7 +4417,7 @@ class DataPage(Page):
                 params['token'] = token
             else:
                 params['token'] = self.site().getToken(sysop = sysop)
-            output(u"Changing %s" % self.title())
+            output(u"Creating %s" % self.title())
             data = query.GetData(params, self.site(), sysop=sysop)
             if 'error' in data:
                 raise RuntimeError("API query error: %s" % data)
@@ -4472,7 +4476,8 @@ class DataPage(Page):
                 raise RuntimeError("API query error: %s" % data)
             if u'warnings' in data:
                 output(str(data[u'warnings']))
-    def getentity(self,force=False, get_redirect=False, throttle=True,
+
+    def _getentity(self,force=False, get_redirect=False, throttle=True,
                   sysop=False, change_edit_time=True):
         """Returns items of a entity in a dictionary
         """
@@ -4581,6 +4586,7 @@ class DataPage(Page):
         self._title = self._contents['entity'].title()
         return self._contents
 
+    @deprecate_arg("get", None)
     def getentities(self, sysop=False):
         """API module to get the data for multiple Wikibase entities.
         """
@@ -4591,7 +4597,7 @@ class DataPage(Page):
         # retrying is done by query.GetData
         data = query.GetData(params, self.site(), sysop=sysop)
         entities  = data['entities'][self.title().lower()]
-        debuginfo = data['debuginfo']
+        #debuginfo = data['debuginfo']
 
         if 'error' in data:
             raise RuntimeError("API query error: %s" % data)
@@ -4635,7 +4641,7 @@ class DataPage(Page):
     def get(self, *args, **kwargs):
         if not hasattr(self, '_contents'):
             if self._title is None:
-                self.getentity(*args, **kwargs)
+                self._getentity(*args, **kwargs)
             else:
                 pagetext = super(DataPage, self).get(*args, **kwargs)
                 self._contents = json.loads(pagetext)

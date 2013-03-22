@@ -225,22 +225,23 @@ class SubsterBot(basic.AutoBasicBot):
                 for item in data:
                     for element in datapage.searchentities(u'DrTrigonBot:%s' % item):
                         dataoutpage = pywikibot.DataPage(self.site, element['id'])
-                        dataoutpage = page.toggleTalkPage()
+                        #dataoutpage = page.toggleTalkPage()
 
-                        ##dic = json.loads(dataoutpage.get())
-                        #dic = dataoutpage.getentities()
-                        out = u'* ~~~~~ / [[%s]] / %s / %s' % (element['id'], item, data[item])
-
-                        pywikibot.output(u'%s <--- "%s"' % (dataoutpage.title(asLink=True), out))
+                        pywikibot.output(u'%s <--- %s = %s' %\
+                            (dataoutpage.title(asLink=True), item, data[item]))
 
                         ## check for changes and then write/change/set values
                         summary = u'Bot: update data because of configuration on %s.' % page.title(asLink=True)
                         #if not self.WD_save(dataoutpage, dic[u'claims'], {u'p32': data}, summary):
                         buf = dataoutpage.get()
-                        if buf.strip().splitlines()[-1].split(u'/')[-1].strip() == data[item]:
+                        propid = 217    # just a cheat to start with ...
+                        claim = [ claim for claim in buf[u'claims'] if (claim['m'][1] == propid) ]
+                        #if buf.strip().splitlines()[-1].split(u'/')[-1].strip() == data[item]:
+                        if claim and (claim[0]['m'][3] == data[item]):
                             pywikibot.output(u'NOTHING TO DO!')
                         else:
-                            dataoutpage.put(buf + u'\n' + out, comment=summary)
+                            #dataoutpage.put(buf + u'\n' + out, comment=summary)
+                            dataoutpage.editclaim(u'p%i' % propid, data[item])
             else:
                 # if changed, write!
                 if (substed_content != content):
