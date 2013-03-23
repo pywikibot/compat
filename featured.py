@@ -443,8 +443,6 @@ def featuredWithInterwiki(fromsite, tosite, template_on_top, pType, quiet,
     re_Link_FA=re.compile(ur"\{\{%s\|%s\}\}"
                           % (findtemplate.replace(u' ', u'[ _]'),
                              fromsite.lang), re.IGNORECASE)
-    re_this_iw=re.compile(ur"\[\[%s:[^]]+\]\]" % fromsite.lang)
-
     gen = featuredArticles(fromsite, pType)
     gen = PreloadingGenerator(gen)
 
@@ -478,11 +476,6 @@ def featuredWithInterwiki(fromsite, tosite, template_on_top, pType, quiet,
                                 u'Connecting %s -> %s. Proceed? [Y/N]'
                                 % (a.title(), atrans.title())) in ['Y', 'y']
                             ):
-                            m=re_this_iw.search(text)
-                            if not m:
-                                pywikibot.output(
-                                    u"no interwiki record, very strange")
-                                continue
                             site = pywikibot.getSite()
                             comment = pywikibot.setAction(
                                 i18n.twtranslate(site, 'featured-' + pType,
