@@ -178,15 +178,13 @@ class SubsterBot(basic.AutoBasicBot):
         self._ConfCSSpostprocPage = pywikibot.Page(self.site, bot_config['ConfCSSpostproc'])
         self._ConfCSSconfigPage   = pywikibot.Page(self.site, bot_config['ConfCSSconfig'])
         self.pagegen     = pagegenerators.ReferringPageGenerator(self._userListPage, onlyTemplateInclusion=True)
-        if (self.site.family.name == 'wikidata'):
+        if (self.site.family.name == 'wikidata'):           # DRTRIGON-130
             # http://www.mediawiki.org/wiki/Special:Code/pywikipedia/11070
             # http://www.mediawiki.org/wiki/Special:Code/pywikipedia/11071
             self.site = self.site.data_repository()
-        else:
-            # DRTRIGON-130; skip this for test-repo
-            self._code       = self._ConfCSSpostprocPage.get()
-            pywikibot.output(u'Imported postproc %s rev %s from %s' %\
-              ((self._ConfCSSpostprocPage.title(asLink=True),) + self._ConfCSSpostprocPage.getVersionHistory(revCount=1)[0][:2]) )
+        self._code       = self._ConfCSSpostprocPage.get()
+        pywikibot.output(u'Imported postproc %s rev %s from %s' %\
+          ((self._ConfCSSpostprocPage.title(asLink=True),) + self._ConfCSSpostprocPage.getVersionHistory(revCount=1)[0][:2]) )
         self._flagenable = {}
         if self._ConfCSSconfigPage.exists():
             exec(self._ConfCSSconfigPage.get())    # with variable: bot_config_wiki
@@ -227,25 +225,26 @@ class SubsterBot(basic.AutoBasicBot):
                 data = self.WD_convertContent(substed_content)
                 datapage = pywikibot.DataPage(self.site, page.title())
                 for item in data:
-                    for element in datapage.searchentities(u'DrTrigonBot:%s' % item):
+                    for element in datapage.searchentities(u'%s:%s' %\
+                      (pywikibot.config.usernames[self.site.family.name][self.site.lang], item)):
                         dataoutpage = pywikibot.DataPage(self.site, element['id'])
                         #dataoutpage = page.toggleTalkPage()
 
                         pywikibot.output(u'%s <--- %s = %s' %\
                             (dataoutpage.title(asLink=True), item, data[item]))
 
-                        ## check for changes and then write/change/set values
+                        # check for changes and then write/change/set values
                         summary = u'Bot: update data because of configuration on %s.' % page.title(asLink=True)
                         #if not self.WD_save(dataoutpage, dic[u'claims'], {u'p32': data}, summary):
                         buf = dataoutpage.get()
                         propid = 217    # just a cheat to start with ...
                         claim = [ claim for claim in buf[u'claims'] if (claim['m'][1] == propid) ]
-                        #if buf.strip().splitlines()[-1].split(u'/')[-1].strip() == data[item]:
-                        if claim and (claim[0]['m'][3] == data[item]):
-                            pywikibot.output(u'NOTHING TO DO!')
-                        else:
+                        #if buf.strip().splitlines()[-1].split(u'/')[-1].strip() != data[item]:
+                        if (not claim) or (claim[0]['m'][3] != data[item]):
                             #dataoutpage.put(buf + u'\n' + out, comment=summary)
-                            dataoutpage.editclaim(u'p%i' % propid, data[item])
+                            dataoutpage.editclaim(u'p%i' % propid, data[item], comment=summary)
+                        else:
+                            pywikibot.output(u'NOTHING TO DO!')
             else:
                 # if changed, write!
                 if (substed_content != content):
