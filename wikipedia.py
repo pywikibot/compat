@@ -46,7 +46,7 @@ Other functions:
     setAction(text): Use 'text' instead of "Wikipedia python library" in
         edit summaries
     setUserAgent(text): Sets the string being passed to the HTTP server as
-        the User-agent: header. The default is 
+        the User-agent: header. The default is
         '<script>/<revision> Pywikipediabot/1.0', where '<script>' is the tail
         path component and file name of the currently executing script and
         revision is the SVN revision of Pywikipediabot.
@@ -2627,7 +2627,8 @@ u'Page %s is semi-protected. Getting edit page to find out if we are allowed to 
         data=datas['query']['pages'].values()[0]['protection']
         return data
 
-    def interwiki(self, api=False):
+    @deprecate_arg("api", None)
+    def interwiki(self):
         """Return a list of interwiki links in the page text.
 
         This will retrieve the page to do its work, so it can raise
@@ -2639,45 +2640,42 @@ u'Page %s is semi-protected. Getting edit page to find out if we are allowed to 
         """
         if hasattr(self, "_interwikis"):
             return self._interwikis
-        if api:
+
+        if self.site.has_transcluded_data:
             params = {
                 'action': 'query',
                 'prop'  : 'langlinks',
                 'titles' : self.title(),
             }
-            if not self.site().isAllowed('apihighlimits') and config.special_page_limit > 500:
+            if not self.site().isAllowed('apihighlimits') and \
+               config.special_page_limit > 500:
                 params['cllimit'] = 500
-            allDone = False
             iwlinks=[]
-            while not allDone:
+            while True:
                 datas = query.GetData(params, self.site())
                 data=datas['query']['pages'].values()[0]
                 if "langlinks" in data:
                     for c in data['langlinks']:
-                        llpage = Page(getSite(c["lang"]),c["*"])
+                        llpage = Page(getSite(c["lang"]), c["*"])
                         iwlinks.append(llpage)
 
                 if 'query-continue' in datas:
                     if 'langlinks' in datas['query-continue']:
                         params.update(datas['query-continue']['langlinks'])
                 else:
-                    allDone = True
+                    break
+            self._interwikis = iwlinks
             return iwlinks
+
         text = self.get()
-
         # Replace {{PAGENAME}} by its value
-        for pagenametext in self.site().pagenamecodes(
-                                                   self.site().language()):
+        for pagenametext in self.site().pagenamecodes(self.site().language()):
             text = text.replace(u"{{%s}}" % pagenametext, self.title())
-
-        ll = getLanguageLinks(text, insite=self.site(), pageLink=self.title(asLink=True))
-
+        ll = getLanguageLinks(text, insite=self.site(),
+                              pageLink=self.title(asLink=True))
         result = ll.values()
-
         self._interwikis = result
         return result
-
-
 
     def categories(self, get_redirect=False, api=False):
         """Return a list of Category objects that the article is in.
@@ -4340,53 +4338,57 @@ class DataPage(Page):
                     return 302, response.msg, data['success']
             return response.code, response.msg, data
 
-    def editclaim(self, WDproperty, value,raw_value=False, refs=None, comment=None, token=None, sysop=False,botflag=True):
-        if isinstance(WDproperty,int):
-            propertyID=WDproperty
-        elif isinstance(WDproperty,basestring):
+    def editclaim(self, WDproperty, value,raw_value=False, refs=None,
+                  comment=None, token=None, sysop=False, botflag=True):
+        if isinstance(WDproperty, int):
+            propertyID = WDproperty
+        elif isinstance(WDproperty, basestring):
             try:
                 propertyID=int(WDproperty)
             except ValueError:
                 try:
-                    propertyID=int(WDproperty.replace("p","").replace("P",""))
+                    propertyID = int(
+                        WDproperty.replace("p", "").replace("P", ""))
                 except ValueError:
-                    search=self.searchentities(WDproperty, 'property', lang=self._originSite.lang)
-                    propertyID=int(search[0]["id"].replace("p",""))
+                    search = self.searchentities(WDproperty, 'property',
+                                                 lang=self._originSite.lang)
+                    propertyID = int(search[0]["id"].replace("p", ""))
                 else:
                     pass
             else:
                 pass
         else:
             raise RuntimeError("Unknown property type: %s" % WDproperty)
-        if not raw_value:      
-            if isinstance(value, int):             # for 'quantity' entity-type
-                value="{\"entity-type\":\"item\",\"numeric-id\":%s}" % value
-            elif isinstance(value, unicode):       # for 'string' entity-type
+        if not raw_value:
+            if isinstance(value, int):  # for 'quantity' entity-type
+                value = "{\"entity-type\":\"item\",\"numeric-id\":%s}" % value
+            elif isinstance(value, unicode):  # for 'string' entity-type
                 value = json.dumps(value)
-            elif isinstance(value, basestring):    # for 'quantity' entity-type
+            elif isinstance(value, basestring):  # for 'quantity' entity-type
                 try:
                     value=int(value)
                 except ValueError:
                     try:
-                        value=int(value.replace("q","").replace("Q",""))
+                        value=int(value.replace("q","").replace("Q", ""))
                     except ValueError:
-                        search=self.searchentities(value, 'item', lang=self._originSite.lang)
-                        value=int(search[0]["id"].replace("q",""))
+                        search=self.searchentities(value, 'item',
+                                                   lang=self._originSite.lang)
+                        value=int(search[0]["id"].replace("q", ""))
                     else:
                         pass
                 else:
                     pass
                 value="{\"entity-type\":\"item\",\"numeric-id\":%s}" % value
-            else:                                  # otherwise
+            else:
                 raise RuntimeError("Unknown property type: %s" % value)
-                value="{\"entity-type\":\"item\",\"numeric-id\":%s}" % value
+                value = "{\"entity-type\":\"item\",\"numeric-id\":%s}" % value
         else:
             pass
-        claims=self.get()['claims']
-        theclaim=None
+        claims = self.get()['claims']
+        theclaim = None
         for claim in claims:
-            if claim['m'][1]==propertyID:
-                theclaim=claim
+            if claim['m'][1] == propertyID:
+                theclaim = claim
         if theclaim:
             params = {
                 'action': 'wbsetclaimvalue',
@@ -4394,10 +4396,7 @@ class DataPage(Page):
                 'snaktype': 'value',
                 'value': value,
             }
-            if token:
-                params['token'] = token
-            else:
-                params['token'] = self.site().getToken(sysop = sysop)
+            params['token'] = token or self.site().getToken(sysop=sysop)
             output(u"Changing %s" % self.title())
             data = query.GetData(params, self.site(), sysop=sysop)
             if 'error' in data:
@@ -4408,43 +4407,48 @@ class DataPage(Page):
         else:
             params = {
             'action': 'wbcreateclaim',
-            'entity': self.title().replace("Q","q"),
+            'entity': self.title().replace("Q", "q"),
             'snaktype': 'value',
-            'property': u"p"+str(propertyID),
+            'property': "p%d" % propertyID,
             'value': value,
             }
-            if token:
-                params['token'] = token
-            else:
-                params['token'] = self.site().getToken(sysop = sysop)
+            params['token'] = token or self.site().getToken(sysop=sysop)
             output(u"Creating %s" % self.title())
             data = query.GetData(params, self.site(), sysop=sysop)
             if 'error' in data:
                 raise RuntimeError("API query error: %s" % data)
-            if u'warnings' in data:
+            if 'warnings' in data:
                 output(str(data[u'warnings']))
             guid=data['claim']['id']
         if refs:
-            snak=[]
+            snak = []
             for ref in refs:
                 if isinstance(ref,basestring):
-                    raise RuntimeError("the references must be like this:{(ref1,value1),(ref2,value2)}")
-                for i in [0,1]:  
-                    if isinstance(ref[i],int):
-                        value=ref[i]
-                    elif isinstance(ref[i],basestring):
+                    raise RuntimeError(
+                        "the references must be like this: {(ref1, value1), (ref2, value2)}")
+                for i in range(2):
+                    if isinstance(ref[i], int):
+                        value = ref[i]
+                    elif isinstance(ref[i], basestring):
                         try:
-                            value=int(ref[i])
+                            value = int(ref[i])
                         except ValueError:
                             try:
-                                value=int(ref[i].replace("q","").replace("Q","").replace("P","").replace("p",""))
+                                value = int(
+                                    ref[i].lower().replace("Q",
+                                                           "").replace("P", ""))
                             except ValueError:
-                                if i==0:
-                                    typesearch='property'
+                                if i == 0:
+                                    typesearch = 'property'
                                 else:
-                                    typesearch='item'
-                                search=self.searchentities(ref[i], typesearch, lang=self._originSite.lang)
-                                value=int(search[0]["id"].replace("q","").replace("p",""))
+                                    typesearch = 'item'
+                                search=self.searchentities(
+                                    ref[i], typesearch,
+                                    lang=self._originSite.lang)
+                                value = int(
+                                    search[0]["id"].replace("q",
+                                                            "").replace("p",
+                                                                        ""))
                             else:
                                 pass
                         else:
@@ -4452,19 +4456,22 @@ class DataPage(Page):
                     else:
                         raise RuntimeError("Unknown item: %s" % ref[i])
                     snak.append(value)
-            finalsnak={}
-            for i in range(0,len(snak)/2):
-                snaki =  [{"snaktype":"value",
-		      "property":"p"+str(snak[i*2]),
-		      "datavalue":{"type":"wikibase-entityid","value":{"entity-type":"item","numeric-id":snak[(i*2)+1]}}}]
-                finalsnak["p"+str(snak[i*2])]=snaki
+            finalsnak = {}
+            for i in range(0, len(snak) / 2):
+                snaki = [
+                    {"snaktype": "value",
+                     "property":"p"+str(snak[i*2]),
+                     "datavalue": {"type": "wikibase-entityid",
+                                   "value": {"entity-type": "item",
+                                             "numeric-id": snak[(i * 2) + 1]}}}]
+                finalsnak["p%d" % snak[i * 2]] = snaki
             finalsnak=json.dumps(finalsnak)
             finalsnak=finalsnak.replace("'", '"')
             params = {
             'action': 'wbsetreference',
-            'statement' : guid,
-            'snaks' :u"%s" % finalsnak,
-            'bot' : '1'
+            'statement': guid,
+            'snaks': u"%s" % finalsnak,
+            'bot': '1'
             }
             if token:
                 params['token'] = token
@@ -4474,7 +4481,7 @@ class DataPage(Page):
             data = query.GetData(params, self.site(), sysop=sysop)
             if 'error' in data:
                 raise RuntimeError("API query error: %s" % data)
-            if u'warnings' in data:
+            if 'warnings' in data:
                 output(str(data[u'warnings']))
 
     def _getentity(self,force=False, get_redirect=False, throttle=True,
@@ -4658,12 +4665,13 @@ class DataPage(Page):
 
         """
         links = self.get()['links']
-        self._interwiki = [Page(getSite(code.replace('wiki', '').replace('_', '-'),fam='wikipedia'),
-                                links[code])
-                           for code in links]
+        self._interwiki = [Page(getSite(code.replace('wiki',
+                                                     '').replace('_', '-'),
+                                        fam='wikipedia'),
+                                links[code]) for code in links]
         return self._interwiki
 
-wikidataPage = DataPage #keep compatible
+wikidataPage = DataPage  #keep compatible
 
 
 class ImagePage(Page):
