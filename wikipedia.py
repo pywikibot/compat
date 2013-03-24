@@ -8715,19 +8715,25 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
 _sites = {}
 _namespaceCache = {}
 
-@deprecate_arg("persistent_http", None)
+
 def getSite(code=None, fam=None, user=None, noLogin=False):
     if code is None:
         code = default_code
     if fam is None:
         fam = default_family
+    if user is None:
+        try:
+            user = config.usernames[fam][code]
+        except KeyError:
+            user = None
     key = '%s:%s:%s' % (fam, code, user)
-    if key not in _sites:
+    if not key in _sites:
         _sites[key] = Site(code=code, fam=fam, user=user)
     ret =  _sites[key]
     if not ret.family.isPublic(code) and not noLogin:
         ret.forceLogin()
     return ret
+
 
 def setSite(site):
     global default_code, default_family
