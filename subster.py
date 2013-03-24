@@ -161,7 +161,11 @@ class SubsterBot(basic.AutoBasicBot):
 
         # modification of timezone to be in sync with wiki
         os.environ['TZ'] = 'Europe/Amsterdam'
-        time.tzset()
+
+        # windows doesn't have that attribute
+        # TODO: fix it
+        if hasattr(time, "tzset"):
+            time.tzset()
         pywikibot.output(u'Setting process TimeZone (TZ): %s' % str(time.tzname))    # ('CET', 'CEST')
 
         # init constants
