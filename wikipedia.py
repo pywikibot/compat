@@ -132,7 +132,7 @@ import math
 import re, codecs, difflib, locale
 try:
     from hashlib import md5
-except ImportError:             # Python 2.4 compatibility
+except ImportError:  # Python 2.4 compatibility
     from md5 import new as md5
 import xml.sax, xml.sax.handler
 import htmlentitydefs
@@ -5899,22 +5899,26 @@ class Site(object):
                 raise NoSuchSite("Language %s in family %s is obsolete"
                                  % (self.__code, self.__family.name))
         if self.__code not in self.languages():
-            if self.__code == 'zh-classic' \
-               and 'zh-classical' in self.languages():
+            if self.__code == 'zh-classic' and \
+               'zh-classical' in self.languages():
                 self.__code = 'zh-classical'
                 # database hack (database is varchar[10], so zh-classical
                 # is cut to zh-classic)
-            elif self.__family.name in self.__family.langs.keys() \
-                 or len(self.__family.langs) == 1:
+            elif self.__family.name in self.__family.langs.keys() and \
+                 len(self.__family.langs) == 1:
+                oldcode = self.__code
                 self.__code = self.__family.name
+                if self.__family == pywikibot.config.family \
+                        and oldcode == pywikibot.config.mylang:
+                    pywikibot.config.mylang = self.__code
             else:
                 raise NoSuchSite("Language %s does not exist in family %s"
                                  % (self.__code, self.__family.name))
 
+        self.nocapitalize = self.code in self.family.nocapitalize
         self._mediawiki_messages = {}
         self._info = {}
         self._userName = [None, None]
-        self.nocapitalize = self.code in self.family.nocapitalize
         self.user = user
         self._userData = [False, False]
         self._isLoggedIn = [None, None]
