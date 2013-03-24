@@ -33,8 +33,7 @@ Syntax example:
         Run bot on another site language than configured as default. E.g. 'en'.
 
     python subster.py -family:meta -lang:
-    python subster.py -family:wikidata -lang:repo
-    python subster.py -family:wikidata -lang:en
+    python subster.py -family:wikidata -lang:wikidata
         Run bot on another site family and language than configured as default.
         E.g. 'meta' or 'wikidata'.
 
@@ -177,12 +176,8 @@ class SubsterBot(basic.AutoBasicBot):
         self._userListPage        = pywikibot.Page(self.site, bot_config['TemplateName'])
         self._ConfCSSpostprocPage = pywikibot.Page(self.site, bot_config['ConfCSSpostproc'])
         self._ConfCSSconfigPage   = pywikibot.Page(self.site, bot_config['ConfCSSconfig'])
-        self.pagegen     = pagegenerators.ReferringPageGenerator(self._userListPage, onlyTemplateInclusion=True)
-        if (self.site.family.name == 'wikidata'):           # DRTRIGON-130
-            # http://www.mediawiki.org/wiki/Special:Code/pywikipedia/11070
-            # http://www.mediawiki.org/wiki/Special:Code/pywikipedia/11071
-            self.site = self.site.data_repository()
-        self._code       = self._ConfCSSpostprocPage.get()
+        self.pagegen = pagegenerators.ReferringPageGenerator(self._userListPage, onlyTemplateInclusion=True)
+        self._code   = self._ConfCSSpostprocPage.get()
         pywikibot.output(u'Imported postproc %s rev %s from %s' %\
           ((self._ConfCSSpostprocPage.title(asLink=True),) + self._ConfCSSpostprocPage.getVersionHistory(revCount=1)[0][:2]) )
         self._flagenable = {}
@@ -220,31 +215,6 @@ class SubsterBot(basic.AutoBasicBot):
             # output result to page or return directly
             if sim:
                 return substed_content
-            elif self.site.is_data_repository():            # DRTRIGON-130
-                # convert talk page result to wikidata(base)
-                data = self.WD_convertContent(substed_content)
-                datapage = pywikibot.DataPage(self.site, page.title())
-                for item in data:
-                    for element in datapage.searchentities(u'%s:%s' %\
-                      (pywikibot.config.usernames[self.site.family.name][self.site.lang], item)):
-                        dataoutpage = pywikibot.DataPage(self.site, element['id'])
-                        #dataoutpage = page.toggleTalkPage()
-
-                        pywikibot.output(u'%s <--- %s = %s' %\
-                            (dataoutpage.title(asLink=True), item, data[item]))
-
-                        # check for changes and then write/change/set values
-                        summary = u'Bot: update data because of configuration on %s.' % page.title(asLink=True)
-                        #if not self.WD_save(dataoutpage, dic[u'claims'], {u'p32': data}, summary):
-                        buf = dataoutpage.get()
-                        propid = 217    # just a cheat to start with ...
-                        claim = [ claim for claim in buf[u'claims'] if (claim['m'][1] == propid) ]
-                        #if buf.strip().splitlines()[-1].split(u'/')[-1].strip() != data[item]:
-                        if (not claim) or (claim[0]['m'][3] != data[item]):
-                            #dataoutpage.put(buf + u'\n' + out, comment=summary)
-                            dataoutpage.editclaim(u'p%i' % propid, data[item], comment=summary)
-                        else:
-                            pywikibot.output(u'NOTHING TO DO!')
             else:
                 # if changed, write!
                 if (substed_content != content):
@@ -263,6 +233,13 @@ class SubsterBot(basic.AutoBasicBot):
                     self.save( page, substed_content,
                                (head + u' ' + msg) % {'tags':", ".join(substed_tags)},
                                **flags )
+
+                    # DRTRIGON-130: data repository (wikidata) output to items
+                    if self.site.is_data_repository() or\
+                      (self.site.family.name == 'wikidata'):  # (work-a-round)
+                        data = self.WD_convertContent(substed_content)
+                        #print self.WD_save(dataoutpage, dic[u'claims'], {u'p32': data}, summary)
+                        self.WD_save(page, data)
                 else:
                     pywikibot.output(u'NOTHING TO DO!')
 
@@ -547,63 +524,99 @@ class SubsterBot(basic.AutoBasicBot):
 
         return res
 
-    def WD_save(self, outpage, dic, data, comment=None):
+#    def WD_save(self, outpage, dic, data, comment=None):
+#        """Stores the content to Wikidata.
+#
+#           @param dic: Original content.
+#           @type  dic: dict
+#           @param data: New content.
+#           @type  data: dict
+#
+#           Returns nothing, but stores the changed content.
+#        """
+#        # DRTRIGON-130: check for changes and then write/change/set values
+#        changed = False
+#        for prop in data:
+#            pywikibot.output(u'Checking claim with %i values' % len(data[prop]))
+#            for i, item in enumerate(data[prop]):
+#                if (i < len(dic[prop])) and \
+#                  (dic[prop][i][u'mainsnak'][u'datavalue'][u'value'] == item):
+#                    pass    # same value; nothing to do
+#                else:
+#                    # changes; update or create claim
+#                    changed = True
+#                    if (i < len(dic[prop])):
+#                        #print item, dic[prop][i][u'mainsnak'][u'datavalue'][u'value']
+#                        pywikibot.output(u'Updating claim with value: %s' % item)
+#                        outpage.setclaimvalue(dic[prop][i][u'id'], item, comment=comment)
+#                    else:
+#                        pywikibot.output(u'Creating new claim with value: %s' % item)
+#                        outpage.createclaim(prop, item, comment=comment)
+#                # search linked items and update them too
+#                # VERY HACKY, HAS TO BE CONCEPTIONALLY IMPROVED:
+#                # link any "key = value" pair to any other item by adding "key"
+#                # to the items 'aliases' (could also use 'description' or even
+#                # a redirect)
+#                (key, value) = map(string.strip, item.split('='))
+#                for linked in outpage.searchentities(key):
+#                    outpage = pywikibot.DataPage(self.site, linked[u'id'])
+#                    #attr = outpage.getentities()
+#                    attr = linked
+#                    if (u'aliases' in attr) and (key in attr[u'aliases']):
+#                        pywikibot.output(u'Item %s linked to key %s ...' % (outpage.title(asLink=True), key))
+#                        data = outpage.getentities()
+#                        if u'claims' in data:
+#                            if (data[u'claims'][u'p32'][0][u'mainsnak'][u'datavalue'][u'value'].strip() == value):
+#                                pywikibot.output(u'... ok')
+#                                continue
+#                            changed = True
+#                            pywikibot.output(u'... updating claim with value: %s' % value)
+#                            outpage.setclaimvalue(data[u'claims'][u'p32'][0][u'id'], value, comment=comment)
+#                        else:
+#                            changed = True
+#                            pywikibot.output(u'... creating new claim with value: %s' % value)
+#                            outpage.createclaim(prop, value, comment=comment)
+#        # speed-up by setting everything at once (in one single write attempt)
+#        #outpage.editentity(data = {u'claims': data})
+#        #outpage.setitem()
+#
+#        return changed
+
+    def WD_save(self, page, data):
         """Stores the content to Wikidata.
 
-           @param dic: Original content.
-           @type  dic: dict
+           @param page: Page containing template.
+           @type  page: page object
            @param data: New content.
            @type  data: dict
 
-           Returns nothing, but stores the changed content.
+           Returns nothing, but stores the changed content to linked labels.
         """
         # DRTRIGON-130: check for changes and then write/change/set values
-        changed = False
-        for prop in data:
-            pywikibot.output(u'Checking claim with %i values' % len(data[prop]))
-            for i, item in enumerate(data[prop]):
-                if (i < len(dic[prop])) and \
-                  (dic[prop][i][u'mainsnak'][u'datavalue'][u'value'] == item):
-                    pass    # same value; nothing to do
-                else:
-                    # changes; update or create claim
-                    changed = True
-                    if (i < len(dic[prop])):
-                        #print item, dic[prop][i][u'mainsnak'][u'datavalue'][u'value']
-                        pywikibot.output(u'Updating claim with value: %s' % item)
-                        outpage.setclaimvalue(dic[prop][i][u'id'], item, comment=comment)
-                    else:
-                        pywikibot.output(u'Creating new claim with value: %s' % item)
-                        outpage.createclaim(prop, item, comment=comment)
-                # search linked items and update them too
-                # VERY HACKY, HAS TO BE CONCEPTIONALLY IMPROVED:
-                # link any "key = value" pair to any other item by adding "key"
-                # to the items 'aliases' (could also use 'description' or even
-                # a redirect)
-                (key, value) = map(string.strip, item.split('='))
-                for linked in outpage.searchentities(key):
-                    outpage = pywikibot.DataPage(self.site, linked[u'id'])
-                    #attr = outpage.getentities()
-                    attr = linked
-                    if (u'aliases' in attr) and (key in attr[u'aliases']):
-                        pywikibot.output(u'Item %s linked to key %s ...' % (outpage.title(asLink=True), key))
-                        data = outpage.getentities()
-                        if u'claims' in data:
-                            if (data[u'claims'][u'p32'][0][u'mainsnak'][u'datavalue'][u'value'].strip() == value):
-                                pywikibot.output(u'... ok')
-                                continue
-                            changed = True
-                            pywikibot.output(u'... updating claim with value: %s' % value)
-                            outpage.setclaimvalue(data[u'claims'][u'p32'][0][u'id'], value, comment=comment)
-                        else:
-                            changed = True
-                            pywikibot.output(u'... creating new claim with value: %s' % value)
-                            outpage.createclaim(prop, value, comment=comment)
-        # speed-up by setting everything at once (in one single write attempt)
-        #outpage.editentity(data = {u'claims': data})
-        #outpage.setitem()
+        datapage = pywikibot.DataPage(self.site, page.title())
+        links = datapage.searchentities(u'%s:%s' % (pywikibot.config.usernames[self.site.family.name][self.site.lang], datapage.title().split(u':')[1]))
+        for element in links:
+            item = element[u'aliases'][0].split(u':')[2]
+            if item not in data:
+                pywikibot.output(u'Value "%s" not found.' % (item,))
+                continue
 
-        return changed
+            dataoutpage = pywikibot.DataPage(self.site, element['id'])
+            #dataoutpage.createclaim(u'p38', u'{"entity-type":"quantity", "numeric-id":1}')
+            #dataoutpage = page.toggleTalkPage()
+
+            # check for changes and then write/change/set values
+            summary = u'Bot: update data because of configuration on %s.' % page.title(asLink=True)
+            buf = dataoutpage.get()
+            propid = 217    # just a cheat to start with ...
+            claim = [ claim for claim in buf[u'claims'] if (claim['m'][1] == propid) ]
+            #if buf.strip().splitlines()[-1].split(u'/')[-1].strip() != data[item]:
+            if (not claim) or (claim[0]['m'][3] != data[item]):
+                pywikibot.output(u'%s in %s <--- %s = %s' %\
+                    (element[u'aliases'][0], dataoutpage.title(asLink=True), item, data[item]))
+
+                #dataoutpage.put(buf + u'\n' + out, comment=summary)
+                dataoutpage.editclaim(u'p%i' % propid, data[item], comment=summary)
 
     def get_var_regex(self, var, cont='.*?'):
         """Get regex used/needed to find the tags to replace.
