@@ -54,8 +54,8 @@ def check_disambig(f):
                                  % "', u'".join(l))
             if distl - disambigs:
                 l = list(distl - disambigs)
-                pywikibot.output("missing on MediaWiki message:\n%s,"
-                                 % "' u".join(l))
+                pywikibot.output("missing on MediaWiki message:\n%s"
+                                 % ", ".join(l))
         else:
             pywikibot.output('remove %s from family file' % k)
         print
