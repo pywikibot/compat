@@ -1094,7 +1094,6 @@ class Family(family.WikimediaFamily):
             # ([[MediaWiki:Disambiguationspage]])
             # first char must be in uppercase
             '_default': [u'Disambig'],  # for default MediaWiki message only
-            'cdo': [u'Gì-ngiê', u'Disambig'],
             'frp': [u'Homonimos', u'Disambig'],
             'fur': [u'Disambiguazion', u'Disambig'],
             'gd':  [u'Soilleireachadh'],
@@ -1109,8 +1108,6 @@ class Family(family.WikimediaFamily):
             'lmo': [u'Desambiguació', u'Dezambiguasiú', u'Desambiguazion',
                     u'Desambiguassiú', u'Desambiguació'],
             'mn':  [u'Салаа утгатай', u'Disambig'],
-            'nn':  [u'Fleirtyding', u'Tobokstavforkorting', u'Pekerside',
-                    u'Peikar', u'Disambig'],
             'no':  [u'Peker', u'Etternavn', u'Disambig',
                     u'Tobokstavsforkortelse', u'Trebokstavsforkortelse',
                     u'Flertydig', u'Pekerside'],
@@ -1129,8 +1126,7 @@ class Family(family.WikimediaFamily):
             'wo':  [u'Bokktekki'],
             'yi':  [u'באדייטען'],
             'zea': [u'Dp', u'Deurverwiespagina'],
-            'zh-classical':  [u'Disambig', u'釋義', u'消歧義'],
-            'zh-yue': [u'搞清楚', u'Disambig'],
+            'zh-classical':  [u'釋義', u'消歧義', u'Disambig'],
         }
 
         self.disambcatname = {
