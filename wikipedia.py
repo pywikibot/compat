@@ -4265,7 +4265,9 @@ class DataPage(Page):
                              'title': self._originTitle,
                              'site': self._siteTitle})
         else:
-            params['data'] = re.sub(ur"\bu\'", u'"',repr(value).decode("unicode-escape")).replace("'", '"')
+            value=json.dumps(value)
+            value=value.replace("'", '"')
+            params['data'] = value
         if token:
             params['token'] = token
         else:
@@ -4397,6 +4399,8 @@ class DataPage(Page):
                 'value': value,
             }
             params['token'] = token or self.site().getToken(sysop=sysop)
+            if botflag:
+                params['bot'] = 1
             output(u"Changing %s" % self.title())
             data = query.GetData(params, self.site(), sysop=sysop)
             if 'error' in data:
@@ -4413,6 +4417,8 @@ class DataPage(Page):
             'value': value,
             }
             params['token'] = token or self.site().getToken(sysop=sysop)
+            if botflag:
+                params['bot'] = 1
             output(u"Creating %s" % self.title())
             data = query.GetData(params, self.site(), sysop=sysop)
             if 'error' in data:
@@ -4477,6 +4483,8 @@ class DataPage(Page):
                 params['token'] = token
             else:
                 params['token'] = self.site().getToken(sysop = sysop)
+            if botflag:
+                params['bot'] = 1
             output(u"Adding references to %s" % self.title())
             data = query.GetData(params, self.site(), sysop=sysop)
             if 'error' in data:
