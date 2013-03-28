@@ -52,8 +52,8 @@ your user-config.py:
     cosmetic_changes_disable['wikipedia'] = ('de', 'en', 'fr')
 """
 #
-# (C) xqt, 2009-2012
-# (C) Pywikipedia bot team, 2006-2012
+# (C) xqt, 2009-2013
+# (C) Pywikipedia bot team, 2006-2013
 #
 # Distributed under the terms of the MIT license.
 #
@@ -75,14 +75,6 @@ irrelevant changes. Some wikis prohibit stand-alone running."""
 docuReplacements = {
     '&params;': pagegenerators.parameterHelp,
     '&warning;': warning,
-}
-
-# Interwiki message on top of iw links
-# 2nd line is a regex if needed
-msg_interwiki = {
-    'fr': u'<!-- Autres langues -->',
-    'nn': (u'<!--interwiki (no, sv, da first; then other languages alphabetically by name)-->',
-           u'(<!-- ?interwiki \(no(?:/nb)?, ?sv, ?da first; then other languages alphabetically by name\) ?-->)')
 }
 
 # This is from interwiki.py;
@@ -248,7 +240,6 @@ class CosmeticChangesToolkit:
         categories = None
         interwikiLinks = None
         allstars = []
-        hasCommentLine = False
 
         # The PyWikipediaBot is no longer allowed to touch categories on the
         # German Wikipedia. See
@@ -289,21 +280,6 @@ class CosmeticChangesToolkit:
                     text = regex.sub('', text)
                     allstars += found
 
-        # nn got a message between the categories and the iw's
-        # and they want to keep it there, first remove it
-        if self.site.lang in msg_interwiki:
-            iw_msg = msg_interwiki[self.site.lang]
-            if isinstance(iw_msg, tuple):
-                iw_reg = iw_msg[1]
-                iw_msg = iw_msg[0]
-            else:
-                iw_reg = u'(%s)' % iw_msg
-            regex = re.compile(iw_reg)
-            found = regex.findall(text)
-            if found:
-                hasCommentLine = True
-                text = regex.sub('', text)
-
         # Adding categories
         if categories:
             ##Sorting categories in alphabetic order. beta test only on Persian Wikipedia, TODO fix bug for sorting
@@ -316,13 +292,6 @@ class CosmeticChangesToolkit:
             #            categories.insert(0, name)
             text = pywikibot.replaceCategoryLinks(text, categories,
                                                   site=self.site)
-        # Put the iw message back
-        if not self.talkpage and \
-           ((interwikiLinks or hasCommentLine) and
-            self.site.language() == 'nn' or
-            (interwikiLinks and hasCommentLine) and
-                self.site.language() == 'fr'):
-            text += '\r\n\r\n' + iw_msg
         # Adding stars templates
         if allstars:
             text = text.strip() + self.site.family.interwiki_text_separator
@@ -331,6 +300,7 @@ class CosmeticChangesToolkit:
                 text += '%s\r\n' % element.strip()
                 if pywikibot.verbose:
                     pywikibot.output(u'%s' % element.strip())
+
         # Adding the interwiki
         if interwikiLinks:
             text = pywikibot.replaceLanguageLinks(text, interwikiLinks,
@@ -397,7 +367,8 @@ class CosmeticChangesToolkit:
                 if not aliases: continue
                 text = pywikibot.replaceExcept(
                     text,
-                    r'\[\[(?P<left>.+?:.+?\..+?\|) *(' + '|'.join(aliases) + ') *(?P<right>(\|.*?)?\]\])',
+                    r'\[\[(?P<left>.+?:.+?\..+?\|) *(' + '|'.join(aliases) + \
+                    ') *(?P<right>(\|.*?)?\]\])',
                     r'[[\g<left>' + aliases[0] + '\g<right>', exceptions)
         return text
 
@@ -686,14 +657,16 @@ class CosmeticChangesToolkit:
                                        r'\1----\2', exceptions)
         # horizontal line with attributes; can't be done with wiki syntax
         # so we only make it XHTML compliant
-        text = pywikibot.replaceExcept(text, r'(?i)<hr ([^>/]+?)>', r'<hr \1 />',
+        text = pywikibot.replaceExcept(text, r'(?i)<hr ([^>/]+?)>',
+                                       r'<hr \1 />',
                                        exceptions)
         # a header where only spaces are in the same line
         for level in range(1, 7):
             equals = '\\1%s \\2 %s\\3' % ("=" * level, "=" * level)
             text = pywikibot.replaceExcept(
                 text,
-                r'(?i)([\r\n]) *<h%d> *([^<]+?) *</h%d> *([\r\n])' % (level, level),
+                r'(?i)([\r\n]) *<h%d> *([^<]+?) *</h%d> *([\r\n])'
+                % (level, level),
                 r'%s' % equals,
                 exceptions)
         # TODO: maybe we can make the bot replace <p> tags with \r\n's.
@@ -701,7 +674,8 @@ class CosmeticChangesToolkit:
 
     def fixReferences(self, text):
         #http://en.wikipedia.org/wiki/User:AnomieBOT/source/tasks/OrphanReferenceFixer.pm
-        exceptions = ['nowiki', 'comment', 'math', 'pre', 'source', 'startspace']
+        exceptions = ['nowiki', 'comment', 'math', 'pre', 'source',
+                      'startspace']
 
         # it should be name = " or name=" NOT name   ="
         text = re.sub(r'(?i)<ref +name(= *| *=)"', r'<ref name="', text)
@@ -713,7 +687,8 @@ class CosmeticChangesToolkit:
         return text
 
     def fixStyle(self, text):
-        exceptions = ['nowiki', 'comment', 'math', 'pre', 'source', 'startspace']
+        exceptions = ['nowiki', 'comment', 'math', 'pre', 'source',
+                      'startspace']
         # convert prettytable to wikitable class
         if self.site.language in ('de', 'en'):
             text = pywikibot.replaceExcept(text,
@@ -722,16 +697,21 @@ class CosmeticChangesToolkit:
         return text
 
     def fixTypo(self, text):
-        exceptions = ['nowiki', 'comment', 'math', 'pre', 'source', 'startspace', 'gallery', 'hyperlink', 'interwiki', 'link']
+        exceptions = ['nowiki', 'comment', 'math', 'pre', 'source',
+                      'startspace', 'gallery', 'hyperlink', 'interwiki', 'link']
         # change <number> ccm -> <number> cm³
-        text = pywikibot.replaceExcept(text, ur'(\d)\s*&nbsp;ccm', ur'\1&nbsp;cm³', exceptions)
-        text = pywikibot.replaceExcept(text, ur'(\d)\s*ccm', ur'\1&nbsp;cm³', exceptions)
+        text = pywikibot.replaceExcept(text, ur'(\d)\s*&nbsp;ccm',
+                                       ur'\1&nbsp;cm³', exceptions)
+        text = pywikibot.replaceExcept(text, ur'(\d)\s*ccm', ur'\1&nbsp;cm³',
+                                       exceptions)
         # Solve wrong Nº sign with °C or °F
         # additional exception requested on fr-wiki for this stuff
         pattern = re.compile(u'«.*?»', re.UNICODE)
         exceptions.append(pattern)
-        text = pywikibot.replaceExcept(text, ur'(\d)\s*&nbsp;[º°]([CF])', ur'\1&nbsp;°\2', exceptions)
-        text = pywikibot.replaceExcept(text, ur'(\d)\s*[º°]([CF])', ur'\1&nbsp;°\2', exceptions)
+        text = pywikibot.replaceExcept(text, ur'(\d)\s*&nbsp;[º°]([CF])',
+                                       ur'\1&nbsp;°\2', exceptions)
+        text = pywikibot.replaceExcept(text, ur'(\d)\s*[º°]([CF])',
+                                       ur'\1&nbsp;°\2', exceptions)
         text = pywikibot.replaceExcept(text, ur'º([CF])', ur'°\1', exceptions)
         return text
 
