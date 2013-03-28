@@ -65,9 +65,6 @@ class Family(family.WikimediaFamily):
         self.namespaces[12]['de'] = [u'Hilfe', u'H']
         self.namespaces[3]['de'] = [u'Benutzer Diskussion', u'BD', u'Benutzerin Diskussion']
         self.namespaces[-2]['bar'] = [u'Media', u'Medium']
-        for code in ('gl', 'pt', 'vi'):
-            self.namespaces[828][code] = u'Module'
-            self.namespaces[829][code] = u'Module talk'
 
         # Most namespaces are inherited from family.Family.
         # Translation used on all wikis for the different namespaces.
