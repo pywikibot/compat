@@ -161,12 +161,12 @@ class SubsterBot(basic.AutoBasicBot):
 
         # modification of timezone to be in sync with wiki
         os.environ['TZ'] = 'Europe/Amsterdam'
-
-        # windows doesn't have that attribute
-        # TODO: fix it
         if hasattr(time, "tzset"):
             time.tzset()
-        pywikibot.output(u'Setting process TimeZone (TZ): %s' % str(time.tzname))    # ('CET', 'CEST')
+            pywikibot.output(u'Setting process TimeZone (TZ): %s' % str(time.tzname))    # ('CET', 'CEST')
+        else:
+            # e.g. windows doesn't have that attribute
+            pywikibot.output(u'WARNING: This operating system has NO SUPPORT for setting TimeZone by code! Before running this script, please set the TimeZone manually to one approriate for use with the Wikipedia language and region you intend to.')
 
         # init constants
         self._bot_config = bot_config
@@ -239,11 +239,10 @@ class SubsterBot(basic.AutoBasicBot):
                                **flags )
 
                     # DRTRIGON-130: data repository (wikidata) output to items
-                    if self.site.is_data_repository() or\
-                      (self.site.family.name == 'wikidata'):  # (work-a-round)
-                        data = self.WD_convertContent(substed_content)
-                        #print self.WD_save(dataoutpage, dic[u'claims'], {u'p32': data}, summary)
-                        self.WD_save(page, data)
+                    if self.site.is_data_repository():
+                        data = self.data_convertContent(substed_content)
+                        #print self.data_save(dataoutpage, dic[u'claims'], {u'p32': data}, summary)
+                        self.data_save(page, data)
                 else:
                     pywikibot.output(u'NOTHING TO DO!')
 
@@ -506,7 +505,7 @@ class SubsterBot(basic.AutoBasicBot):
         pywikibot.output(u''.join(diff))
         pywikibot.output(u'--- ' * 15)
 
-    def WD_convertContent(self, substed_content):
+    def data_convertContent(self, substed_content):
         """Converts the substed content to Wikidata format in order to save.
            (1 line of wiki text is converted to 1 claim/statement)
 
@@ -528,7 +527,7 @@ class SubsterBot(basic.AutoBasicBot):
 
         return res
 
-#    def WD_save(self, outpage, dic, data, comment=None):
+#    def data_save(self, outpage, dic, data, comment=None):
 #        """Stores the content to Wikidata.
 #
 #           @param dic: Original content.
@@ -586,7 +585,7 @@ class SubsterBot(basic.AutoBasicBot):
 #
 #        return changed
 
-    def WD_save(self, page, data):
+    def data_save(self, page, data):
         """Stores the content to Wikidata.
 
            @param page: Page containing template.
