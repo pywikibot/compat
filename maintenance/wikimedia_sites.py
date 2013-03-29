@@ -4,76 +4,87 @@ This script checks the language list of each Wikimedia multiple-language site
 against the language lists
 """
 #
-# (C) Pywikipedia bot team, 2008-2010
+# (C) xqt, 2009-2013
+# (C) Pywikipedia bot team, 2008-2013
 #
 # Distributed under the terms of the MIT license.
 #
 __version__ = '$Id$'
 
-import sys, re
+import sys
+import re
+import codecs
+import urllib
+from xml.etree import cElementTree
 
 sys.path.insert(1, '..')
 import pywikibot
-import codecs
+
+URL = 'http://wikistats.wmflabs.org/api.php?action=dump&table=%s&format=xml'
 
 familiesDict = {
-    'wikipedia':  'wikipedias_wiki.php',
-    'wiktionary': 'wiktionaries_wiki.php',
-    'wikiquote':  'wikiquotes_wiki.php',
-    'wikisource': 'wikisources_wiki.php',
-    'wikibooks':  'wikibooks_wiki.php',
-    'wikinews':   'wikinews_wiki.php',
-    'wikiversity':'wikiversity_wiki.php',
+    'wikibooks':   'wikibooks',
+    'wikinews':    'wikinews',
+    'wikipedia':   'wikipedias',
+    'wikiquote':   'wikiquotes',
+    'wikisource':  'wikisources',
+    'wikiversity': 'wikiversity',
+    'wikivoyage':  'wikivoyage',
+    'wiktionary':  'wiktionaries',
 }
+
 exceptions = ['www']
+
 
 def update_family(families):
     if not families:
         families = familiesDict.keys()
     for family in families:
-        pywikibot.output('Checking family %s:' % family)
+        pywikibot.output('\nChecking family %s:' % family)
 
         original = pywikibot.Family(family).languages_by_size
         obsolete = pywikibot.Family(family).obsolete
 
-        url = 'http://s23.org/wikistats/%s' % familiesDict[family]
-        uo = pywikibot.MyURLopener
-        f = uo.open(url)
-        text = f.read()
-
-        if family == 'wikipedia':
-            p = re.compile(r"\[\[:([a-z\-]{2,}):\|\1\]\].*?'''([0-9,]{1,})'''</span>\]", re.DOTALL)
-        else:
-            p = re.compile(r"\[http://([a-z\-]{2,}).%s.org/wiki/ \1].*?'''([0-9,]{1,})'''\]" % family, re.DOTALL)
+        feed = urllib.urlopen(URL % familiesDict[family])
+        tree = cElementTree.parse(feed)
 
         new = []
-        for lang, cnt in p.findall(text):
-            if lang in obsolete or lang in exceptions:
-                # Ignore this language
+        for field in tree.findall('row/field'):
+            if field.get('name') == 'prefix':
+                code = field.text
+                if not (code in obsolete or code in exceptions):
+                    new.append(code)
                 continue
-            new.append(lang)
+
+        # put the missing languages to the right place
+        missing = original != new and set(original) - set(new)
+        if missing:
+            pywikibot.output(u"WARNING: ['%s'] not listed at wikistats."
+                             % "', '".join(missing))
+            index = {}
+            for code in missing:
+                index[original.index(code)] = code
+            i = len(index) - 1
+            for key in sorted(index.keys(), reverse=True):
+                new.insert(key - i, index[key])
+                i -= 1
+
         if original == new:
             pywikibot.output(u'The lists match!')
         else:
             pywikibot.output(u"The lists don't match, the new list is:")
-            missing = set(original) - set(new)
-            new += missing
             text = u'        self.languages_by_size = [\r\n'
             line = ' ' * 11
-            for lang in new:
-                if len(line)+len(lang) <= 76:
-                    line += u" '%s'," % lang
+            for code in new:
+                if len(line) + len(code) <= 76:
+                    line += u" '%s'," % code
                 else:
                     text += u'%s\r\n' % line
                     line = ' ' * 11
-                    line += u" '%s'," % lang
+                    line += u" '%s'," % code
             text += u'%s\r\n' % line
             text += u'        ]'
             pywikibot.output(text)
-            if missing:
-                pywikibot.output(u"WARNING: ['%s'] not listed at wikistats.\n"
-                                 u"Now listed as last item\n"
-                                 % "', '".join(missing))
             family_file_name = '../families/%s_family.py' % family
             family_file = codecs.open(family_file_name, 'r', 'utf8')
             old_text = family_text = family_file.read()
@@ -83,6 +94,7 @@ def update_family(families):
             family_file = codecs.open(family_file_name, 'w', 'utf8')
             family_file.write(family_text)
             family_file.close()
+
 
 if __name__ == '__main__':
     try:
