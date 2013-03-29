@@ -23,14 +23,16 @@ import pywikibot
 URL = 'http://wikistats.wmflabs.org/api.php?action=dump&table=%s&format=xml'
 
 familiesDict = {
-    'wikibooks':   'wikibooks',
-    'wikinews':    'wikinews',
-    'wikipedia':   'wikipedias',
-    'wikiquote':   'wikiquotes',
-    'wikisource':  'wikisources',
-    'wikiversity': 'wikiversity',
-    'wikivoyage':  'wikivoyage',
-    'wiktionary':  'wiktionaries',
+    'anarchopedia': 'anarchopedias',
+    'gentoo':       'gentoo',
+    'wikibooks':    'wikibooks',
+    'wikinews':     'wikinews',
+    'wikipedia':    'wikipedias',
+    'wikiquote':    'wikiquotes',
+    'wikisource':   'wikisources',
+    'wikiversity':  'wikiversity',
+    'wikivoyage':   'wikivoyage',
+    'wiktionary':   'wiktionaries',
 }
 
 exceptions = ['www']
