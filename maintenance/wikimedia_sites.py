@@ -13,7 +13,7 @@ __version__ = '$Id$'
 import sys, re
 
 sys.path.insert(1, '..')
-import wikipedia
+import pywikibot
 import codecs
 
 familiesDict = {
@@ -31,13 +31,13 @@ def update_family(families):
     if not families:
         families = familiesDict.keys()
     for family in families:
-        wikipedia.output('Checking family %s:' % family)
+        pywikibot.output('Checking family %s:' % family)
 
-        original = wikipedia.Family(family).languages_by_size
-        obsolete = wikipedia.Family(family).obsolete
+        original = pywikibot.Family(family).languages_by_size
+        obsolete = pywikibot.Family(family).obsolete
 
         url = 'http://s23.org/wikistats/%s' % familiesDict[family]
-        uo = wikipedia.MyURLopener
+        uo = pywikibot.MyURLopener
         f = uo.open(url)
         text = f.read()
 
@@ -53,9 +53,11 @@ def update_family(families):
                 continue
             new.append(lang)
         if original == new:
-            wikipedia.output(u'The lists match!')
+            pywikibot.output(u'The lists match!')
         else:
-            wikipedia.output(u"The lists don't match, the new list is:")
+            pywikibot.output(u"The lists don't match, the new list is:")
+            missing = set(original) - set(new)
+            new += missing
             text = u'        self.languages_by_size = [\r\n'
             line = ' ' * 11
             for lang in new:
@@ -63,15 +65,20 @@ def update_family(families):
                     line += u" '%s'," % lang
                 else:
                     text += u'%s\r\n' % line
-                    line = '           '
+                    line = ' ' * 11
                     line += u" '%s'," % lang
             text += u'%s\r\n' % line
             text += u'        ]'
-            wikipedia.output(text)
+            pywikibot.output(text)
+            if missing:
+                pywikibot.output(u"WARNING: ['%s'] not listed at wikistats.\n"
+                                 u"Now listed as last item\n"
+                                 % "', '".join(missing))
             family_file_name = '../families/%s_family.py' % family
             family_file = codecs.open(family_file_name, 'r', 'utf8')
             old_text = family_text = family_file.read()
-            old = re.findall(ur'(?msu)^ {8}self.languages_by_size.+?\]', family_text)[0]
+            old = re.findall(ur'(?msu)^ {8}self.languages_by_size.+?\]',
+                             family_text)[0]
             family_text = family_text.replace(old, text)
             family_file = codecs.open(family_file_name, 'w', 'utf8')
             family_file.write(family_text)
@@ -80,9 +87,9 @@ def update_family(families):
 if __name__ == '__main__':
     try:
         fam = []
-        for arg in wikipedia.handleArgs():
+        for arg in pywikibot.handleArgs():
             if arg in familiesDict.keys() and arg not in fam:
                 fam.append(arg)
         update_family(fam)
     finally:
-        wikipedia.stopme()
+        pywikibot.stopme()
