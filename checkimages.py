@@ -178,7 +178,7 @@ empty = {
     'ja': u'{{subst:Welcome/intro}}\n{{subst:welcome|--~~~~}}\n',
     'ko': u'{{환영}}--~~~~\n',
     'ta': u'{{welcome}}\n~~~~\n',
-    'ur': u'{{خوش آمدید}}\n~~~~\n',    
+    'ur': u'{{خوش آمدید}}\n~~~~\n',
     'zh': u'{{subst:welcome|sign=~~~~}}',
 }
 
@@ -195,7 +195,7 @@ msg_comm2 = {
     'ja': u'ロボットによる:著作権情報明記のお願い',
     'ko': u'로봇:라이선스 정보 요청',
     'ta': u'தானியங்கி:மூலம் வழங்கப்படா படிமத்தை சுட்டுதல்',
-    'ur': u'روبالہ:درخواست ماخذ تصویر',    
+    'ur': u'روبالہ:درخواست ماخذ تصویر',
     'zh': u'機器人：告知用戶',
 }
 
@@ -212,7 +212,7 @@ delete_immediately = {
     'ja': u'{{db|知らないファイルフォーマット %s}}',
     'ko': u'{{delete|잘못된 파일 형식 (.%s)}}',
     'ta': u'{{delete|இந்தக் கோப்பு .%s என்றக் கோப்பு நீட்சியைக் கொண்டுள்ளது.}}',
-    'ur': u"{{سریع حذف شدگی|اس ملف میں .%s بطور توسیع موجود ہے۔ }}", 
+    'ur': u"{{سریع حذف شدگی|اس ملف میں .%s بطور توسیع موجود ہے۔ }}",
     'zh': u'{{delete|未知檔案格式%s}}',
 }
 
@@ -228,7 +228,7 @@ delete_immediately_head = {
     'it': u'\n\n== File non specificato ==\n',
     'ko': u'\n== 잘못된 파일 형식 ==\n',
     'ta': u'\n== இனங்காணப்படாத கோப்பு நீட்சி! ==\n',
-    'ur': u"\n== نامعلوم توسیع! ==\n",   
+    'ur': u"\n== نامعلوم توسیع! ==\n",
     'zh': u'\n==您上載的檔案格式可能有誤==\n',
 }
 
@@ -244,7 +244,7 @@ delete_immediately_notification = {
     'it': u'{{subst:Progetto:Coordinamento/Immagini/Bot/Messaggi/Ext|%s|__botnick__}} --~~~~',
     'ko': u'[[:그림:%s]]의 파일 형식이 잘못되었습니다. 확인 바랍니다.--~~~~',
     'ta': u'[[:படிமம்:%s]] இனங்காணப்படாத கோப்பு நீட்சியை கொண்டுள்ளது தயவு செய்து ஒரு முறை சரி பார்க்கவும் ~~~~',
-    'ur': u'ملف [[:File:%s]] کی توسیع شاید درست نہیں ہے، براہ کرم جانچ لیں۔ ~~~~', 
+    'ur': u'ملف [[:File:%s]] کی توسیع شاید درست نہیں ہے، براہ کرم جانچ لیں۔ ~~~~',
     'zh'    :u'您好，你上傳的[[:File:%s]]無法被識別，請檢查您的檔案，謝謝。--~~~~',
 }
 
@@ -312,7 +312,7 @@ bot_list = {
     'ja': [u'Alexbot'],
     'ko': [u'Kwjbot IV'],
     'ta': [u'TrengarasuBOT'],
-    'ur': [u'Shuaib-bot', u'Tahir-bot', u'SAMI.bot'], 
+    'ur': [u'Shuaib-bot', u'Tahir-bot', u'SAMI.bot'],
     'zh': [u'Alexbot'],
 }
 
@@ -345,7 +345,7 @@ report_page = {
     'ja': u'User:Alexbot/report',
     'ko': u'User:Kwjbot IV/Report',
     'ta': u'User:Trengarasu/commonsimages',
-    'ur': u'صارف:محمد شعیب/درخواست تصویر', 
+    'ur': u'صارف:محمد شعیب/درخواست تصویر',
     'zh': u'User:Alexsh/checkimagereport',
 }
 
@@ -365,7 +365,7 @@ report_text = {
     'ja': u"\n*[[:File:%s]] " + timeselected,
     'ko': u"\n*[[:그림:%s]] " + timeselected,
     'ta': u"\n*[[:படிமம்:%s]] " + timeselected,
-    'ur': u"\n*[[:تصویر:%s]] " + timeselected, 
+    'ur': u"\n*[[:تصویر:%s]] " + timeselected,
     'zh': u"\n*[[:File:%s]] " + timeselected,
 }
 
@@ -1175,7 +1175,8 @@ class checkImagesBot(object):
         else:
             # Adding the log
             if addings:
-                rep_text = rep_text % image_to_report # Adding the name of the image in the report if not done already
+                # Adding the name of the image in the report if not done already
+                rep_text = rep_text % image_to_report
             another_page.put(text_get + rep_text, comment=com, force=True,
                              minorEdit=False)
             pywikibot.output(u"...Reported...")
@@ -1463,7 +1464,8 @@ class checkImagesBot(object):
         if skip_number == 0:
             pywikibot.output(u'\t\t>> No files to skip...<<')
             return False
-        if skip_number > limit: skip_number = limit
+        if skip_number > limit:
+            skip_number = limit
         # Print a starting message only if no images has been skipped
         if not self.skip_list:
             if skip_number == 1:
@@ -1479,7 +1481,7 @@ class checkImagesBot(object):
                 pywikibot.output('')
             return True
         else:
-            pywikibot.output('') # Print a blank line.
+            pywikibot.output('')
             return False
 
     def wait(self, waitTime, generator, normal, limit):
@@ -1496,7 +1498,7 @@ class checkImagesBot(object):
                 % waitTime)
             imagesToSkip = 0
             while True:
-                loadOtherImages = True # ensure that all the images loaded aren't to skip!
+                loadOtherImages = True  # ensure that all the images loaded aren't to skip!
                 for image in generator:
                     try:
                         timestamp = image.getLatestUploader()[1]
@@ -1518,10 +1520,10 @@ class checkImagesBot(object):
                             u'Skipping %s, uploaded %s seconds ago..'
                             % (image.title(), int(secs_of_diff)))
                         imagesToSkip += 1
-                        continue # Still wait
+                        continue  # Still wait
                     else:
                         loadOtherImages = False
-                        break # No ok, continue
+                        break  # Not ok, continue
                 # if yes, we have skipped all the images given!
                 if loadOtherImages:
                     generator = (x[0] for x in
@@ -1563,7 +1565,7 @@ class checkImagesBot(object):
                     return True
             elif i.lower() in self.imageCheckText:
                 return True
-        return False # Nothing Found
+        return False
 
     def findAdditionalProblems(self):
         # In every tuple there's a setting configuration
@@ -1623,7 +1625,8 @@ class checkImagesBot(object):
         brackets = False
         delete = False
         notification = None
-        extension = self.imageName.split('.')[-1] # get the extension from the image's name
+        # get the extension from the image's name
+        extension = self.imageName.split('.')[-1]
         # Load the notification messages
         HiddenTN = pywikibot.translate(self.site, HiddenTemplateNotification,
                                        fallback=False)
