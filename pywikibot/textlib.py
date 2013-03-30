@@ -7,7 +7,7 @@ and return a unicode string.
 
 """
 #
-# (C) Pywikipedia bot team, 2004-2012
+# (C) Pywikipedia bot team, 2004-2013
 #
 # Distributed under the terms of the MIT license.
 #
@@ -91,6 +91,10 @@ def replaceExcept(text, old, new, exceptions, caseInsensitive=False,
                                    % '|'.join(site.validLanguageLinks()
                                               + site.family.obsolete.keys())
                                   ),
+        # Wikidata property inclusions
+        'property':    re.compile(r'(?i)\{\{\s*#property:\s*p\d+\s*\}\}'),
+        # Module invocations (currently only Lua)
+        'invoke':      re.compile(r'(?i)\{\{\s*#invoke:.*?}\}'),
 
     }
 
