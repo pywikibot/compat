@@ -4717,6 +4717,7 @@ class ImagePage(Page):
 
         Caches the HTML code, so that if you run this method twice on the
         same ImagePage object, the page will only be downloaded once.
+
         """
         if not self._imagePageHtml:
             path = self.site().get_address(self.urlname())
@@ -4758,7 +4759,8 @@ class ImagePage(Page):
                 for info in pageInfo['imageinfo']:
                     count += 1
                     if count == 1 and 'iistart' not in params:
-                    # count 1 and no iicontinue mean first image revision is latest.
+                        # count 1 and no iicontinue mean first image revision
+                        # is latest.
                         self._latestInfo = info
                     infos.append(info)
                     if limit == 1:
@@ -4769,7 +4771,7 @@ class ImagePage(Page):
                 else:
                     break
         except KeyError:
-            output("Not image in imagepage")
+            output("No image in imagepage")
         self._infoLoaded = True
         if limit > 1:
             return infos
@@ -4814,8 +4816,8 @@ class ImagePage(Page):
             return self.fileUrl().startswith(u'http://wikitravel.org/upload/shared/')
         return self.fileIsOnCommons()
 
-    # FIXME: MD5 might be performed on incomplete file due to server disconnection
-    # (see bug #1795683).
+    # FIXME: MD5 might be performed on incomplete file due to server
+    # disconnection (see bug #1795683).
     def getFileMd5Sum(self):
         """Return image file's MD5 checksum."""
         f = MyURLopener.open(self.fileUrl())
