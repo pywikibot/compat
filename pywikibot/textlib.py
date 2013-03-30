@@ -58,21 +58,21 @@ def replaceExcept(text, old, new, exceptions, caseInsensitive=False,
         site = pywikibot.getSite()
 
     exceptionRegexes = {
-        'comment':     re.compile(r'(?s)<!--.*?-->'),
+        'comment':      re.compile(r'(?s)<!--.*?-->'),
         # section headers
-        'header':      re.compile(r'\r?\n=+.+=+ *\r?\n'),
+        'header':       re.compile(r'\r?\n=+.+=+ *\r?\n'),
         # preformatted text
-        'pre':         re.compile(r'(?ism)<pre>.*?</pre>'),
-        'source':      re.compile(r'(?is)<source .*?</source>'),
+        'pre':          re.compile(r'(?ism)<pre>.*?</pre>'),
+        'source':       re.compile(r'(?is)<source .*?</source>'),
         # inline references
-        'ref':         re.compile(r'(?ism)<ref[ >].*?</ref>'),
+        'ref':          re.compile(r'(?ism)<ref[ >].*?</ref>'),
         # lines that start with a space are shown in a monospace font and
         # have whitespace preserved.
-        'startspace':  re.compile(r'(?m)^ (.*?)$'),
+        'startspace':   re.compile(r'(?m)^ (.*?)$'),
         # tables often have whitespace that is used to improve wiki
         # source code readability.
         # TODO: handle nested tables.
-        'table':       re.compile(r'(?ims)^{\|.*?^\|}|<table>.*?</table>'),
+        'table':        re.compile(r'(?ims)^{\|.*?^\|}|<table>.*?</table>'),
         # templates with parameters often have whitespace that is used to
         # improve wiki source code readability.
         # 'template':    re.compile(r'(?s){{.*?}}'),
@@ -80,21 +80,21 @@ def replaceExcept(text, old, new, exceptions, caseInsensitive=False,
         # templates cascaded up to level 2, but no deeper. For arbitrary
         # depth, we'd need recursion which can't be done in Python's re.
         # After all, the language of correct parenthesis words is not regular.
-        'template':    re.compile(r'(?s){{(({{.*?}})?.*?)*}}'),
-        'hyperlink':   compileLinkR(),
-        'gallery':     re.compile(r'(?is)<gallery.*?>.*?</gallery>'),
+        'template':     re.compile(r'(?s){{(({{.*?}})?.*?)*}}'),
+        'hyperlink':    compileLinkR(),
+        'gallery':      re.compile(r'(?is)<gallery.*?>.*?</gallery>'),
         # this matches internal wikilinks, but also interwiki, categories, and
         # images.
-        'link':        re.compile(r'\[\[[^\]\|]*(\|[^\]]*)?\]\]'),
+        'link':         re.compile(r'\[\[[^\]\|]*(\|[^\]]*)?\]\]'),
         # also finds links to foreign sites with preleading ":"
-        'interwiki':   re.compile(r'(?i)\[\[:?(%s)\s?:[^\]]*\]\][\s]*'
+        'interwiki':    re.compile(r'(?i)\[\[:?(%s)\s?:[^\]]*\]\][\s]*'
                                    % '|'.join(site.validLanguageLinks()
                                               + site.family.obsolete.keys())
                                   ),
         # Wikidata property inclusions
-        'property':    re.compile(r'(?i)\{\{\s*#property:\s*p\d+\s*\}\}'),
+        'property':     re.compile(r'(?i)\{\{\s*#property:\s*p\d+\s*\}\}'),
         # Module invocations (currently only Lua)
-        'invoke':      re.compile(r'(?i)\{\{\s*#invoke:.*?}\}'),
+        'invoke':       re.compile(r'(?i)\{\{\s*#invoke:.*?}\}'),
 
     }
 
