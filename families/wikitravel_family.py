@@ -1,41 +1,23 @@
 # -*- coding: utf-8  -*-
 import family, config
 
-# The wikitravel family
-
-# Translation used on all wikitravels for the 'article' text.
-# A language not mentioned here is not known by the robot
-
 __version__ = '$Id$'
+
+# The wikitravel family
 
 class Family(family.Family):
     def __init__(self):
         family.Family.__init__(self)
         self.name = 'wikitravel'
-        self.langs = {
-            'ar':'ar',
-            'ca':'ca',
-            'de':'de',
-            'en':'en',
-            'eo':'eo',
-            'es':'es',
-            'fi':'fi',
-            'fr':'fr',
-            'he':'he',
-            'hi':'hi',
-            'hu':'hu',
-            'it':'it',
-            'ja':'ja',
-            'ko':'ko',
-            'nl':'nl',
-            'pl':'pl',
-            'pt':'pt',
-            'ro':'ro',
-            'ru':'ru',
-            'sv':'sv',
-            'zh':'zh',
-            'wts':'wts',
-        }
+
+        self.languages_by_size = [
+            'en', 'de', 'ja', 'it', 'nl', 'pt', 'fr', 'pl', 'es', 'fi', 'ru',
+            'sv', 'hu', 'ca', 'ro', 'eo', 'hi', 'he',
+        ]
+
+        self.langs = dict([(lang, '%s.wikibooks.org' % lang)
+                           for lang in self.languages_by_size])
+
         self.namespaces[-2] = {
             '_default': u'Media',
             'ar': u'ملف',
@@ -361,12 +343,6 @@ class Family(family.Family):
         self.namespaces[201] = {
             'wts': u'Tech talk',
         }
-
-        # A few selected big languages for things that we do not want to loop over
-        # all languages. This is only needed by the titletranslate.py module, so
-        # if you carefully avoid the options, you could get away without these
-        # for another wikimedia family.
-        self.languages_by_size = ['en','fr','ro']
 
         # for Wikitravel's /Run subpages check.
         self.wt_script_policy = {
