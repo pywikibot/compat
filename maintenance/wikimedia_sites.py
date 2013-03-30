@@ -30,6 +30,7 @@ familiesDict = {
     'wikipedia':    'wikipedias',
     'wikiquote':    'wikiquotes',
     'wikisource':   'wikisources',
+    'wikitravel':   'wikitravel',
     'wikiversity':  'wikiversity',
     'wikivoyage':   'wikivoyage',
     'wiktionary':   'wiktionaries',
