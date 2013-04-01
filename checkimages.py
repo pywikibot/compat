@@ -1468,11 +1468,11 @@ class checkImagesBot(object):
             skip_number = limit
         # Print a starting message only if no images has been skipped
         if not self.skip_list:
-            if skip_number == 1:
-                pywikibot.output(u'Skipping the first file:\n')
-            else:
-                pywikibot.output(u'Skipping the first %s files:\n'
-                                 % skip_number)
+            pywikibot.output(
+                pywikibot.translate(
+                    'en',
+                    u'Skipping the first {{PLURAL:num|file|%(num)s files}}:\n',
+                    {'num': skip_number})
         # If we still have pages to skip:
         if len(self.skip_list) < skip_number:
             pywikibot.output(u'Skipping %s...' % self.imageName)
