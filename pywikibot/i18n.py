@@ -304,14 +304,11 @@ def translate(code, xdict, parameters=None, fallback=True):
         # TODO: check against plural_rules[lang]['nplurals']
         try:
             index = plural_rules[code]['plural'](num)
-            print 1, num, index
         except KeyError:
             index = plural_rules['_default']['plural'](num)
-            print 2, num, index
         except TypeError:
             # we got an int, not a function
             index = plural_rules[code]['plural']
-            print 3, index
         trans = re.sub(PLURAL_PATTERN, variants.split('|')[index], trans)
     if param:
         try:
@@ -457,6 +454,7 @@ def twntranslate(code, twtitle, parameters=None):
         # to use plural.py - use _default rules for all
         if sys.version_info < (2, 5):
             plural_func = lambda n: (n != 1)
+            index = plural_rules(num)
         else:
             from plural import plural_rules
             # we only need the lang or _default, not a _altlang code
@@ -467,7 +465,7 @@ def twntranslate(code, twtitle, parameters=None):
             except KeyError:
                 index = plural_rules['_default']['plural'](num)
             except TypeError:
-                # we got an int
+                # we got an int not a function
                 index = plural_rules[lang]['plural']
         repl = variants.split('|')[index]
         trans = re.sub(PLURAL_PATTERN, repl, trans)
