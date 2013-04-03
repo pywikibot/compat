@@ -828,14 +828,14 @@ def compileLinkR(withoutBracketed=False, onlyBracketed=False):
 # Functions dealing with templates
 #----------------------------------
 
-def extract_templates_and_params(text, asDict=False):
+def extract_templates_and_params(text, asList=False):
     """Return a list of templates found in text.
 
     Return value is a list of tuples. There is one tuple for each use of a
     template in the page, with the template title as the first entry and
     either a list of parameters or a dict of parameters as the second entry
-    which depends on asDict method parameter.
-    If asDict is True the parameters is a dict, and they are indexed by strings;
+    which depends on asList method parameter.
+    If asList is False the parameters is a dict, and they are indexed by strings;
     as in MediaWiki, an unnamed parameter is given a parameter name with an
     integer value corresponding to its position among the unnamed parameters,
     and if this results multiple parameters with the same name, only the last
@@ -843,8 +843,8 @@ def extract_templates_and_params(text, asDict=False):
 
     @param text: The wikitext from which templates are extracted
     @type text: unicode or string
-    @param asDict: If True, return parameters as list, else as dict
-    @type asDict: bool
+    @param asList: If True, return parameters as list, else as dict
+    @type asList: bool
 
     """
     # remove commented-out stuff etc.
@@ -961,7 +961,7 @@ def extract_templates_and_params(text, asDict=False):
                 markedParams = paramString.split('|')
                 # Replace markers
                 for param in markedParams:
-                    if asDict and "=" in param:
+                    if not asList and "=" in param:
                         param_name, param_val = param.split("=", 1)
                     else:
                         param_name = unicode(numbered_param)
@@ -982,10 +982,10 @@ def extract_templates_and_params(text, asDict=False):
                     params[param_name.strip()] = param_val.strip()
 
             # Add it to the result
-            if asDict:
-                result.append((name, params))
-            else:
+            if asList:
                 result.append((name, params.values()))
+            else:
+                result.append((name, params))
     return result
 
 
