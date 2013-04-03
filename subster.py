@@ -328,8 +328,7 @@ class SubsterBot(basic.AutoBasicBot):
         # 0.2.) check for 'simple' mode and get additional params
         if param['simple']:
             p = self.site.getExpandedString(param['simple'])
-            param.update(
-                pywikibot.extract_templates_and_params(p, asDict=True)[0][1])
+            param.update(pywikibot.extract_templates_and_params(p)[0][1])
 
         # 0.5.) check cron/date
         if param['cron']:
