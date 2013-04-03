@@ -828,16 +828,23 @@ def compileLinkR(withoutBracketed=False, onlyBracketed=False):
 # Functions dealing with templates
 #----------------------------------
 
-def extract_templates_and_params(text):
-    """Return list of template calls found in text.
+def extract_templates_and_params(text, asDict=False):
+    """Return a list of templates found in text.
 
     Return value is a list of tuples. There is one tuple for each use of a
-    template in the page, with the template title as the first entry and a
-    dict of parameters as the second entry.  Parameters are indexed by
-    strings; as in MediaWiki, an unnamed parameter is given a parameter name
-    with an integer value corresponding to its position among the unnnamed
-    parameters, and if this results multiple parameters with the same name
-    only the last value provided will be returned.
+    template in the page, with the template title as the first entry and
+    either a list of parameters or a dict of parameters as the second entry
+    which depends on asDict method parameter.
+    If asDict is True the parameters is a dict, and they are indexed by strings;
+    as in MediaWiki, an unnamed parameter is given a parameter name with an
+    integer value corresponding to its position among the unnamed parameters,
+    and if this results multiple parameters with the same name, only the last
+    value provided will be returned.
+
+    @param text: The wikitext from which templates are extracted
+    @type text: unicode or string
+    @param asDict: If True, return parameters as list, else as dict
+    @type asDict: bool
 
     """
     # remove commented-out stuff etc.
@@ -907,6 +914,35 @@ def extract_templates_and_params(text):
                 # Doesn't detect templates whose name changes,
                 # or templates whose name contains math tags
                 continue
+
+            # {{#if: }}
+            if name.startswith('#'):
+                continue
+
+## TODO: merged from wikipedia.py - implement the following
+##            if self.site().isInterwikiLink(name):
+##                continue
+##            # {{DEFAULTSORT:...}}
+##            defaultKeys = self.site().versionnumber() > 13 and \
+##                          self.site().getmagicwords('defaultsort')
+##            # It seems some wikis does not have this magic key
+##            if defaultKeys:
+##                found = False
+##                for key in defaultKeys:
+##                    if name.startswith(key):
+##                        found = True
+##                        break
+##                if found: continue
+##
+##            try:
+##                name = Page(self.site(), name).title()
+##            except InvalidTitle:
+##                if name:
+##                    output(
+##                        u"Page %s contains invalid template name {{%s}}."
+##                       % (self.title(), name.strip()))
+##                continue
+
             # Parameters
             paramString = m.group('params')
             params = {}
@@ -925,7 +961,7 @@ def extract_templates_and_params(text):
                 markedParams = paramString.split('|')
                 # Replace markers
                 for param in markedParams:
-                    if "=" in param:
+                    if asDict and "=" in param:
                         param_name, param_val = param.split("=", 1)
                     else:
                         param_name = unicode(numbered_param)
@@ -946,7 +982,10 @@ def extract_templates_and_params(text):
                     params[param_name.strip()] = param_val.strip()
 
             # Add it to the result
-            result.append((name, params))
+            if asDict:
+                result.append((name, params))
+            else:
+                result.append((name, params.values()))
     return result
 
 
