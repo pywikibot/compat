@@ -2842,7 +2842,7 @@ u'Page %s is semi-protected. Getting edit page to find out if we are allowed to 
             output(u"""\
 thistxt argument of templatesWithParams is deprecated. Please use textlib method
 extract_templates_and_params() instead.""")
-        return extract_templates_and_params(thistxt)
+        return extract_templates_and_params(thistxt, asList=True)
 
     def getRedirectTarget(self):
         """Return a Page object for the target this Page redirects to.
