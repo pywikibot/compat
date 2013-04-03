@@ -45,7 +45,7 @@ class Replacer(object):
         self.disallowed_replacements = [(re.compile(i[0], re.I), re.compile(i[1], re.I))
             for i in self.config.get('disallowed_replacements', ())]
 
-        self.site = wikipedia.getSite(persistent_http = True)
+        self.site = wikipedia.getSite()
         self.site.forceLogin()
 
         self.database = connect_database()
@@ -220,7 +220,7 @@ class Replacer(object):
         if self.config.get('replacer_run_once', False):
             self.run_once()
             return
-        
+
         while True:
             self.run_once()
             time.sleep(self.config['replacer_timeout'])
@@ -242,11 +242,11 @@ class Replacer(object):
 
     def process_reports(self):
         end_time = time.time() + self.config['replacer_timeout']
-        
+
         while self.reporters and time.time() < end_time:
             report = self.reporters[0]
             del self.reporters[0]
-            
+
             self.report(report)
 
     def report(self, (old_image, new_image, user, comment, not_ok)):
