@@ -1472,7 +1472,7 @@ class checkImagesBot(object):
                 pywikibot.translate(
                     'en',
                     u'Skipping the first {{PLURAL:num|file|%(num)s files}}:\n',
-                    {'num': skip_number})
+                    {'num': skip_number}))
         # If we still have pages to skip:
         if len(self.skip_list) < skip_number:
             pywikibot.output(u'Skipping %s...' % self.imageName)
