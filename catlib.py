@@ -66,12 +66,15 @@ class Category(wikipedia.Page):
     """Subclass of Page that has some special tricks that only work for
        category: pages"""
 
-    def __init__(self, site, title = None, insite = None, sortKey = None, sortKeyPrefix = None):
-        wikipedia.Page.__init__(self, site = site, title = title, insite = insite, defaultNamespace = 14)
+    def __init__(self, site, title=None, insite=None, sortKey=None,
+                 sortKeyPrefix=None):
+        wikipedia.Page.__init__(self, site=site, title=title, insite=insite,
+                                defaultNamespace=14)
         self.sortKey = sortKey
         self.sortKeyPrefix = sortKeyPrefix
         if self.namespace() != 14:
-            raise ValueError(u'BUG: %s is not in the category namespace!' % title)
+            raise ValueError(u'BUG: %s is not in the category namespace!'
+                             % title)
         self.completelyCached = False
         self.articleCache = []
         self.subcatCache = []
@@ -84,7 +87,8 @@ class Category(wikipedia.Page):
 
         """
         if self.sortKey:
-            titleWithSortKey = '%s|%s' % (self.title(savetitle=True), self.sortKey)
+            titleWithSortKey = '%s|%s' % (self.title(savetitle=True),
+                                          self.sortKey)
         else:
             titleWithSortKey = self.title(savetitle=True)
         if not noInterwiki and (forceInterwiki
@@ -92,9 +96,11 @@ class Category(wikipedia.Page):
             if self.site().family != wikipedia.getSite().family \
                     and self.site().family.name != self.site().lang:
                 return '[[%s:%s:%s]]' % (self.site().family.name,
-                                         self.site().lang, self.title(savetitle=True))
+                                         self.site().lang,
+                                         self.title(savetitle=True))
             else:
-                return '[[%s:%s]]' % (self.site().lang, self.title(savetitle=True))
+                return '[[%s:%s]]' % (self.site().lang,
+                                      self.title(savetitle=True))
         elif textlink:
             return '[[:%s]]' % self.title(savetitle=True)
         else:
@@ -159,8 +165,9 @@ class Category(wikipedia.Page):
                             # contents of subcategory are cached by calling
                             # this method recursively; therefore, do not cache
                             # them again
-                            for item in page._getAndCacheContents(newrecurse, purge, cache=cache,
-                                             sortby=sortby, sortdir=sortdir):
+                            for item in page._getAndCacheContents(
+                                    newrecurse, purge, cache=cache,
+                                    sortby=sortby, sortdir=sortdir):
                                 yield item
             if not startFrom:
                 self.completelyCached = True
@@ -207,9 +214,11 @@ class Category(wikipedia.Page):
             'action': 'query',
             'list': 'categorymembers',
             'cmtitle': self.title(),
-            'cmprop': ['title', 'ids', 'sortkey', 'sortkeyprefix', 'timestamp'],
+            'cmprop': ['title', 'ids', 'sortkey', 'timestamp'],
             #'': '',
         }
+        if self.site().versionnumber() > 16:
+            params['cmprop'].append('sortkeyprefix')
         if sortby:
             params['cmsort'] = sortby
         if sortdir:
@@ -223,15 +232,17 @@ class Category(wikipedia.Page):
             if currentPageOffset:
                 params.update(currentPageOffset)
                 wikipedia.output('Getting [[%s]] list from %s...'
-                                 % (self.title(), "%s=%s" % currentPageOffset.popitem()))
+                                 % (self.title(),
+                                    "%s=%s" % currentPageOffset.popitem()))
             else:
                 msg = 'Getting [[%s]] list' % self.title()
+                # category sort keys are uppercase
                 if startFrom:
-                    startFrom = startFrom.upper() # category sort keys are uppercase
+                    startFrom = startFrom.upper()
                     params['cmstartsortkey'] = startFrom
                     msg += ' starting at %s' % startFrom
                 if endsort:
-                    endsort = endsort.upper() # category sort keys are uppercase
+                    endsort = endsort.upper()
                     params['cmendsortkey'] = endsort
                     msg += ' ending at %s' % endsort
                 wikipedia.output(msg + u'...')
@@ -246,11 +257,20 @@ class Category(wikipedia.Page):
                 count += 1
                 # For MediaWiki versions where subcats look like articles
                 if memb['ns'] == 14:
-                    yield SUBCATEGORY, Category(self.site(), memb['title'], sortKey=memb['sortkey'], sortKeyPrefix=memb['sortkeyprefix'])
+                    if 'sortkeyprefix' in memb:
+                        sortKeyPrefix = memb['sortkeyprefix']
+                    else:
+                        sortKeyPrefix = None
+                    yield SUBCATEGORY, \
+                          Category(self.site(), memb['title'],
+                                   sortKey=memb['sortkey'],
+                                   sortKeyPrefix=sortKeyPrefix)
                 elif memb['ns'] == 6:
-                    yield ARTICLE, wikipedia.ImagePage(self.site(), memb['title'])
+                    yield ARTICLE, wikipedia.ImagePage(self.site(),
+                                                       memb['title'])
                 else:
-                    yield ARTICLE, wikipedia.Page(self.site(), memb['title'], defaultNamespace=memb['ns'])
+                    yield ARTICLE, wikipedia.Page(self.site(), memb['title'],
+                                                  defaultNamespace=memb['ns'])
                 if count >= params['cmlimit']:
                     break
             # try to find a link to the next list page
