@@ -19,6 +19,7 @@ import re
 from HTMLParser import HTMLParser
 import config
 
+TEMP_REGEX = re.compile('{{(msg:)?(?P<name>[^{\|]+?)(\|(?P<params>[^{]+?))?}}')
 
 def unescape(s):
     """Replace escaped HTML-special characters by their originals"""
@@ -75,14 +76,6 @@ def replaceExcept(text, old, new, exceptions, caseInsensitive=False,
         # source code readability.
         # TODO: handle nested tables.
         'table':        re.compile(r'(?ims)^{\|.*?^\|}|<table>.*?</table>'),
-        # templates with parameters often have whitespace that is used to
-        # improve wiki source code readability.
-        # 'template':    re.compile(r'(?s){{.*?}}'),
-        # The regex above fails on nested templates. This regex can handle
-        # templates cascaded up to level 2, but no deeper. For arbitrary
-        # depth, we'd need recursion which can't be done in Python's re.
-        # After all, the language of correct parenthesis words is not regular.
-        'template':     re.compile(r'(?s){{(({{.*?}})?.*?)*}}'),
         'hyperlink':    compileLinkR(),
         'gallery':      re.compile(r'(?is)<gallery.*?>.*?</gallery>'),
         # this matches internal wikilinks, but also interwiki, categories, and
@@ -107,12 +100,15 @@ def replaceExcept(text, old, new, exceptions, caseInsensitive=False,
             old = re.compile(old)
 
     dontTouchRegexes = []
+    except_templates = False
     for exc in exceptions:
         if isinstance(exc, basestring):
             # assume it's a reference to the exceptionRegexes dictionary
             # defined above.
             if exc in exceptionRegexes:
                 dontTouchRegexes.append(exceptionRegexes[exc])
+            elif exc == 'template':
+                except_templates = True
             else:
                 # nowiki, noinclude, includeonly, timeline, math ond other
                 # extensions
@@ -125,6 +121,35 @@ def replaceExcept(text, old, new, exceptions, caseInsensitive=False,
         else:
             # assume it's a regular expression
             dontTouchRegexes.append(exc)
+
+    # mark templates
+    # don't care about mw variables and parser functions
+    if except_templates:
+        marker1 = findmarker(text)
+        marker2 = findmarker(text, u'##', u'#')
+        Rvalue = re.compile('{{{.+?}}}')
+        Rmarker1 = re.compile('%(mark)s(\d+)%(mark)s' % {'mark': marker1})
+        Rmarker2 = re.compile('%(mark)s(\d+)%(mark)s' % {'mark': marker2})
+        values = {}
+        count = 0
+        for m in Rvalue.finditer(text):
+            count += 1
+            item = m.group()
+            text = text.replace(item, '%s%d%s' % (marker2, count, marker2))
+            values[count] = item
+        inside = {}
+        count = 0
+        while TEMP_REGEX.search(text) is not None:
+            for m in TEMP_REGEX.finditer(text):
+                count += 1
+                item = m.group()
+                text = text.replace(item, '%s%d%s' % (marker1, count, marker1))
+
+                for m2 in Rmarker1.finditer(item):
+                    item = item.replace(m2.group(), inside[int(m2.group(1))])
+                for m2 in Rmarker2.finditer(item):
+                    item = item.replace(m2.group(), values[int(m2.group(1))])
+                inside[count] = item
     index = 0
     markerpos = len(text)
     while True:
@@ -194,6 +219,12 @@ def replaceExcept(text, old, new, exceptions, caseInsensitive=False,
                 index = match.start() + len(replacement)
             markerpos = match.start() + len(replacement)
     text = text[:markerpos] + marker + text[markerpos:]
+
+    if except_templates:  # restore templates from dict
+        for m2 in Rmarker1.finditer(text):
+            text = text.replace(m2.group(), inside[int(m2.group(1))])
+        for m2 in Rmarker2.finditer(text):
+            text = text.replace(m2.group(), values[int(m2.group(1))])
     return text
 
 
@@ -863,8 +894,6 @@ def extract_templates_and_params(text, asList=False):
     marker4 = findmarker(thistxt, u'§§', u'§')
 
     result = []
-    Rtemplate = re.compile(
-        ur'{{(msg:)?(?P<name>[^{\|]+?)(\|(?P<params>[^{]+?))?}}')
     Rmath = re.compile(ur'<math>[^<]+</math>')
     Rvalue = re.compile(r'{{{.+?}}}')
     Rmarker = re.compile(ur'%s(\d+)%s' % (marker, marker))
@@ -891,8 +920,8 @@ def extract_templates_and_params(text, asList=False):
 
     inside = {}
     count = 0
-    while Rtemplate.search(thistxt) is not None:
-        for m in Rtemplate.finditer(thistxt):
+    while TEMP_REGEX.search(thistxt) is not None:
+        for m in TEMP_REGEX.finditer(thistxt):
             # Make sure it is not detected again
             count += 1
             text = m.group()
