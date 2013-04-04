@@ -143,7 +143,7 @@ def set_all(keys, values, verbose = False):
 
 def set_for(lang, family, keys, values, verbose = False):
     import wikipedia
-    site = wikipedia.getSite(lang, family, persistent_http = True)
+    site = wikipedia.getSite(lang, family)
     prefs = Preferences(site)
     for key, value in zip(keys, values):
         prev = unicode(prefs.get(key, ''))
