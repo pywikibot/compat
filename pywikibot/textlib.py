@@ -130,6 +130,8 @@ def replaceExcept(text, old, new, exceptions, caseInsensitive=False,
         Rvalue = re.compile('{{{.+?}}}')
         Rmarker1 = re.compile('%(mark)s(\d+)%(mark)s' % {'mark': marker1})
         Rmarker2 = re.compile('%(mark)s(\d+)%(mark)s' % {'mark': marker2})
+        # hide the flat template marker
+        dontTouchRegexes.append(Rmarker1)
         values = {}
         count = 0
         for m in Rvalue.finditer(text):
@@ -145,6 +147,7 @@ def replaceExcept(text, old, new, exceptions, caseInsensitive=False,
                 item = m.group()
                 text = text.replace(item, '%s%d%s' % (marker1, count, marker1))
 
+                # Make sure stored templates don't contain markers
                 for m2 in Rmarker1.finditer(item):
                     item = item.replace(m2.group(), inside[int(m2.group(1))])
                 for m2 in Rmarker2.finditer(item):
