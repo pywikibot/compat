@@ -170,11 +170,9 @@ def workon(page):
         try:
             target = page2.getRedirectTarget()
         except pywikibot.NoPage:
-            gen = mysite.logpages(number=1, mode='move', title=page2.title(),
-                                  dump=True)
             try:
-                lastmove = gen.next()['move']
-            except StopIteration:
+                target = page2.getMovedTarget()
+            except pywikibot.NoPage:
                 continue
             target = pywikibot.Page(mysite, lastmove['new_title'])
         except (pywikibot.Error, pywikibot.SectionError):
