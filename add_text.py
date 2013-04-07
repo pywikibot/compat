@@ -294,9 +294,11 @@ Match was: %s''' % result)
             if always or choice == 'y':
                 try:
                     if always:
-                        page.put(newtext, summary)
+                        page.put(newtext, summary,
+                                 minorEdit=page.namespace() != 3)
                     else:
-                        page.put_async(newtext, summary)
+                        page.put_async(newtext, summary,
+                                       minorEdit=page.namespace() != 3)
                 except pywikibot.EditConflict:
                     pywikibot.output(u'Edit conflict! skip!')
                     return (False, False, always)
