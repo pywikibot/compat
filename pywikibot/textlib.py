@@ -252,7 +252,7 @@ def removeDisabledParts(text, tags=['*']):
         'pre':             r'<pre>.*?</pre>',
         'source':          r'<source .*?</source>',
         'syntaxhighlight': r'<syntaxhighlight .*?</syntaxhighlight>',
-        'templategoof':    r'\{\{\s*?\|.+?\}\}',
+        'templategoof':    r'\{\{\s*?(?:\|.+?)*?\}\}',
     }
     if '*' in tags:
         tags = regexes.keys()
