@@ -2841,9 +2841,10 @@ u'Page %s is semi-protected. Getting edit page to find out if we are allowed to 
             except (IsRedirectPage, NoPage):
                 return []
         else:
-            output(u"""\
-thistxt argument of templatesWithParams is deprecated. Please use textlib method
-extract_templates_and_params() instead.""")
+            pass
+##            output(u"""\
+##thistxt argument of templatesWithParams is deprecated. Please use textlib method
+##extract_templates_and_params() instead.""")
         return [(t[0].upper() + t[1:], p) for t, p in
                 extract_templates_and_params(thistxt, asList=True)]
 
