@@ -949,7 +949,7 @@ def extract_templates_and_params(text, asList=False):
                 continue
 
             # {{#if: }}
-            if name.startswith('#'):
+            if not name or name.startswith('#'):
                 continue
 
 ## TODO: merged from wikipedia.py - implement the following
