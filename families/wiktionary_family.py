@@ -12,7 +12,7 @@ class Family(family.WikimediaFamily):
 
         self.languages_by_size = [
             'en', 'fr', 'mg', 'zh', 'lt', 'ru', 'el', 'ko', 'sv', 'pl', 'tr',
-            'ta', 'nl', 'de', 'ku', 'kn', 'vi', 'fi', 'io', 'hu', 'pt', 'ml',
+            'ta', 'nl', 'de', 'ku', 'kn', 'vi', 'fi', 'io', 'pt', 'hu', 'ml',
             'no', 'my', 'id', 'it', 'li', 'es', 'et', 'ja', 'fa', 'te', 'ro',
             'ar', 'cs', 'jv', 'eu', 'gl', 'lo', 'ca', 'uk', 'fj', 'br', 'bg',
             'eo', 'hr', 'oc', 'is', 'vo', 'th', 'simple', 'zh-min-nan', 'cy',
@@ -23,8 +23,8 @@ class Family(family.WikimediaFamily):
             'csb', 'st', 'ia', 'si', 'sh', 'sd', 'tg', 'ug', 'mn', 'sa', 'kl',
             'jbo', 'an', 'ln', 'zu', 'or', 'gu', 'kw', 'rw', 'gv', 'fo', 'qu',
             'ss', 'ie', 'mt', 'om', 'chr', 'roa-rup', 'iu', 'bn', 'pa', 'so',
-            'am', 'su', 'za', 'gd', 'mi', 'tpi', 'yi', 'ti', 'sg', 'na', 'dv',
-            'tn', 'ne', 'ha', 'ks', 'ay', 'ts',
+            'am', 'su', 'za', 'gd', 'mi', 'tpi', 'ne', 'yi', 'ti', 'sg', 'na',
+            'dv', 'tn', 'ha', 'ks', 'ay', 'ts',
         ]
 
         self.langs = dict([(lang, '%s.wiktionary.org' % lang)
