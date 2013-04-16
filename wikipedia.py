@@ -4313,11 +4313,12 @@ class DataPage(Page):
             params['token'] = token or self.site().getToken(sysop=sysop)
             if botflag:
                 params['bot'] = 1
-            output(u"Changing %s" % self.title())
+            output(u"Changing claim in item %s" % self.title())
             data = query.GetData(params, self.site(), sysop=sysop)
             if 'error' in data:
                 raise RuntimeError("API query error: %s" % data)
-            if u'warnings' in data:
+            if (u'warnings' in data) and \
+               (not data[u'warnings'][u'messages'][u'0'][u'name'] == u'edit-no-change'):
                 output(str(data[u'warnings']))
             guid=theclaim['g']
         else:
@@ -4331,7 +4332,7 @@ class DataPage(Page):
             params['token'] = token or self.site().getToken(sysop=sysop)
             if botflag:
                 params['bot'] = 1
-            output(u"Creating %s" % self.title())
+            output(u"Creating claim in item %s" % self.title())
             data = query.GetData(params, self.site(), sysop=sysop)
             if 'error' in data:
                 raise RuntimeError("API query error: %s" % data)
@@ -4340,49 +4341,65 @@ class DataPage(Page):
             guid=data['claim']['id']
         if refs:
             snak = []
-            for ref in refs:
-                if isinstance(ref,basestring):
-                    raise RuntimeError(
-                        "the references must be like this: {(ref1, value1), (ref2, value2)}")
-                for i in range(2):
-                    if isinstance(ref[i], int):
-                        value = ref[i]
-                    elif isinstance(ref[i], basestring):
-                        try:
-                            value = int(ref[i])
-                        except ValueError:
+            if isinstance(refs, dict):
+                # the references must be like this:
+                # {"p?": [{"snaktype": "value", 
+                #          "property":"p?",
+                #          "datavalue": {u'type': u'string', u'value': u'...'}},
+                #         {"snaktype": "value", ... }}, ]}
+                pass
+            elif isinstance(refs, set):
+                # the references must be like this:
+                # {(ref1, value1), (ref2, value2)}
+                for ref in refs:
+                    if isinstance(ref, basestring):
+                        raise RuntimeError(
+                            "the references must be like this: {(ref1, value1), (ref2, value2)}")
+                    for i in range(2):
+                        if isinstance(ref[i], int):
+                            value = ref[i]
+                        elif isinstance(ref[i], basestring):
                             try:
-                                value = int(
-                                    ref[i].lower().replace("Q",
-                                                           "").replace("P", ""))
+                                value = int(ref[i])
                             except ValueError:
-                                if i == 0:
-                                    typesearch = 'property'
+                                try:
+                                    value = int(
+                                        ref[i].lower().replace("Q",
+                                                               "").replace("P", ""))
+                                except ValueError:
+                                    if i == 0:
+                                        typesearch = 'property'
+                                    else:
+                                        typesearch = 'item'
+                                    search=self.searchentities(
+                                        ref[i], typesearch,
+                                        lang=self._originSite.lang)
+                                    value = int(
+                                        search[0]["id"].replace("q",
+                                                                "").replace("p",
+                                                                            ""))
                                 else:
-                                    typesearch = 'item'
-                                search=self.searchentities(
-                                    ref[i], typesearch,
-                                    lang=self._originSite.lang)
-                                value = int(
-                                    search[0]["id"].replace("q",
-                                                            "").replace("p",
-                                                                        ""))
+                                    pass
                             else:
                                 pass
                         else:
-                            pass
-                    else:
-                        raise RuntimeError("Unknown item: %s" % ref[i])
-                    snak.append(value)
-            finalsnak = {}
-            for i in range(0, len(snak) / 2):
-                snaki = [
-                    {"snaktype": "value",
-                     "property":"p"+str(snak[i*2]),
-                     "datavalue": {"type": "wikibase-entityid",
-                                   "value": {"entity-type": "item",
-                                             "numeric-id": snak[(i * 2) + 1]}}}]
-                finalsnak["p%d" % snak[i * 2]] = snaki
+                            raise RuntimeError("Unknown item: %s" % ref[i])
+                        snak.append(value)
+            else:
+                raise RuntimeError(
+                    "the references format cannot be understood!")
+            if snak:
+                finalsnak = {}
+                for i in range(0, len(snak) / 2):
+                    snaki = [
+                        {"snaktype": "value",
+                         "property":"p"+str(snak[i*2]),
+                         "datavalue": {"type": "wikibase-entityid",
+                                       "value": {"entity-type": "item",
+                                                 "numeric-id": snak[(i * 2) + 1]}}}]
+                    finalsnak["p%d" % snak[i * 2]] = snaki
+            else:
+                finalsnak=refs
             finalsnak=json.dumps(finalsnak)
             finalsnak=finalsnak.replace("'", '"')
             params = {
@@ -4397,11 +4414,12 @@ class DataPage(Page):
                 params['token'] = self.site().getToken(sysop = sysop)
             if botflag:
                 params['bot'] = 1
-            output(u"Adding references to %s" % self.title())
+            output(u"Adding references to claim in %s" % self.title())
             data = query.GetData(params, self.site(), sysop=sysop)
             if 'error' in data:
                 raise RuntimeError("API query error: %s" % data)
-            if 'warnings' in data:
+            if (u'warnings' in data) and \
+               (not data[u'warnings'][u'messages'][u'0'][u'name'] == u'edit-no-change'):
                 output(str(data[u'warnings']))
 
     def _getentity(self,force=False, get_redirect=False, throttle=True,
