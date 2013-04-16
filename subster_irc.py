@@ -37,10 +37,7 @@ from collections import deque
 import time
 import thread
 
-bot_config = {    'BotName':    pywikibot.config.usernames[pywikibot.config.family][pywikibot.config.mylang],
-
-            'ConfCSSconfig':    u'User:DrTrigon/DrTrigonBot/subster-config.css',
-}
+# Configuration imported from 'subster.py'.
 
 # debug tools
 # (look at 'bot_control.py' and 'subster.py' for more info)
@@ -71,7 +68,8 @@ class SubsterTagModifiedBot(articlenos.ArtNoDisp):
         self.do_refresh_References()
 
         # init constants
-        self._ConfCSSconfigPage = pywikibot.Page(self.site, bot_config['ConfCSSconfig'])
+        self._BotName = subster.bot_config['BotName']
+        self._ConfCSSconfigPage = pywikibot.Page(self.site, subster.bot_config['ConfCSSconfig'])
         self._difflink = []
         if self._ConfCSSconfigPage.exists():
             exec(self._ConfCSSconfigPage.get())    # with variable: bot_config_wiki
@@ -83,7 +81,7 @@ class SubsterTagModifiedBot(articlenos.ArtNoDisp):
             return
 #        print match.groups(), match.group('page'), match.group('user')
         user = match.group('user').decode(self.site.encoding())
-        if user == bot_config['BotName']:
+        if user == self._BotName:
             return
         #if botlist.isBot(user):
         #    return

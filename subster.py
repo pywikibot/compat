@@ -85,10 +85,16 @@ from pywikibot.comms import http
 
 bot_config = {
         # unicode values
+             'BotName':     pywikibot.config.usernames[pywikibot.config.family][pywikibot.config.mylang],
         'TemplateName':     u'User:DrTrigonBot/Subster',    # or 'template' for 'Flagged Revisions'
+   'data_PropertyId':       u'370',                         # default: Sandbox-String (P370)
 
         'ErrorTemplate':    u'<b>SubsterBot Exception in "%s" (%s)</b>\n<pre>%s</pre>',
         'VerboseMessage':   u'<noinclude>\n----\n%s\n</noinclude>', # DRTRIGON-116, DRTRIGON-132
+   'data_VerboseMessage':   u'<onlyinclude>{{#switch: {{{1|}}}\n'
+                            u'|          error = %(error)s\n'
+                            u'|error-traceback = %(error-traceback)s\n'
+                            u'}}</onlyinclude>',
 
         # important to use a '.css' page here, since it HAS TO BE protected to
         # prevent malicious code injection !
@@ -142,13 +148,11 @@ class SubsterBot(basic.AutoBasicBot):
     other wiki text data. Like dynamic text updating.
     '''
 
-    _param_default = bot_config['param_default']
-
     _var_regex_str = bot_config['var_regex_str']%{'var1':'%(var)s','var2':'%(var)s','cont':'%(cont)s'}
     _BS_regex_str  = bot_config['var_regex_str']%{'var1':'%(var1)s','var2':'%(var2)sBS:/','cont':'%(cont)s'}
 
     # -template and subst-tag handling taken from MerlBot
-    # -this bot could also be runned on my local wiki with an anacron-job
+    # -this bot could also be runned on any local wiki with an anacron-job
 
     def __init__(self):
         '''Constructor of SubsterBot(), initialize needed vars.'''
@@ -173,13 +177,15 @@ class SubsterBot(basic.AutoBasicBot):
         # convert e.g. namespaces to corret language
         self._bot_config['TemplateName'] = pywikibot.Page(self.site, self._bot_config['TemplateName']).title()
         self._template_regex = re.compile('\{\{' + self._bot_config['TemplateName'] + '(.*?)\}\}', re.S)
+        if self.site.is_data_repository():
+            self._bot_config['VerboseMessage'] = self._bot_config['data_VerboseMessage']
 
         self._debug = debug
 
         # init constants
-        self._userListPage        = pywikibot.Page(self.site, bot_config['TemplateName'])
-        self._ConfCSSpostprocPage = pywikibot.Page(self.site, bot_config['ConfCSSpostproc'])
-        self._ConfCSSconfigPage   = pywikibot.Page(self.site, bot_config['ConfCSSconfig'])
+        self._userListPage        = pywikibot.Page(self.site, self._bot_config['TemplateName'])
+        self._ConfCSSpostprocPage = pywikibot.Page(self.site, self._bot_config['ConfCSSpostproc'])
+        self._ConfCSSconfigPage   = pywikibot.Page(self.site, self._bot_config['ConfCSSconfig'])
         self.pagegen = pagegenerators.ReferringPageGenerator(self._userListPage, onlyTemplateInclusion=True)
         self._code   = self._ConfCSSpostprocPage.get()
         pywikibot.output(u'Imported postproc %s rev %s from %s' %\
@@ -210,7 +216,7 @@ class SubsterBot(basic.AutoBasicBot):
                 # get page content and operating mode
                 content = self.load(page)
                 params = self.loadTemplates(page, self._bot_config['TemplateName'],
-                                            default=self._param_default)
+                                            default=self._bot_config['param_default'])
 
             if not params: continue
 
@@ -241,7 +247,6 @@ class SubsterBot(basic.AutoBasicBot):
                     # DRTRIGON-130: data repository (wikidata) output to items
                     if self.site.is_data_repository():
                         data = self.data_convertContent(substed_content)
-                        #print self.data_save(dataoutpage, dic[u'claims'], {u'p32': data}, summary)
                         self.data_save(page, data)
                 else:
                     pywikibot.output(u'NOTHING TO DO!')
@@ -285,7 +290,7 @@ class SubsterBot(basic.AutoBasicBot):
                 # DRTRIGON-132; metadata append IFF exception raised
                 # (this metadata HAVE TO trigger a change because of error!)
                 metadata['bot-error'] = unicode(True)
-                metadata['bot-error-traceback'] = bot_config['ErrorTemplate'] %\
+                metadata['bot-error-traceback'] = self._bot_config['ErrorTemplate'] %\
                                      ( item['value'],
                                        pywikibot.Timestamp.now().isoformat(' '),
                                        result.strip() )
@@ -295,7 +300,7 @@ class SubsterBot(basic.AutoBasicBot):
                 value = md_val_tag % (item['value'], 'bot-error-traceback')
                 tags = self.subTag(substed_content, value)[1]
                 if ast.literal_eval(item['verbose']) and (value not in tags):
-                    substed_content += bot_config['VerboseMessage'] %\
+                    substed_content += self._bot_config['VerboseMessage'] %\
                       (self._var_regex_str % {'var': value, 'cont': u''})
 
             # 2nd stage: conditional metadata substitution (DRTRIGON-132)
@@ -318,7 +323,6 @@ class SubsterBot(basic.AutoBasicBot):
 
            Returns a tuple containig the new content with tags
            substituted and a list of those tags.
-
         """
 
         substed_tags = []  # DRTRIGON-73
@@ -345,17 +349,17 @@ class SubsterBot(basic.AutoBasicBot):
                                datetime.timedelta(microseconds=1))
 
             pywikibot.output(u'CRON delay for execution: %.3f (<= %i)'
-                             % (delay, bot_config['CRONMaxDelay']))
+                             % (delay, self._bot_config['CRONMaxDelay']))
 
-            if not (delay <= bot_config['CRONMaxDelay']):
+            if not (delay <= self._bot_config['CRONMaxDelay']):
                 return (content, substed_tags, metadata)
 
         # 1.) getUrl or wiki text
         # (security: check url not to point to a local file on the server,
         #  e.g. 'file://' - same as used in xsalt.py)
         secure = False
-        for item in [u'http://', u'https://', u'mail://', u'local://',
-                     u'wiki://']:
+        for item in [u'http://', u'https://',
+                     u'mail://', u'local://', u'wiki://']:
             secure = secure or (param['url'][:len(item)] == item)
         param['zip'] = ast.literal_eval(param['zip'])
         if not secure:
@@ -370,8 +374,8 @@ class SubsterBot(basic.AutoBasicBot):
         elif (param['url'][:7] == u'mail://'):              # DRTRIGON-101
             url = param['url'].replace(u'{{@}}', u'@')     # e.g. nlwiki
             mbox = SubsterMailbox(
-                pywikibot.config.datafilepath(bot_config['data_path'],
-                                              bot_config['mbox_file'], ''))
+              pywikibot.config.datafilepath(self._bot_config['data_path'],
+                                            self._bot_config['mbox_file'], ''))
             external_buffer = mbox.find_data(url)
             mbox.close()
         elif (param['url'][:8] == u'local://'):             # DRTRIGON-131
@@ -453,7 +457,7 @@ class SubsterBot(basic.AutoBasicBot):
                 scope.update( locals() )        # (add DATA, *args, ...)
                 scope.update( globals() )       # (add imports and else)
                 if func:
-                    exec(self._code + (bot_config['CodeTemplate'] % func), scope, scope)
+                    exec(self._code + (self._bot_config['CodeTemplate'] % func), scope, scope)
                     external_data = DATA[0]
                 logging.getLogger('subster').debug( external_data )
 
@@ -541,64 +545,6 @@ class SubsterBot(basic.AutoBasicBot):
 
         return res
 
-#    def data_save(self, outpage, dic, data, comment=None):
-#        """Stores the content to Wikidata.
-#
-#           @param dic: Original content.
-#           @type  dic: dict
-#           @param data: New content.
-#           @type  data: dict
-#
-#           Returns nothing, but stores the changed content.
-#        """
-#        # DRTRIGON-130: check for changes and then write/change/set values
-#        changed = False
-#        for prop in data:
-#            pywikibot.output(u'Checking claim with %i values' % len(data[prop]))
-#            for i, item in enumerate(data[prop]):
-#                if (i < len(dic[prop])) and \
-#                  (dic[prop][i][u'mainsnak'][u'datavalue'][u'value'] == item):
-#                    pass    # same value; nothing to do
-#                else:
-#                    # changes; update or create claim
-#                    changed = True
-#                    if (i < len(dic[prop])):
-#                        #print item, dic[prop][i][u'mainsnak'][u'datavalue'][u'value']
-#                        pywikibot.output(u'Updating claim with value: %s' % item)
-#                        outpage.setclaimvalue(dic[prop][i][u'id'], item, comment=comment)
-#                    else:
-#                        pywikibot.output(u'Creating new claim with value: %s' % item)
-#                        outpage.createclaim(prop, item, comment=comment)
-#                # search linked items and update them too
-#                # VERY HACKY, HAS TO BE CONCEPTIONALLY IMPROVED:
-#                # link any "key = value" pair to any other item by adding "key"
-#                # to the items 'aliases' (could also use 'description' or even
-#                # a redirect)
-#                (key, value) = map(string.strip, item.split('='))
-#                for linked in outpage.searchentities(key):
-#                    outpage = pywikibot.DataPage(self.site, linked[u'id'])
-#                    #attr = outpage.getentities()
-#                    attr = linked
-#                    if (u'aliases' in attr) and (key in attr[u'aliases']):
-#                        pywikibot.output(u'Item %s linked to key %s ...' % (outpage.title(asLink=True), key))
-#                        data = outpage.getentities()
-#                        if u'claims' in data:
-#                            if (data[u'claims'][u'p32'][0][u'mainsnak'][u'datavalue'][u'value'].strip() == value):
-#                                pywikibot.output(u'... ok')
-#                                continue
-#                            changed = True
-#                            pywikibot.output(u'... updating claim with value: %s' % value)
-#                            outpage.setclaimvalue(data[u'claims'][u'p32'][0][u'id'], value, comment=comment)
-#                        else:
-#                            changed = True
-#                            pywikibot.output(u'... creating new claim with value: %s' % value)
-#                            outpage.createclaim(prop, value, comment=comment)
-#        # speed-up by setting everything at once (in one single write attempt)
-#        #outpage.editentity(data = {u'claims': data})
-#        #outpage.setitem()
-#
-#        return changed
-
     def data_save(self, page, data):
         """Stores the content to Wikidata.
 
@@ -611,29 +557,30 @@ class SubsterBot(basic.AutoBasicBot):
         """
         # DRTRIGON-130: check for changes and then write/change/set values
         datapage = pywikibot.DataPage(self.site, page.title())
-        links = datapage.searchentities(u'%s:%s' % (pywikibot.config.usernames[self.site.family.name][self.site.lang], datapage.title().split(u':')[1]))
+        links = datapage.searchentities(u'%s:%s' % (self._bot_config['BotName'], datapage.title().split(u':')[1]))
         for element in links:
-            item = element[u'aliases'][0].split(u':')[2]
+            propid = self._bot_config['data_PropertyId']
+            el = element[u'aliases'][0].split(u':')
+            item = el[2]
             if item not in data:
                 pywikibot.output(u'Value "%s" not found.' % (item,))
                 continue
+            if len(el) > 3:
+                propid = el[3]
 
             dataoutpage = pywikibot.DataPage(self.site, element['id'])
-            #dataoutpage.createclaim(u'p38', u'{"entity-type":"quantity", "numeric-id":1}')
-            #dataoutpage = page.toggleTalkPage()
 
             # check for changes and then write/change/set values
             summary = u'Bot: update data because of configuration on %s.' % page.title(asLink=True)
             buf = dataoutpage.get()
-            propid = 217    # just a cheat to start with ...
             claim = [ claim for claim in buf[u'claims'] if (claim['m'][1] == propid) ]
-            #if buf.strip().splitlines()[-1].split(u'/')[-1].strip() != data[item]:
             if (not claim) or (claim[0]['m'][3] != data[item]):
                 pywikibot.output(u'%s in %s <--- %s = %s' %\
                     (element[u'aliases'][0], dataoutpage.title(asLink=True), item, data[item]))
 
-                #dataoutpage.put(buf + u'\n' + out, comment=summary)
-                dataoutpage.editclaim(u'p%i' % propid, data[item], comment=summary)
+                dataoutpage.editclaim(u'p%s' % propid, data[item],
+#                                        refs={(self._bot_config['data_PropertyId'], datapage.title()),},
+                                        comment=summary)
 
     def get_var_regex(self, var, cont='.*?'):
         """Get regex used/needed to find the tags to replace.
