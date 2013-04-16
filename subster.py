@@ -574,13 +574,17 @@ class SubsterBot(basic.AutoBasicBot):
             summary = u'Bot: update data because of configuration on %s.' % page.title(asLink=True)
             buf = dataoutpage.get()
             claim = [ claim for claim in buf[u'claims'] if (claim['m'][1] == propid) ]
+            # TODO: does this check (if) work with multiple claims per property?
             if (not claim) or (claim[0]['m'][3] != data[item]):
                 pywikibot.output(u'%s in %s <--- %s = %s' %\
                     (element[u'aliases'][0], dataoutpage.title(asLink=True), item, data[item]))
-
                 dataoutpage.editclaim(u'p%s' % propid, data[item],
-#                                        refs={(self._bot_config['data_PropertyId'], datapage.title()),},
-                                        comment=summary)
+                                      refs={"p%s" % propid:
+                                          [{"snaktype": "value",
+                                            "property":"p%s" % propid,
+                                            "datavalue": {u'type': u'string', 
+                                                          u'value': datapage.title()}},]},
+                                      comment=summary)
 
     def get_var_regex(self, var, cont='.*?'):
         """Get regex used/needed to find the tags to replace.
