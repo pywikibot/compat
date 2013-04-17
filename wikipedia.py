@@ -4153,7 +4153,7 @@ class DataPage(Page):
                     return 302, response.msg, data['success']
             return 302, response.msg, False
 
-    def createitem(self, summary=None, value=None, watchArticle=False, minorEdit=True,
+    def createitem(self, summary=u'', value=None, watchArticle=False, minorEdit=True,
                    token=None, newToken=False, sysop=False, captcha=None,
                    botflag=True, maxTries=-1):
         """Creating an item
@@ -4571,8 +4571,14 @@ class DataPage(Page):
         if entitytype:
             params['type']=entitytype
         # retrying is done by query.GetData
-        data = query.GetData(params, self.site(), sysop=sysop)
-        search  = data['search']
+        search = []
+        while True:
+            data    = query.GetData(params, self.site(), sysop=sysop)
+            search += data['search']
+            if u'search-continue' in data:
+                params[u'continue'] = data[u'search-continue']
+            else:
+                break
 
         if 'error' in data:
             raise RuntimeError("API query error: %s" % data)
