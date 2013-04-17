@@ -83,6 +83,8 @@ from pywikibot import i18n
 from pywikibot.comms import http
 
 
+# TODO: think about what config to move to 'subster-config.css' (per wiki)
+#       e.g. 'VerboseMessage', 'data_VerboseMessage', ...
 bot_config = {
         # unicode values
              'BotName':     pywikibot.config.usernames[pywikibot.config.family][pywikibot.config.mylang],
@@ -531,7 +533,8 @@ class SubsterBot(basic.AutoBasicBot):
            @type  substed_content: string
         """
         # DRTRIGON-130: convert talk page result to wikidata(base)
-        #res, i = {}, 0
+        # TODO: consider format; every line starting with "|" is data
+        # TODO: combine with 'outputContentDiff' in order to update changed only
         res = {}
         for line in substed_content.splitlines():
             #data = self.get_var_regex('(.*?)', '(.*?)').findall(line)
@@ -564,7 +567,7 @@ class SubsterBot(basic.AutoBasicBot):
             item = el[2]
             if item not in data:
                 pywikibot.output(u'Value "%s" not found.' % (item,))
-                continue
+                data[item] = u'%s: N/A' % self._bot_config['BotName']
             if len(el) > 3:
                 propid = el[3]
 
@@ -580,9 +583,9 @@ class SubsterBot(basic.AutoBasicBot):
                     (element[u'aliases'][0], dataoutpage.title(asLink=True), item, data[item]))
                 dataoutpage.editclaim(u'p%s' % propid, data[item],
                                       refs={"p%s" % propid:
-                                          [{"snaktype": "value",
-                                            "property":"p%s" % propid,
-                                            "datavalue": {u'type': u'string', 
+                                          [{"snaktype":  "value",
+                                            "property":  "p%s" % propid,
+                                            "datavalue": {u'type':  u'string', 
                                                           u'value': datapage.title()}},]},
                                       comment=summary)
 
