@@ -808,8 +808,10 @@ def UserContributionsGenerator(username, number = 250, namespaces = [], site = N
 def SearchPageGenerator(query, number = 100, namespaces = None, site = None):
     """
     Provides a list of results using the internal MediaWiki search engine.
-    If the factory object is given, it is used to filter namespaces as defined
-    by the GeneratorFactory
+
+    namespaces: List of namespace numbers to fetch contribs from. Also accepted
+                are None (default namespace), [] (all namespaces, default) and
+                a callable that returns a list of namespaces.
     """
     if site is None:
         site = pywikibot.getSite()
