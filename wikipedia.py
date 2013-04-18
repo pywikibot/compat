@@ -4013,7 +4013,11 @@ class DataPage(Page):
     getentities      : Get the data for multiple Wikibase entities
                        DEPRECATED: please use get() instead of getentities()
     searchentities   : Search for entities
-
+    linktitles       : Associate articles on two different wikis with an item
+                       IMPLEMENTATION: open - not done yet
+    removeclaim      : Remove Wikibase claims
+    removereferences : Remove one or more references of the same statement
+                       IMPLEMENTATION: open - not done yet
     """
     def __init__(self, source, title=None, *args, **kwargs):
         if isinstance(source, basestring):
@@ -4072,6 +4076,12 @@ class DataPage(Page):
         elif items['type'] == u'sitelink':
             params['linksite'] = items['site'] + u'wiki'
             params['linktitle'] = items['title']
+        elif items['type'] == u'label':
+            raise NotImplementedError(
+                u'Wikidata action type "%s" was not implemented yet' % items['type'])
+        elif items['type'] == u'aliases':
+            raise NotImplementedError(
+                u'Wikidata action type "%s" was not implemented yet' % items['type'])
         else:
             raise NotImplementedError(
                 u'Wikidata action type "%s" is unknown' % items['type'])
@@ -4298,7 +4308,7 @@ class DataPage(Page):
                 value = "{\"entity-type\":\"item\",\"numeric-id\":%s}" % value
         else:
             pass
-        claims = self.get()['claims']
+        claims = self.get()['claims'] if 'claims' in self.get() else []
         theclaim = None
         for claim in claims:
             if claim['m'][1] == propertyID:
@@ -4682,6 +4692,14 @@ class DataPage(Page):
                                         fam='wikipedia'),
                                 links[code]) for code in links]
         return self._interwiki
+
+    def linktitles(self):
+        raise NotImplementedError(
+            u'Wikidata member function "wblinktitles" was not implemented yet')
+
+    def removereferences(self):
+        raise NotImplementedError(
+            u'Wikidata member function "wbremovereferences" was not implemented yet')
 
 wikidataPage = DataPage  #keep compatible
 
