@@ -219,6 +219,9 @@ class GeneratorFactory(object):
         self.namespaces = []
         self.limit = None
 
+    def getNamespaces(self):
+        return map(int, self.namespaces)
+
     def getCombinedGenerator(self, gen=None):
         """Returns the combination of all accumulated generators,
         that have been created in the process of handling arguments.
@@ -235,8 +238,8 @@ class GeneratorFactory(object):
         else:
             gensList = CombinedPageGenerator(self.gens)
         genToReturn = DuplicateFilterPageGenerator(gensList, total=self.limit)
-        if (self.namespaces):
-            genToReturn = NamespaceFilterPageGenerator(genToReturn, map(int, self.namespaces))
+        if (self.getNamespaces()):
+            genToReturn = NamespaceFilterPageGenerator(genToReturn, self.getNamespaces())
         return genToReturn
 
     def getCategoryGen(self, arg, length, recurse=False):
@@ -318,7 +321,7 @@ class GeneratorFactory(object):
                 number = int(args[1])
             except:
                 number = 250
-            gen = UserContributionsGenerator(args[0], number)
+            gen = UserContributionsGenerator(args[0], number, namespaces=self.getNamespaces)
         elif arg.startswith('-withoutinterwiki'):
             if len(arg) == 17:
                 gen = WithoutInterwikiPageGenerator()
@@ -487,8 +490,7 @@ class GeneratorFactory(object):
             if not mediawikiQuery:
                 mediawikiQuery = pywikibot.input(
                     u'What do you want to search for?')
-            # In order to be useful, all namespaces are required
-            gen = SearchPageGenerator(mediawikiQuery, number=None, namespaces=[])
+            gen = SearchPageGenerator(mediawikiQuery, number=None, namespaces=self.getNamespaces)
         elif arg.startswith('-google'):
             gen = GoogleSearchPageGenerator(arg[8:])
         elif arg.startswith('-titleregex'):
@@ -791,20 +793,28 @@ def LinksearchPageGenerator(link, step=500, site=None):
 def UserContributionsGenerator(username, number = 250, namespaces = [], site = None ):
     """
     Yields number unique pages edited by user:username
-    namespaces : list of namespace numbers to fetch contribs from
+    namespaces : List of namespace numbers to fetch contribs from. Also accepted
+                 are None (default namespace), [] (all namespaces, default) and
+                 a callable that returns a list of namespaces.
     """
     if site is None:
         site = pywikibot.getSite()
+    if callable(namespaces):
+        namespaces = namespaces()
     user = userlib.User(site, username)
     for page in user.contributions(number, namespaces):
         yield page[0]
 
 def SearchPageGenerator(query, number = 100, namespaces = None, site = None):
     """
-    Provides a list of results using the internal MediaWiki search engine
+    Provides a list of results using the internal MediaWiki search engine.
+    If the factory object is given, it is used to filter namespaces as defined
+    by the GeneratorFactory
     """
     if site is None:
         site = pywikibot.getSite()
+    if callable(namespaces):
+        namespaces = namespaces()
     for page in site.search(query, number=number, namespaces = namespaces):
         yield page[0]
 
