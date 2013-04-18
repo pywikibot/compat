@@ -9037,7 +9037,39 @@ def writeToCommandLogFile():
     commandLogFile.write(s + os.linesep)
     commandLogFile.close()
 
-def setLogfileStatus(enabled, logname = None):
+def writeLogfileHeader():
+    """
+    Save additional version, system and status info to the logfile in use,
+    so that the user can look it up later to track errors or report bugs.
+    """
+    logger.info(u'=== Pywikipediabot framework v1.0 -- Logging header ===')
+
+    # script call
+    logger.info(u'COMMAND: %s' % unicode(sys.argv))
+
+    # new framework release/revision?
+    site = getSite()
+    logger.info(u'VERSION: %s' % unicode((version.getversion().strip(' ()'),
+                                          version.getversion_onlinerepo(),
+                                          site.live_version())))
+
+    # system
+    if hasattr(os, 'uname'):
+        logger.info(u'SYSTEM: %s' % unicode(os.uname()))
+
+    # imported modules
+    logger.info(u'MODULES:')
+    for item in sys.modules.keys():
+        ver = version.getfileversion('%s.py' % item)
+        if ver and (ver[0] == u'$'):
+            logger.info(u'  %s' % ver)
+
+    # messages on bot discussion page?
+    logger.info(u'MESSAGES: %s' % ('unanswered' if site.messages() else 'none'))
+
+    logger.info(u'=== ' * 14)
+
+def setLogfileStatus(enabled, logname=None, header=False):
     # NOTE-1: disable 'fh.setFormatter(formatter)' below in order to get "old"
     #         logging format (without additional info)
     # NOTE-2: enable 'logger.addHandler(ch)' below in order output to console
@@ -9098,6 +9130,9 @@ def setLogfileStatus(enabled, logname = None):
     else:
         # disable the log file
         logger = None
+
+    if header:
+        writeLogfileHeader()
 
 writeToCommandLogFile()
 
