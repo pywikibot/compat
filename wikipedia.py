@@ -4421,7 +4421,73 @@ class DataPage(Page):
             if (u'warnings' in data) and \
                (not data[u'warnings'][u'messages'][u'0'][u'name'] == u'edit-no-change'):
                 output(str(data[u'warnings']))
-
+    def removeclaim(self,WDproperty ,value = None, raw_value=False, botflag= True, token=None, sysop=False):
+        if isinstance(WDproperty, int):
+            propertyID = WDproperty
+        elif isinstance(WDproperty, basestring):
+            try:
+                propertyID=int(WDproperty)
+            except ValueError:
+                try:
+                    propertyID = int(
+                        WDproperty.replace("p", "").replace("P", ""))
+                except ValueError:
+                    search = self.searchentities(WDproperty, 'property',
+                                                 lang=self._originSite.lang)
+                    propertyID = int(search[0]["id"].replace("p", ""))
+                else:
+                    pass
+            else:
+                pass
+        else:
+            raise RuntimeError("Unknown property type: %s" % WDproperty)
+        if not raw_value:
+            if isinstance(value, int) or not value:
+                pass
+            elif isinstance(value, unicode):  # for 'string' entity-type
+                value = json.dumps(value)
+            elif isinstance(value, basestring):  # for 'quantity' entity-type
+                try:
+                    value=int(value)
+                except ValueError:
+                    try:
+                        value=int(value.replace("q","").replace("Q", ""))
+                    except ValueError:
+                        search=self.searchentities(value, 'item',
+                                                   lang=self._originSite.lang)
+                        value=int(search[0]["id"].replace("q", ""))
+                    else:
+                        pass
+                else:
+                    pass
+            else:
+                raise RuntimeError("Unknown property type: %s" % value)
+        else:
+            pass
+        claims = self.get()['claims']
+        theclaim = []
+        if value:
+            for claim in claims:
+                if claim['m'][1] == propertyID and (int(claim['m'][3][u'numeric-id'])==value or (not value)):
+                    theclaim.append(claim['g'])
+        if not theclaim:
+            raise RuntimeError("The claim %s hasn't been used in the item" % propertyID)
+        params = {
+            'action': 'wbremoveclaims',
+            'claim': "|".join(theclaim),
+            }
+        if token:
+            params['token'] = token
+        else:
+            params['token'] = self.site().getToken(sysop = sysop)
+        if botflag:
+            params['bot'] = 1
+        output(u"Remving claim from %s" % self.title())
+        data = query.GetData(params, self.site(), sysop=sysop)
+        if 'error' in data:
+            raise RuntimeError("API query error: %s" % data)
+        if 'warnings' in data:
+            output(str(data[u'warnings']))
     def _getentity(self,force=False, get_redirect=False, throttle=True,
                   sysop=False, change_edit_time=True):
         """Returns items of a entity in a dictionary
