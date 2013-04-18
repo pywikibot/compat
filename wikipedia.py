@@ -7018,6 +7018,8 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                 params['srlimit'] = number
             if namespaces:
                 params['srnamespace'] = namespaces
+            if namespaces == []:
+                params['srnamespace'] = [ni for ni in (self.getNamespaceIndex(x) for x in self.namespaces()) if ni >= 0]
 
             offset = 0
             while offset < number or not number:
