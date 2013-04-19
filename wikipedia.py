@@ -126,7 +126,7 @@ __version__ = '$Id$'
 
 import os, sys
 import httplib, socket, urllib, urllib2, cookielib
-import traceback
+import traceback, inspect
 import time, threading, Queue
 import math
 import re, codecs, difflib, locale
@@ -163,6 +163,11 @@ try:
     WIDEBUILD = True
 except ValueError:
     WIDEBUILD = False
+
+from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
+STDOUT = 16
+VERBOSE = 18
+INPUT = 25
 
 
 # Format string for the default user agent.
@@ -733,7 +738,7 @@ not supported by PyWikipediaBot!"""
                     m = re.search("=+[ ']*%s[ ']*=+" % re.escape(hn),
                                   self._contents)
                     if verbose and not m:
-                        output(u"WARNING: Section does not exist: %s" % self)
+                        warning(u"Section does not exist: %s" % self)
             # Store any exceptions for later reference
             except NoPage:
                 self._getexception = NoPage
@@ -931,7 +936,7 @@ not supported by PyWikipediaBot!"""
                     else:
                         output( unicode(text) )
                         # We assume that the server is down. Wait some time, then try again.
-                        output( u"WARNING: No text area found on %s%s. Maybe the server is down. Retrying in %i minutes..." % (self.site().hostname(), path, retry_idle_time) )
+                        warning( u"No text area found on %s%s. Maybe the server is down. Retrying in %i minutes..." % (self.site().hostname(), path, retry_idle_time) )
                     time.sleep(retry_idle_time * 60)
                     # Next time wait longer, but not longer than half an hour
                     retry_idle_time *= 2
@@ -944,7 +949,7 @@ not supported by PyWikipediaBot!"""
         m = re.search('var wgRestrictionEdit = \\["(\w+)"\\]', text)
         if m:
             if verbose:
-                output(u"DBG> page is locked for group %s" % m.group(1))
+                debug(u"page is locked for group %s" % m.group(1))
             self.editRestriction = m.group(1);
         else:
             self.editRestriction = ''
@@ -1070,16 +1075,16 @@ not supported by PyWikipediaBot!"""
             u'prop'   : u'sections',
         }
 
-        pywikibot.get_throttle()
-        pywikibot.output(u"Reading section info from %s via API..." % self.title(asLink=True))
+        get_throttle()
+        output(u"Reading section info from %s via API..." % self.title(asLink=True))
 
         result = query.GetData(params, self.site())
         # JIRA: DRTRIGON-90; catch and convert error (convert it such that the whole page gets processed later)
         try:
             r = result[u'parse'][u'sections']
         except KeyError:    # sequence of sometimes occuring "KeyError: u'parse'"
-            pywikibot.output(u'WARNING: Query result (gS): %r' % result)
-            raise pywikibot.Error('Problem occured during data retrieval for sections in %s!' % self.title(asLink=True))
+            warning(u'Query result (gS): %r' % result)
+            raise Error('Problem occured during data retrieval for sections in %s!' % self.title(asLink=True))
         #debug_data = str(r) + '\n'
         debug_data = str(result) + '\n'
 
@@ -1117,7 +1122,7 @@ not supported by PyWikipediaBot!"""
                             item[u'wikiline'] = None
                         r[i] = item
                     break
-                except pywikibot.Error:
+                except Error:
                     pos = None
             if (pos == None):
                 raise  # re-raise
@@ -1180,8 +1185,8 @@ not supported by PyWikipediaBot!"""
                 u'rvsection' : section[u'index'],
             }
 
-            pywikibot.get_throttle()
-            pywikibot.output(u"  Reading section %s from %s via API..." % (section[u'index'], self.title(asLink=True)))
+            get_throttle()
+            output(u"  Reading section %s from %s via API..." % (section[u'index'], self.title(asLink=True)))
 
             result = query.GetData(params, self.site())
             # JIRA: DRTRIGON-90; catch and convert error (convert it such that the whole page gets processed later)
@@ -1189,8 +1194,8 @@ not supported by PyWikipediaBot!"""
                 r = result[u'query'][u'pages'].values()[0]
                 pl = r[u'revisions'][0][u'*'].splitlines()
             except KeyError:    # sequence of sometimes occuring "KeyError: u'parse'"
-                pywikibot.output(u'WARNING: Query result (gSBO): %r' % result)
-                raise pywikibot.Error('Problem occured during data retrieval for sections in %s!' % self.title(asLink=True))
+                warning(u'Query result (gSBO): %r' % result)
+                raise Error('Problem occured during data retrieval for sections in %s!' % self.title(asLink=True))
 
             if pl:
                 possible_headers = [ (pl[0], pl[0]) ]
@@ -1213,8 +1218,8 @@ not supported by PyWikipediaBot!"""
             section[u'wikiline_bo'] = self._contents.find(section[u'wikiline'], pos)
         if section[u'wikiline_bo'] < 0:          # nothing found, report/raise error !
             #page._getexception = ...
-            raise pywikibot.Error('Problem occured during attempt to retrieve and resolve sections in %s!' % self.title(asLink=True))
-            #pywikibot.output(...)
+            raise Error('Problem occured during attempt to retrieve and resolve sections in %s!' % self.title(asLink=True))
+            #output(...)
             # (or create a own error, e.g. look into interwiki.py)
 
     def permalink(self, oldid=None):
@@ -1438,8 +1443,8 @@ not supported by PyWikipediaBot!"""
                 if template in catredirs:
                     # Get target (first template argument)
                     if not args:
-                        pywikibot.output(u'Warning: redirect target for %s is missing'
-                                         % self.title(asLink=True))
+                        warning(u'redirect target for %s is missing'
+                                % self.title(asLink=True))
                         self._catredirect = False
                     else:
                         self._catredirect = self.site().namespace(14) + ":" + args[0]
@@ -1817,11 +1822,11 @@ not supported by PyWikipediaBot!"""
         for link in reflist("li", recursive=False):
             title = link.a.string
             if title is None:
-                output(u"DBG> invalid <li> item in Whatlinkshere: %s" % link)
+                debug(u"invalid <li> item in Whatlinkshere: %s" % link)
             try:
                 p = Page(self.site(), title)
             except InvalidTitle:
-                output(u"DBG> Whatlinkshere:%s contains invalid link to %s"
+                debug(u"Whatlinkshere:%s contains invalid link to %s"
                         % (self.title(), title))
                 continue
             isredirect, istemplate = False, False
@@ -2561,7 +2566,7 @@ u'Page %s is semi-protected. Getting edit page to find out if we are allowed to 
             if  response.code != 302 and data.strip() != u"":
                 # Something went wrong, and we don't know what. Show the
                 # HTML code that hopefully includes some error message.
-                output(u"ERROR: Unexpected response from wiki server.")
+                error(u"Unexpected response from wiki server.")
                 output(u"       %s (%s) " % (response.code, response.msg))
                 output(data)
                 # Unexpected responses should raise an error and not pass,
@@ -4492,7 +4497,7 @@ class DataPage(Page):
             params['token'] = self.site().getToken(sysop = sysop)
         if botflag:
             params['bot'] = 1
-        output(u"Remving claim from %s" % self.title())
+        output(u"Removing claim from %s" % self.title())
         data = query.GetData(params, self.site(), sysop=sysop)
         if 'error' in data:
             raise RuntimeError("API query error: %s" % data)
@@ -5057,8 +5062,8 @@ class _GetAll(object):
                         s = ''.join(traceback.format_exception(*sys.exc_info()))
                         if not isinstance(s, unicode):
                             s = s.decode('utf-8')
-                        output(u'%s\nDBG> got network error in _GetAll.run. ' \
-                                'Sleeping for %d seconds...' % (s, self.sleeptime))
+                        debug(u'%s\nDBG> got network error in _GetAll.run. ' \
+                               'Sleeping for %d seconds...' % (s, self.sleeptime))
                         self.sleep()
                     else:
                         if 'error' in data:
@@ -5080,8 +5085,8 @@ class _GetAll(object):
                         s = ''.join(traceback.format_exception(*sys.exc_info()))
                         if not isinstance(s, unicode):
                             s = s.decode('utf-8')
-                        output(u'%s\nDBG> got network error in _GetAll.run. ' \
-                                'Sleeping for %d seconds...' % (s, self.sleeptime))
+                        debug(u'%s\nDBG> got network error in _GetAll.run. ' \
+                               'Sleeping for %d seconds...' % (s, self.sleeptime))
                         self.sleep()
                     else:
                         if "<title>Wiki does not exist</title>" in data:
@@ -5173,7 +5178,7 @@ class _GetAll(object):
                         if not m:
                             try:
                                 page2._getexception
-                                output(u"WARNING: Section not found: %s" % page2)
+                                warning(u"Section not found: %s" % page2)
                             except AttributeError:
                                 # There is no exception yet
                                 page2._getexception = SectionError
@@ -5198,8 +5203,8 @@ class _GetAll(object):
             if version != self.site.version() and \
                versionnumber(self.site.lang,
                              version=version) != versionnumber(self.site.lang):
-                output(u'WARNING: Family file %s contains version number %s, but it should be %s'
-                       % (self.site.family.name, self.site.version(), version))
+                warning(u'Family file %s contains version number %s, but it should be %s'
+                        % (self.site.family.name, self.site.version(), version))
 
         # Verify case
         if self.site.nocapitalize:
@@ -5207,7 +5212,7 @@ class _GetAll(object):
         else:
             case = 'first-letter'
         if case != header.case.strip():
-            output(u'WARNING: Family file %s contains case %s, but it should be %s' % (self.site.family.name, case, header.case.strip()))
+            warning(u'Family file %s contains case %s, but it should be %s' % (self.site.family.name, case, header.case.strip()))
 
         # Verify namespaces
         lang = self.site.lang
@@ -5230,13 +5235,13 @@ class _GetAll(object):
                         flag = u"is '%s', but should be removed (default value '%s')" % (ns, nshdr)
                     else:
                         flag = u"is '%s', but should be '%s'" % (ns, nshdr)
-                    output(u"WARNING: Outdated family file %s: namespace['%s'][%i] %s" % (self.site.family.name, lang, id, flag))
+                    warning(u"Outdated family file %s: namespace['%s'][%i] %s" % (self.site.family.name, lang, id, flag))
                     #self.site.family.namespaces[id][lang] = nshdr
             else:
-                output(u"WARNING: Missing namespace in family file %s: namespace['%s'][%i] (it is set to '%s')" % (self.site.family.name, lang, id, nshdr))
+                warning(u"Missing namespace in family file %s: namespace['%s'][%i] (it is set to '%s')" % (self.site.family.name, lang, id, nshdr))
         for id in self.site.family.namespaces:
             if self.site.family.isDefinedNSLanguage(id, lang) and id not in header.namespaces:
-                output(u"WARNING: Family file %s includes namespace['%s'][%i], but it should be removed (namespace doesn't exist in the site)" % (self.site.family.name, lang, id))
+                warning(u"Family file %s includes namespace['%s'][%i], but it should be removed (namespace doesn't exist in the site)" % (self.site.family.name, lang, id))
 
     def getData(self, curonly=True):
         address = self.site.export_address()
@@ -5246,7 +5251,7 @@ class _GetAll(object):
             pagenames = [encodeEsperantoX(pagetitle) for pagetitle in pagenames]
         pagenames = u'\r\n'.join(pagenames)
         if type(pagenames) is not unicode:
-            output(u'Warning: xmlreader.WikipediaXMLHandler.getData() got non-unicode page names. Please report this.')
+            warning(u'xmlreader.WikipediaXMLHandler.getData() got non-unicode page names. Please report this.')
             output(str(pagenames))
         # convert Unicode string to the encoding used on that wiki
         pagenames = pagenames.encode(self.site.encoding())
@@ -5341,8 +5346,8 @@ class _GetAll(object):
                         if not m:
                             try:
                                 page2._getexception
-                                output(u"WARNING: Section not found: %s"
-                                       % page2)
+                                warning(u"Section not found: %s"
+                                        % page2)
                             except AttributeError:
                                 # There is no exception yet
                                 page2._getexception = SectionError
@@ -5365,8 +5370,8 @@ class _GetAll(object):
             if version != self.site.version() and \
                versionnumber(self.site.lang,
                              version=version) != versionnumber(self.site.lang):
-                output(u'WARNING: Family file %s contains version number %s, but it should be %s'
-                       % (self.site.family.name, self.site.version(), version))
+                warning(u'Family file %s contains version number %s, but it should be %s'
+                        % (self.site.family.name, self.site.version(), version))
 
         # Verify case
         if self.site.nocapitalize:
@@ -5374,7 +5379,7 @@ class _GetAll(object):
         else:
             case = 'first-letter'
         if case != header['general']['case'].strip():
-            output(u'WARNING: Family file %s contains case %s, but it should be %s' % (self.site.family.name, case, header.case.strip()))
+            warning(u'Family file %s contains case %s, but it should be %s' % (self.site.family.name, case, header.case.strip()))
 
         # Verify namespaces
         lang = self.site.lang
@@ -5398,13 +5403,13 @@ class _GetAll(object):
                         flag = u"is '%s', but should be removed (default value '%s')" % (ns, nshdr)
                     else:
                         flag = u"is '%s', but should be '%s'" % (ns, nshdr)
-                    output(u"WARNING: Outdated family file %s: namespace['%s'][%i] %s" % (self.site.family.name, lang, id, flag))
+                    warning(u"Outdated family file %s: namespace['%s'][%i] %s" % (self.site.family.name, lang, id, flag))
                     #self.site.family.namespaces[id][lang] = nshdr
             else:
-                output(u"WARNING: Missing namespace in family file %s: namespace['%s'][%i] (it is set to '%s')" % (self.site.family.name, lang, id, nshdr))
+                warning(u"Missing namespace in family file %s: namespace['%s'][%i] (it is set to '%s')" % (self.site.family.name, lang, id, nshdr))
         for id in self.site.family.namespaces:
             if self.site.family.isDefinedNSLanguage(id, lang) and u'%i' % id not in header['namespaces']:
-                output(u"WARNING: Family file %s includes namespace['%s'][%i], but it should be removed (namespace doesn't exist in the site)" % (self.site.family.name, lang, id ) )
+                warning(u"Family file %s includes namespace['%s'][%i], but it should be removed (namespace doesn't exist in the site)" % (self.site.family.name, lang, id ) )
 
     def getDataApi(self):
         pagenames = [page.sectionFreeTitle() for page in self.pages]
@@ -5977,8 +5982,8 @@ class Site(object):
 
         """
 ##        # DEPRECATED warning. Should be uncommented if scripts are actualized
-##        pywikibot.output('Page.site() method is DEPRECATED, '
-##                         'use Page.site instead.')
+##        output('Page.site() method is DEPRECATED, '
+##               'use Page.site instead.')
         return self
 
     @property
@@ -6414,8 +6419,8 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
         if ('action' in predata) and pywikibot.simulate and \
            (predata['action'] in pywikibot.config.actions_to_block) and \
            (address not in [self.export_address()]):
-            pywikibot.output(u'\03{lightyellow}SIMULATION: %s action blocked.\03{default}'%\
-                             predata['action'])
+            output(u'\03{lightyellow}SIMULATION: %s action blocked.\03{default}'%\
+                   predata['action'])
             import StringIO
             f_dummy = StringIO.StringIO()
             f_dummy.__dict__.update({u'code': 0, u'msg': u''})
@@ -6487,8 +6492,8 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                         retry_attempt += 1
                         if retry_attempt > config.maxretries:
                             raise MaxTriesExceededError()
-                        output(u"WARNING: Could not open '%s'.\nMaybe the server is down. Retrying in %i minutes..."
-                               % (url, retry_idle_time))
+                        warning(u"Could not open '%s'.\nMaybe the server is down. Retrying in %i minutes..."
+                                % (url, retry_idle_time))
                         time.sleep(retry_idle_time * 60)
                         # Next time wait longer, but not longer than half an hour
                         retry_idle_time *= 2
@@ -6509,7 +6514,7 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                     retry_attempt += 1
                     if retry_attempt > config.maxretries:
                         raise MaxTriesExceededError()
-                    output(u"WARNING: Could not open '%s'. Maybe the server or\n your connection is down. Retrying in %i minutes..."
+                    warning(u"Could not open '%s'. Maybe the server or\n your connection is down. Retrying in %i minutes..."
                            % (url, retry_idle_time))
                     time.sleep(retry_idle_time * 60)
                     retry_idle_time *= 2
@@ -6540,9 +6545,8 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
         # We need to split it to get a value
         content_length = int(headers.get('content-length', '0').split(',')[0])
         if content_length != len(text) and 'content-length' in headers:
-            output(
-                u'Warning! len(text) does not match content-length: %s != %s'
-                % (len(text), content_length))
+            warning(u'len(text) does not match content-length: %s != %s'
+                    % (len(text), content_length))
             return self.postData(address, data, contentType, sysop, compress,
                                  cookies)
 
@@ -6555,7 +6559,7 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
             charset = m.group(1)
         else:
             if verbose:
-                output(u"WARNING: No character set found.")
+                warning(u"No character set found.")
             # UTF-8 as default
             charset = 'utf-8'
         # Check if this is the charset we expected
@@ -6566,8 +6570,8 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
         except UnicodeDecodeError, e:
             if verbose:
                 output(u'%s' %e)
-            output(u'ERROR: Invalid characters found on %s://%s%s, replaced by \\ufffd.'
-                   % (self.protocol(), self.hostname(), address))
+            error(u'Invalid characters found on %s://%s%s, replaced by \\ufffd.'
+                  % (self.protocol(), self.hostname(), address))
             # We use error='replace' in case of bad encoding.
             text = unicode(text, charset, errors = 'replace')
 
@@ -6624,7 +6628,7 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                 account = 'Your sysop account'
             else:
                 account = 'Your account'
-            output(u'\nWARNING: %s on %s is blocked by %s.\nReason: %s\nEditing using this account will stop the run.\n'
+            warning(u'\n%s on %s is blocked by %s.\nReason: %s\nEditing using this account will stop the run.\n'
                    % (account, self, text['blockedby'], text['blockreason']))
         self._isBlocked[index] = 'blockedby' in text
 
@@ -6673,9 +6677,9 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                     if sysop:
                         output(u'Note: Your sysop account on %s does not have a bot flag. Its edits will be visible in the recent changes.' % self)
                     else:
-                        output(u'WARNING: Your account on %s does not have a bot flag. Its edits will be visible in the recent changes and it may get blocked.' % self)
+                        warning(u'Your account on %s does not have a bot flag. Its edits will be visible in the recent changes and it may get blocked.' % self)
                 if sysop and 'sysop' not in self._rights[index]:
-                    output(u'WARNING: Your sysop account on %s does not seem to have sysop rights. You may not be able to perform any sysop-restricted actions using it.' % self)
+                    warning(u'Your sysop account on %s does not seem to have sysop rights. You may not be able to perform any sysop-restricted actions using it.' % self)
         else:
             # 'groups' is not exists, set default rights
             self._rights[index] = []
@@ -6711,10 +6715,10 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                 self._token[index] = data['edittoken']
                 self._userData[index] = True
             else:
-                output(u'WARNING: Token not found on %s. You will not be able to edit any page.' % self)
+                warning(u'Token not found on %s. You will not be able to edit any page.' % self)
         else:
             if not self._isBlocked[index]:
-                output(u'WARNING: Token not found on %s. You will not be able to edit any page.' % self)
+                warning(u'Token not found on %s. You will not be able to edit any page.' % self)
 
     def _getUserDataOld(self, text, sysop = False, force = True):
         """
@@ -6740,7 +6744,7 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                     account = 'Your sysop account'
                 else:
                     account = 'Your account'
-                output(u'WARNING: %s on %s is blocked. Editing using this account will stop the run.' % (account, self))
+                warning(u'%s on %s is blocked. Editing using this account will stop the run.' % (account, self))
             self._isBlocked[index] = blocked
 
         # Check for new messages
@@ -6808,9 +6812,9 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                     if sysop:
                         output(u'Note: Your sysop account on %s does not have a bot flag. Its edits will be visible in the recent changes.' % self)
                     else:
-                        output(u'WARNING: Your account on %s does not have a bot flag. Its edits will be visible in the recent changes and it may get blocked.' % self)
+                        warning(u'Your account on %s does not have a bot flag. Its edits will be visible in the recent changes and it may get blocked.' % self)
                 if sysop and 'sysop' not in self._rights[index]:
-                    output(u'WARNING: Your sysop account on %s does not seem to have sysop rights. You may not be able to perform any sysop-restricted actions using it.' % self)
+                    warning(u'Your sysop account on %s does not seem to have sysop rights. You may not be able to perform any sysop-restricted actions using it.' % self)
         else:
             # We don't have wgUserGroups, and can't check the rights
             self._rights[index] = []
@@ -6845,7 +6849,7 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
             # there is a textarea and the tab "view source" is not shown
             if u'<textarea' in text and u'<li id="ca-viewsource"' not in text and not self._isBlocked[index]:
                 # Token not found
-                output(u'WARNING: Token not found on %s. You will not be able to edit any page.' % self)
+                warning(u'Token not found on %s. You will not be able to edit any page.' % self)
 
     def siteinfo(self, key = 'general', force = False, dump = False):
         """Get Mediawiki Site informations by API
@@ -6993,7 +6997,7 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                     # No messages could be added.
                     # We assume that the server is down.
                     # Wait some time, then try again.
-                    output(u'WARNING: No messages found in Special:Allmessages. Maybe the server is down. Retrying in %i minutes...' % retry_idle_time)
+                    warning(u'No messages found in Special:Allmessages. Maybe the server is down. Retrying in %i minutes...' % retry_idle_time)
                     time.sleep(retry_idle_time * 60)
                     # Next time wait longer, but not longer than half an hour
                     retry_attempt += 1
@@ -7172,9 +7176,9 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
         if start:
             params['lestart'] = start
             if offset and offset > 0:
-                output(u'WARNING: offset parameter %s ignored,\n'
-                       u'         start parameter is set to %s'
-                       % (offset, start))
+                warning(u'offset parameter %s ignored,\n'
+                        u'         start parameter is set to %s'
+                        % (offset, start))
         # offset in hours from now
         elif offset and offset > 0:
             start = Timestamp.utcnow() - datetime.timedelta(0, offset*3600)
@@ -7803,7 +7807,7 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                 get_throttle()
             data = query.GetData(params, self)
             if verbose:
-                output('DEBUG: allpages>>> data.keys() %s' % data.keys())
+                debug('allpages>>> data.keys() %s' % data.keys())
             if 'warnings' in data:
                 warning = data['warnings']['allpages']['*']
                 raise RuntimeError("API query warning: %s" % warning)
@@ -9089,7 +9093,7 @@ def setLogfileStatus(enabled, logname=None, header=False):
 
         logger = logging.getLogger()    # root logger
         if logger.handlers:             # init just once (if re-called)
-            logger = logging.getLogger('pywikibot')
+            logger = logging.getLogger('pywiki')
             return
         logger.setLevel(logging.DEBUG)
         # create file handler which logs even debug messages
@@ -9114,10 +9118,10 @@ def setLogfileStatus(enabled, logname=None, header=False):
             if os.path.exists(logfn) and (ver == int('0206')):
                 t = os.stat(logfn).st_mtime
                 fh.rolloverAt = fh.computeRollover(t)
-        fh.setLevel(logging.DEBUG if debug else logging.INFO)
+        fh.setLevel(DEBUG if debug else INFO)
         # create console handler with a higher log level
         ch = logging.StreamHandler()
-        ch.setLevel(logging.INFO)
+        ch.setLevel(INFO)
         # create formatter and add it to the handlers (using LogRecord attributes)
         formatter = logging.Formatter(
                     fmt='%(asctime)s %(name)18s: %(levelname)-8s %(message)s',
@@ -9131,7 +9135,7 @@ def setLogfileStatus(enabled, logname=None, header=False):
         logger.addHandler(fh)           # output to logfile
         #logger.addHandler(ch)           # output to terminal/shell console
 
-        logger = logging.getLogger('pywikibot')
+        logger = logging.getLogger('pywiki')
     else:
         # disable the log file
         logger = None
@@ -9143,26 +9147,49 @@ writeToCommandLogFile()
 
 colorTagR = re.compile('\03{.*?}', re.UNICODE)
 
-def log(text):
-    """Write the given text to the logfile."""
-    if logger:
-        # remove all color markup
-        plaintext = colorTagR.sub('', text)
-        # save the text in a logfile (will be written in utf-8)
-        for line in plaintext.splitlines():
-            type = line.split(':')
-            func = 'info'
-            if len(type) > 1:
-                func = type[0].strip().lower()
-                if func not in ['debug', 'warning', 'error', 'critical', 'info']:
-                    func = 'info'
-            getattr(logger, func)(line.rstrip())
-
 output_lock = threading.Lock()
 input_lock = threading.Lock()
 output_cache = []
 
-def output(text, decoder=None, newline=True, toStdout=False, **kwargs):
+def logoutput(text, decoder=None, newline=True, _level=INFO, _logger="",
+              **kwargs):
+    """Format output and send to the logging module.
+
+    Backend function used by all the user-output convenience functions.
+
+    """
+    if _logger:
+        log = logging.getLogger("pywiki." + _logger)
+    else:
+        log = logging.getLogger("pywiki")
+
+    # make sure logging system has been initialized
+    if not logger:
+        setLogfileStatus(True)
+
+    context = {}
+
+    if decoder:
+        text = unicode(text, decoder)
+    elif not isinstance(text, unicode):
+        if not isinstance(text, str):
+            # looks like text is a non-text object.
+            # Maybe it has a __unicode__ builtin ?
+            # (allows to print Page, Site...)
+            text = unicode(text)
+        else:
+            try:
+                text = unicode(text, 'utf-8')
+            except UnicodeDecodeError:
+                text = unicode(text, 'iso8859-1')
+
+    log.log(_level, text, extra=context, **kwargs)
+
+    if _level <> INFO:
+        text = u'%s: %s' % (logging.getLevelName(_level), text)
+    _outputOld(text)
+
+def _outputOld(text, decoder=None, newline=True, toStdout=False, **kwargs):
     """Output a message to the user via the userinterface.
 
     Works like print, but uses the encoding used by the user's console
@@ -9196,7 +9223,9 @@ def output(text, decoder=None, newline=True, toStdout=False, **kwargs):
                 text = unicode(text, 'iso8859-1')
         if newline:
             text += u'\n'
-        log(text)
+        caller = inspect.getouterframes(inspect.currentframe())[1][3]
+        if not (caller == 'logoutput'):
+            _logOld(text)
         if input_lock.locked():
             cache_output(text, toStdout = toStdout)
         else:
@@ -9211,6 +9240,48 @@ def flush_output_cache():
     while(output_cache):
         (args, kwargs) = output_cache.pop(0)
         ui.output(*args, **kwargs)
+
+def _logOld(text):
+    """Write the given text to the logfile."""
+    if logger:
+        # remove all color markup
+        plaintext = colorTagR.sub('', text)
+        # save the text in a logfile (will be written in utf-8)
+        for line in plaintext.splitlines():
+            type = line.split(':')
+            func = 'info'
+            if len(type) > 1:
+                func = type[0].strip().lower()
+                if func not in ['debug', 'warning', 'error', 'critical']:
+                    func = 'info'
+            getattr(logger, func)(line.rstrip())
+
+output = _outputOld
+
+def stdout(text, decoder=None, newline=True, **kwargs):
+    """Output script results to the user via the userinterface."""
+    logoutput(text, decoder, newline, STDOUT, **kwargs)
+
+def warning(text, decoder=None, newline=True, **kwargs):
+    """Output a warning message to the user via the userinterface."""
+    logoutput(text, decoder, newline, WARNING, **kwargs)
+
+def error(text, decoder=None, newline=True, **kwargs):
+    """Output an error message to the user via the userinterface."""
+    logoutput(text, decoder, newline, ERROR, **kwargs)
+
+def log(text, decoder=None, newline=True, **kwargs):
+    """Output a record to the log file."""
+    logoutput(text, decoder, newline, VERBOSE, **kwargs)
+
+def critical(text, decoder=None, newline=True, **kwargs):
+    """Output a debug record to the log file."""
+    logoutput(text, decoder, newline, CRITICAL, **kwargs)
+
+def debug(text, layer, decoder=None, newline=True, **kwargs):
+    """Output a debug record to the log file."""
+    logoutput(text, decoder, newline, DEBUG, layer, **kwargs)
+
 
 # User input functions
 
@@ -9371,7 +9442,7 @@ def debugDump(name, site, error, data):
     except UnicodeDecodeError:
         f.write(data)
     f.close()
-    output( u'ERROR: %s caused error %s. Dump %s created.' % (name,error,filename) )
+    error( u'%s caused error %s. Dump %s created.' % (name,error,filename) )
 
 get_throttle = Throttle()
 put_throttle = Throttle(write=True)
