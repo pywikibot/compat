@@ -8296,9 +8296,14 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
         """Return path to unblock an IP address."""
         return self.family.unblock_address(self.lang)
 
-    def blocksearch_address(self, s):
+    def blocksearch_address(self, s, usertype):
         """Return path to search for blocks on IP address 's'."""
-        return self.family.blocksearch_address(self.lang, s)
+        params = {
+            'bk%s' % usertype : s,
+            'action' : 'query',
+            'list'   : 'blocks',
+        }
+        return query.GetData(params, self, back_response=True)
 
     def linksearch_address(self, s, limit=500, offset=0):
         """Return path to Special:Linksearch for target 's'."""

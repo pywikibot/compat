@@ -113,7 +113,7 @@ class User(object):
             return self.registrationTime(force) != -1
 
     def isAnonymous(self):
-        return ip_regexp.match(self.username) is not None
+        return ip_regexp.match(self.username.split("/")[0]) is not None
 
     def __str__(self):
         return (u'%s:%s'
@@ -522,13 +522,17 @@ class User(object):
 
     def _getBlockID(self):
         pywikibot.output(u"Getting block id for [[User:%s]]..." % self.name())
-        address = self.site().blocksearch_address(self.name())
-        data = self.site().getUrl(address)
-        bIDre = re.search(r'action=unblock&amp;id=(\d+)', data)
-        if not bIDre:
+        if self.isAnonymous():
+            usertype="ip"
+        else:
+            usertype="users"
+        data = self.site().blocksearch_address(self.name(),usertype)
+        try:
+            bIDre = data[1]["query"]["blocks"][0]["id"]
+        except KeyError:
             pywikibot.output(data)
             raise BlockIDError
-        return bIDre.group(1)
+        return bIDre
 
     def _unblock(self, blockID, reason):
         pywikibot.output(u"Unblocking [[User:%s]]..." % self.name())
