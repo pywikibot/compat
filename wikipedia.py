@@ -9185,9 +9185,10 @@ def logoutput(text, decoder=None, newline=True, _level=INFO, _logger="",
 
     log.log(_level, text, extra=context, **kwargs)
 
+    # instead of logging handler for output to console (StreamHandler)
     if _level <> INFO:
         text = u'%s: %s' % (logging.getLevelName(_level), text)
-    _outputOld(text)
+    _outputOld(text, decoder, newline, (_level == STDOUT), **kwargs)
 
 def _outputOld(text, decoder=None, newline=True, toStdout=False, **kwargs):
     """Output a message to the user via the userinterface.
@@ -9223,9 +9224,6 @@ def _outputOld(text, decoder=None, newline=True, toStdout=False, **kwargs):
                 text = unicode(text, 'iso8859-1')
         if newline:
             text += u'\n'
-        caller = inspect.getouterframes(inspect.currentframe())[1][3]
-        if not (caller == 'logoutput'):
-            logoutput(text)
         if input_lock.locked():
             cache_output(text, toStdout = toStdout)
         else:
@@ -9241,7 +9239,34 @@ def flush_output_cache():
         (args, kwargs) = output_cache.pop(0)
         ui.output(*args, **kwargs)
 
-output = _outputOld
+def output(text, decoder=None, newline=True, toStdout=False, **kwargs):
+    """Output a message to the user via the userinterface.
+
+    Works like print, but uses the encoding used by the user's console
+    (console_encoding in the configuration file) instead of ASCII.
+
+    If decoder is None, text should be a unicode string. Otherwise it
+    should be encoded in the given encoding.
+
+    If newline is True, a linebreak will be added after printing the text.
+
+    If toStdout is True, the text will be sent to standard output,
+    so that it can be piped to another process. All other text will
+    be sent to stderr. See: http://en.wikipedia.org/wiki/Pipeline_%28Unix%29
+
+    text can contain special sequences to create colored output. These
+    consist of the escape character \03 and the color name in curly braces,
+    e. g. \03{lightpurple}. \03{default} resets the color.
+
+    Other keyword arguments are passed unchanged to the logger; so far, the
+    only argument that is useful is "exc_info=True", which causes the
+    log message to include an exception traceback.
+
+    """
+    if toStdout:  # maintained for backwards-compatibity only
+        logoutput(text, decoder, newline, STDOUT, **kwargs)
+    else:
+        logoutput(text, decoder, newline, INFO, **kwargs)
 
 def stdout(text, decoder=None, newline=True, **kwargs):
     """Output script results to the user via the userinterface."""
