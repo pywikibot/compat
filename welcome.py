@@ -499,7 +499,7 @@ class WelcomeBot(object):
                     pywikibot.output(u"The whitelist's page doesn't exist!")
             else:
                 showStatus(4)
-                pywikibot.output(u"WARNING: The whitelist hasn't been setted!")
+                pywikibot.warning(u"The whitelist hasn't been setted!")
 
             # Join the whitelist words.
             self._whitelist = list_white + whitelist_default
@@ -730,7 +730,7 @@ class WelcomeBot(object):
                 f = codecs.open(pywikibot.config.datafilepath(globalvar.signFileName), 'r',
                                 encoding='utf-8')
             except IOError:
-                pywikibot.output(u'Error! - No fileName!')
+                pywikibot.error(u'No fileName!')
                 raise FilenameNotSet("No signature filename specified.")
 
             signText = f.read()
@@ -971,7 +971,7 @@ if __name__ == "__main__":
         # file where is stored the random signature index
         filename = pywikibot.config.datafilepath('welcome-%s-%s.data' % (pywikibot.default_family, pywikibot.default_code))
         if globalvar.offset and globalvar.timeoffset:
-            pywikibot.output('WARING: both -offset and -timeoffset were provided, ignoring -offset')
+            pywikibot.warning('both -offset and -timeoffset were provided, ignoring -offset')
             globalvar.offset = 0
         bot = WelcomeBot()
         try:

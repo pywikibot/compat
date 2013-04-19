@@ -559,17 +559,17 @@ class RedirectRobot:
                 else:
                     pass # target found
             except pywikibot.SectionError:
-                pywikibot.output(
-                    u'Warning: Redirect target section %s doesn\'t exist.'
+                pywikibot.warning(
+                    u'Redirect target section %s doesn\'t exist.'
                       % newRedir.title(asLink=True))
             except pywikibot.BadTitle, e:
                 # str(e) is in the format 'BadTitle: [[Foo]]'
-                pywikibot.output(
-                    u'Warning: Redirect target %s is not a valid page title.'
+                pywikibot.warning(
+                    u'Redirect target %s is not a valid page title.'
                       % str(e)[10:])
             #sometimes this error occures. Invalid Title starting with a '#'
             except pywikibot.InvalidTitle, err:
-                pywikibot.output(u'Warning: %s' % err)
+                pywikibot.warning(u'%s' % err)
                 break
             except pywikibot.NoPage:
                 if len(redirList) == 1:
@@ -583,8 +583,8 @@ class RedirectRobot:
                             % newRedir.title(asLink=True))
                         break  # skip if automatic
                     else:
-                        pywikibot.output(
-                            u"Warning: Redirect target %s doesn't exist."
+                        pywikibot.warning(
+                            u"Redirect target %s doesn't exist."
                             % newRedir.title(asLink=True))
             except pywikibot.ServerError:
                 pywikibot.output(u'Skipping due to server error: '
@@ -602,8 +602,8 @@ class RedirectRobot:
                             u"Skipping toolbar example: Redirect source is potentially vandalized.")
                         break
                 if targetPage.site != self.site:
-                    pywikibot.output(
-                        u'Warning: redirect target (%s) is on a different site.'
+                    pywikibot.warning(
+                        u'redirect target (%s) is on a different site.'
                         % targetPage.title(asLink=True))
                     if self.always:
                         break  # skip if automatic
@@ -612,8 +612,8 @@ class RedirectRobot:
                                    % (targetPage.site.lang,
                                       targetPage.sectionFreeTitle())
                                   ) > 0:
-                    pywikibot.output(
-                        u'Warning: Redirect target %s forms a redirect loop.'
+                    pywikibot.warning(
+                        u'Redirect target %s forms a redirect loop.'
                         % targetPage.title(asLink=True))
                     break ### doesn't work. edits twice!
 ##                    try:

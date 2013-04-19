@@ -238,8 +238,8 @@ def main():
                 else:
                     oldName1 = page.title()
             if oldName1:
-                pywikibot.output(
-                    u'WARNING: file %s contains odd number of links' % filename)
+                pywikibot.warning(
+                    u'file %s contains odd number of links' % filename)
         elif arg == '-noredirect':
             noredirect = True
         elif arg == '-always':
@@ -248,14 +248,14 @@ def main():
             skipredirects = True
         elif arg.startswith('-from:'):
             if oldName:
-                pywikibot.output(u'WARNING: -from:%s without -to:' % oldName)
+                pywikibot.warning(u'-from:%s without -to:' % oldName)
             oldName = arg[len('-from:'):]
         elif arg.startswith('-to:'):
             if oldName:
                 fromToPairs.append([oldName, arg[len('-to:'):]])
                 oldName = None
             else:
-                pywikibot.output(u'WARNING: %s without -from' % arg)
+                pywikibot.warning(u'%s without -from' % arg)
         elif arg.startswith('-prefix'):
             if len(arg) == len('-prefix'):
                 prefix = pywikibot.input(u'Enter the prefix:')
@@ -270,7 +270,7 @@ def main():
             genFactory.handleArg(arg)
 
     if oldName:
-        pywikibot.output(u'WARNING: -from:%s without -to:' % oldName)
+        pywikibot.warning(u'-from:%s without -to:' % oldName)
     for pair in fromToPairs:
         page = pywikibot.Page(pywikibot.getSite(), pair[0])
         bot = MovePagesBot(None, prefix, noredirect, always, skipredirects,

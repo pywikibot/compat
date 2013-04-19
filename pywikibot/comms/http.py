@@ -121,9 +121,9 @@ def request(site, uri, retry=None, sysop=False, data=None, compress=True,
             # read & info can raise socket.error
             headers = f.info()
             if (int(headers.get('content-length', '-1')) > 1E7):
-                pywikibot.output(u'WARNING: Target is of huge size (>10MB) is '
-                                 u'that correct? Downloading will take some '
-                                 u'time, please be patient.')
+                pywikibot.warning(u'Target is of huge size (>10MB) is '
+                                  u'that correct? Downloading will take some '
+                                  u'time, please be patient.')
             text = f.read()
             break
         except KeyboardInterrupt:
@@ -143,8 +143,8 @@ def request(site, uri, retry=None, sysop=False, data=None, compress=True,
                     retry_attempt += 1
                     if retry_attempt > config.maxretries:
                         raise MaxTriesExceededError()
-                    pywikibot.output(
-                        u"WARNING: Could not open '%s'.Maybe the server or\n "
+                    pywikibot.warning(
+                        u"Could not open '%s'.Maybe the server or\n "
                         u"your connection is down. Retrying in %i minutes..."
                         % (url, retry_idle_time))
                     time.sleep(retry_idle_time * 60)
@@ -164,8 +164,8 @@ def request(site, uri, retry=None, sysop=False, data=None, compress=True,
                 retry_attempt += 1
                 if retry_attempt > config.maxretries:
                     raise MaxTriesExceededError()
-                pywikibot.output(
-                    u"WARNING: Could not open '%s'. Maybe the server or\n your "
+                pywikibot.warning(
+                    u"Could not open '%s'. Maybe the server or\n your "
                     u"connection is down. Retrying in %i minutes..."
                     % (url, retry_idle_time))
                 time.sleep(retry_idle_time * 60)
@@ -198,8 +198,8 @@ def request(site, uri, retry=None, sysop=False, data=None, compress=True,
     # We need to split it to get a value
     content_length = int(headers.get('content-length', '0').split(',')[0])
     if content_length != len(text) and 'content-length' in headers:
-        pywikibot.output(
-            u'Warning! len(text) does not match content-length: %s != %s'
+        pywikibot.warning(
+            u'len(text) does not match content-length: %s != %s'
             % (len(text), content_length))
         return request(site, uri, retry, sysop, data, compress, no_hostname,
                            cookie_only, back_response)
@@ -213,7 +213,7 @@ def request(site, uri, retry=None, sysop=False, data=None, compress=True,
         charset = m.group(1)
     else:
         if pywikibot.verbose:
-            pywikibot.output(u"WARNING: No character set found.")
+            pywikibot.warning(u"No character set found.")
         # UTF-8 as default
         charset = 'utf-8'
     # Check if this is the charset we expected
@@ -223,9 +223,9 @@ def request(site, uri, retry=None, sysop=False, data=None, compress=True,
         if (not back_response) or verbose:
             pywikibot.output(u'%s' %e)
             if no_hostname:
-                pywikibot.output(u'ERROR: Invalid charset found on %s.' % uri)
+                pywikibot.error(u'Invalid charset found on %s.' % uri)
             else:
-                pywikibot.output(u'ERROR: Invalid charset found on %s://%s%s.'
+                pywikibot.error(u'Invalid charset found on %s://%s%s.'
                     % (site.protocol(), site.hostname(), uri))
     # Convert HTML to Unicode
     try:
@@ -234,10 +234,10 @@ def request(site, uri, retry=None, sysop=False, data=None, compress=True,
         if (not back_response) or verbose:
             pywikibot.output(u'%s' %e)
             if no_hostname:
-                pywikibot.output(u'ERROR: Invalid characters found on %s, '
-                                 u'replaced by \\ufffd.' % uri)
+                pywikibot.error(u'Invalid characters found on %s, '
+                                u'replaced by \\ufffd.' % uri)
             else:
-                pywikibot.output(u'ERROR: Invalid characters found on %s://%s%s, '
+                pywikibot.error(u'Invalid characters found on %s://%s%s, '
                     u'replaced by \\ufffd.' 
                     % (site.protocol(), site.hostname(), uri))
         # We use error='replace' in case of bad encoding.

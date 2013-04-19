@@ -1267,8 +1267,8 @@ u'WARNING: %s is in namespace %i, but %s is in namespace %i. Follow it anyway?'
                 dictName, year = page.autoFormat()
                 if dictName is not None:
                     if self.originPage:
-                        pywikibot.output(
-                            u'WARNING: %s:%s relates to %s:%s, which is an '
+                        pywikibot.warning(
+                            u'%s:%s relates to %s:%s, which is an '
                             u'auto entry %s(%s)'
                             % (self.originPage.site.language(), self.originPage,
                                page.site.language(), page, dictName, year))
@@ -1925,8 +1925,8 @@ u'NOTE: number of edits are restricted at %s'
                    rmPage.site.lang in ['hak', 'hi', 'cdo', 'sa'] and \
                    pywikibot.unicode_error:  # work-arround for bug #3081100 (do not remove affected pages)
                     new[rmsite] = rmPage
-                    pywikibot.output(
-                        u"WARNING: %s is either deleted or has a mismatching disambiguation state."
+                    pywikibot.warning(
+                        u"%s is either deleted or has a mismatching disambiguation state."
                         % rmPage)
             # Re-Check what needs to get done
             mods, mcomment, adding, removing, modifying = compareLanguages(old,
@@ -1977,8 +1977,8 @@ u'NOTE: number of edits are restricted at %s'
             if pywikibot.unicode_error:
                 for x in removing:
                     if x.lang in ['hi', 'cdo']:
-                        pywikibot.output(
-u'\03{lightred}WARNING: This may be false positive due to unicode bug #3081100\03{default}')
+                        pywikibot.warning(
+u'\03{lightred}This may be false positive due to unicode bug #3081100\03{default}')
                         break
             ask = True
         if globalvar.force or globalvar.cleanup:
@@ -2029,21 +2029,21 @@ u'\03{lightred}WARNING: This may be false positive due to unicode bug #3081100\0
                     pywikibot.output(u'Page %s is locked. Skipping.' % page)
                     raise SaveError(u'Locked')
                 except pywikibot.EditConflict:
-                    pywikibot.output(
-                        u'ERROR putting page: An edit conflict occurred. Giving up.')
+                    pywikibot.error(
+                        u'putting page: An edit conflict occurred. Giving up.')
                     raise SaveError(u'Edit conflict')
                 except (pywikibot.SpamfilterError), error:
-                    pywikibot.output(
-                        u'ERROR putting page: %s blacklisted by spamfilter. Giving up.'
+                    pywikibot.error(
+                        u'putting page: %s blacklisted by spamfilter. Giving up.'
                         % (error.url,))
                     raise SaveError(u'Spam filter')
                 except (pywikibot.PageNotSaved), error:
-                    pywikibot.output(u'ERROR putting page: %s' % (error.args,))
+                    pywikibot.error(u'putting page: %s' % (error.args,))
                     raise SaveError(u'PageNotSaved')
                 except (socket.error, IOError), error:
                     if timeout>3600:
                         raise
-                    pywikibot.output(u'ERROR putting page: %s' % (error.args,))
+                    pywikibot.error(u'putting page: %s' % (error.args,))
                     pywikibot.output(u'Sleeping %i seconds before trying again.'
                                      % (timeout,))
                     timeout *= 2
@@ -2051,7 +2051,7 @@ u'\03{lightred}WARNING: This may be false positive due to unicode bug #3081100\0
                 except pywikibot.ServerError:
                     if timeout > 3600:
                         raise
-                    pywikibot.output(u'ERROR putting page: ServerError.')
+                    pywikibot.error(u'putting page: ServerError.')
                     pywikibot.output(u'Sleeping %i seconds before trying again.'
                                      % (timeout,))
                     timeout *= 2
@@ -2088,8 +2088,8 @@ u'\03{lightred}WARNING: This may be false positive due to unicode bug #3081100\0
                     try:
                         linkedPages = set(page.interwiki())
                     except pywikibot.NoPage:
-                        pywikibot.output(
-                            u"WARNING: Page %s does no longer exist?!" % page)
+                        pywikibot.warning(
+                            u"Page %s does no longer exist?!" % page)
                         break
                     # To speed things up, create a dictionary which maps sites
                     # to pages. This assumes that there is only one interwiki
@@ -2101,14 +2101,14 @@ u'\03{lightred}WARNING: This may be false positive due to unicode bug #3081100\0
                         if expectedPage != page:
                             try:
                                 linkedPage = linkedPagesDict[expectedPage.site]
-                                pywikibot.output(
-                                    u"WARNING: %s: %s does not link to %s but to %s"
+                                pywikibot.warning(
+                                    u"%s: %s does not link to %s but to %s"
                                     % (page.site.family.name,
                                        page, expectedPage, linkedPage))
                             except KeyError:
                                 if not expectedPage.site.is_data_repository():
-                                    pywikibot.output(
-                                        u"WARNING: %s: %s does not link to %s"
+                                    pywikibot.warning(
+                                        u"%s: %s does not link to %s"
                                         % (page.site.family.name,
                                            page, expectedPage))
                     # Check for superfluous links
@@ -2117,12 +2117,12 @@ u'\03{lightred}WARNING: This may be false positive due to unicode bug #3081100\0
                             # Check whether there is an alternative page on that language.
                             # In this case, it was already reported above.
                             if linkedPage.site not in expectedSites:
-                                pywikibot.output(
-                                    u"WARNING: %s: %s links to incorrect %s"
+                                pywikibot.warning(
+                                    u"%s: %s links to incorrect %s"
                                     % (page.site.family.name,
                                        page, linkedPage))
         except (socket.error, IOError):
-            pywikibot.output(u'ERROR: could not report backlinks')
+            pywikibot.error(u'could not report backlinks')
 
 
 class InterwikiBot(object):
@@ -2282,8 +2282,8 @@ class InterwikiBot(object):
                         self.generateMore(globalvar.maxquerysize - mycount)
                     except pywikibot.ServerError:
                         # Could not extract allpages special page?
-                        pywikibot.output(
-                            u'ERROR: could not retrieve more pages. Will try again in %d seconds'
+                        pywikibot.error(
+                            u'could not retrieve more pages. Will try again in %d seconds'
                             % timeout)
                         time.sleep(timeout)
                         timeout *= 2

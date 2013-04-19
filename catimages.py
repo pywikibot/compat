@@ -34,8 +34,6 @@ X-sendemail          Send an email after tagging.
 
 X-untagged[:#]       Use daniel's tool as generator:
 X                    http://toolserver.org/~daniel/WikiSense/UntaggedImages.php
-
-
 """
 
 #
@@ -214,10 +212,10 @@ class FileData(object):
             # how small and how many features are detected as faces (or eyes)
             scale  = max([1., np.average(np.array(img.shape)[0:2]/500.)])
         except IOError:
-            pywikibot.output(u'WARNING: unknown file type [_detect_Faces_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Faces_CV]')
             return
         except AttributeError:
-            pywikibot.output(u'WARNING: unknown file type [_detect_Faces_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Faces_CV]')
             return
 
         #detectAndDraw( image, cascade, nestedCascade, scale );
@@ -419,10 +417,10 @@ class FileData(object):
             scale  = max([1., np.average(np.array(img.shape)[0:2]/400.)])
             #scale  = max([1., np.average(np.array(img.shape)[0:2]/300.)])
         except IOError:
-            pywikibot.output(u'WARNING: unknown file type [_detect_People_CV]')
+            pywikibot.warning(u'unknown file type [_detect_People_CV]')
             return
         except AttributeError:
-            pywikibot.output(u'WARNING: unknown file type [_detect_People_CV]')
+            pywikibot.warning(u'unknown file type [_detect_People_CV]')
             return
 
         # similar to face detection
@@ -529,10 +527,10 @@ class FileData(object):
             # how small and how many features are detected
             scale  = max([1., np.average(np.array(img.shape)[0:2]/500.)])
         except IOError:
-            pywikibot.output(u'WARNING: unknown file type [_detect_Geometry_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Geometry_CV]')
             return self._buffer_Geometry
         except AttributeError:
-            pywikibot.output(u'WARNING: unknown file type [_detect_Geometry_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Geometry_CV]')
             return self._buffer_Geometry
 
         # similar to face or people detection
@@ -750,7 +748,7 @@ class FileData(object):
             (l, t) = (0, 0)
             i = im
         except IOError:
-            pywikibot.output(u'WARNING: unknown file type [_detect_SegmentColors_JSEGnPIL]')
+            pywikibot.warning(u'unknown file type [_detect_SegmentColors_JSEGnPIL]')
             return
 
         result = []
@@ -764,7 +762,7 @@ class FileData(object):
             ##(pic, scale) = self._util_detect_ColorSegments_JSEG(pic)    # (final split)
             #hist = self._util_get_ColorSegmentsHist_PIL(i, pic, scale)  #
         except TypeError:
-            pywikibot.output(u'WARNING: unknown file type [_detect_SegmentColors_JSEGnPIL]')
+            pywikibot.warning(u'unknown file type [_detect_SegmentColors_JSEGnPIL]')
             return
         i = 0
         # (may be do an additional region merge according to same color names...)
@@ -805,7 +803,7 @@ class FileData(object):
             i = Image.open(self.image_path_JPEG)
             h = i.histogram()
         except IOError:
-            pywikibot.output(u'WARNING: unknown file type [_detect_AverageColor_PILnCV]')
+            pywikibot.warning(u'unknown file type [_detect_AverageColor_PILnCV]')
             return
 
         result              = self._util_average_Color_colormath(h)
@@ -863,7 +861,7 @@ class FileData(object):
             try:
                 i = Image.open(self.image_path)
             except IOError:
-                pywikibot.output(u'WARNING: unknown (image) file type [_detect_Properties_PIL]')
+                pywikibot.warning(u'unknown (image) file type [_detect_Properties_PIL]')
                 return
 
             # http://mail.python.org/pipermail/image-sig/1999-May/000740.html
@@ -906,7 +904,7 @@ class FileData(object):
         #    result = {}
         #    # DO NOT use ImageMagick (identify) instead of PIL to get these info !!
         else:
-            pywikibot.output(u'WARNING: unknown (generic) file type [_detect_Properties_PIL]')
+            pywikibot.warning(u'unknown (generic) file type [_detect_Properties_PIL]')
             return
 
         result['Dimensions'] = self.image_size
@@ -1001,7 +999,7 @@ class FileData(object):
         try:
             smallImg = im.resize( tuple(np.int_(np.array(im.size)/scale)), Image.ANTIALIAS )
         except IOError:
-            pywikibot.output(u'WARNING: unknown file type [_util_detect_ColorSegments_JSEG]')
+            pywikibot.warning(u'unknown file type [_util_detect_ColorSegments_JSEG]')
             return
         
         #im.thumbnail(size, Image.ANTIALIAS) # size is 640x480
@@ -1070,7 +1068,7 @@ class FileData(object):
         try:
             smallImg = im.resize( tuple(np.int_(np.array(im.size)/scale)), Image.ANTIALIAS )
         except IOError:
-            pywikibot.output(u'WARNING: unknown file type [_util_get_ColorSegmentsHist_PIL]')
+            pywikibot.warning(u'unknown file type [_util_get_ColorSegmentsHist_PIL]')
             return
 
         imgsize = float(smallImg.size[0]*smallImg.size[1])
@@ -1190,10 +1188,10 @@ class FileData(object):
             # how small and how many features are detected
             scale  = max([1., np.average(np.array(img.shape)[0:2]/maxdim)])
         except IOError:
-            pywikibot.output(u'WARNING: unknown file type [_detect_Trained_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Trained_CV]')
             return
         except AttributeError:
-            pywikibot.output(u'WARNING: unknown file type [_detect_Trained_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Trained_CV]')
             return
 
         # similar to face detection
@@ -1358,10 +1356,10 @@ class FileData(object):
         #    pdfinterp.process_pdf(rsrcmgr, device, fp, set(), maxpages=0, password='',
         #                caching=True, check_extractable=False)
         #except AssertionError:
-        #    pywikibot.output(u'WARNING: pdfminer missed, may be corrupt [_detect_EmbeddedText_poppler]')
+        #    pywikibot.warning(u'pdfminer missed, may be corrupt [_detect_EmbeddedText_poppler]')
         #    return
         #except TypeError:
-        #    pywikibot.output(u'WARNING: pdfminer missed, may be corrupt [_detect_EmbeddedText_poppler]')
+        #    pywikibot.warning(u'pdfminer missed, may be corrupt [_detect_EmbeddedText_poppler]')
         #    return
         #fp.close()
         #device.close()
@@ -1417,7 +1415,7 @@ class FileData(object):
 
             scale  = max([1., np.average(np.array(img.size)/200.)])
         except IOError:
-            pywikibot.output(u'WARNING: unknown file type [_recognize_OpticalCodes_dmtxNzbar]')
+            pywikibot.warning(u'unknown file type [_recognize_OpticalCodes_dmtxNzbar]')
             return
         
         smallImg = img.resize( (int(img.size[0]/scale), int(img.size[1]/scale)) )
@@ -1454,7 +1452,7 @@ class FileData(object):
             img = Image.open(self.image_path_JPEG).convert('L')
             width, height = img.size
         except IOError:
-            pywikibot.output(u'WARNING: unknown file type [_recognize_OpticalCodes_dmtxNzbar]')
+            pywikibot.warning(u'unknown file type [_recognize_OpticalCodes_dmtxNzbar]')
             return
         
         scanner = zbar.ImageScanner()
@@ -1504,10 +1502,10 @@ class FileData(object):
 
             scale  = max([1., np.average(np.array(im.shape)[0:2]/1000.)])
         except IOError:
-            pywikibot.output(u'WARNING: unknown file type [_detect_Chessboard_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Chessboard_CV]')
             return
         except AttributeError:
-            pywikibot.output(u'WARNING: unknown file type [_detect_Chessboard_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Chessboard_CV]')
             return
 
         smallImg = np.empty( (cv.Round(im.shape[1]/scale), cv.Round(im.shape[0]/scale)), dtype=np.uint8 )
@@ -1522,7 +1520,7 @@ class FileData(object):
             #found_all, corners = cv.FindChessboardCorners( im, chessboard_dim )
             found_all, corners = cv2.findChessboardCorners( im, chessboard_dim )
         except cv2.error, e:
-            pywikibot.output(u'%s' % e)
+            pywikibot.error(u'%s' % e)
 
         #cv2.drawChessboardCorners( im, chessboard_dim, corners, found_all )
         ##cv2.imshow("win", im)
@@ -1806,7 +1804,7 @@ class FileData(object):
             try:
                 (width, height) = (int(float(width)+0.5), int(float(height)+0.5))
             except ValueError:
-                pywikibot.output(u'WARNING: %s contains incompatible unit(s), skipped' % ((width, height),))
+                pywikibot.warning(u'%s contains incompatible unit(s), skipped' % ((width, height),))
                 return
         else:
             (width, height) = self.image_size
@@ -1921,8 +1919,8 @@ class FileData(object):
             available = [item in res for item in ['FacesDetected', 'ValidAFPoints']]
             unknown   = ['face' in item.lower() for item in res.keys()]
             if make and (True in (available+unknown)):
-                pywikibot.output(u"WARNING: skipped '%s' since not supported (yet) [_detect_Faces_EXIF]" % make)
-                pywikibot.output(u"WARNING: FacesDetected: %s - ValidAFPoints: %s" % tuple(available))
+                pywikibot.warning(u"skipped '%s' since not supported (yet) [_detect_Faces_EXIF]" % make)
+                pywikibot.warning(u"FacesDetected: %s - ValidAFPoints: %s" % tuple(available))
         
         # finally, rotate face coordinates if image was rotated
         if wasRotated:
@@ -2209,7 +2207,7 @@ class FileData(object):
 
         # Load important components
         if (yaafe.loadComponentLibrary('yaafe-io')!=0):
-            pywikibot.output(u'WARNING: cannot load yaafe-io component library !')   # ! needed, else it will crash !
+            pywikibot.warning(u'cannot load yaafe-io component library !')   # ! needed, else it will crash !
 
         # Build a DataFlow object using FeaturePlan
         fp = yaafe.FeaturePlan(sample_rate=44100, normalize=0.98, resample=False)
@@ -2764,7 +2762,7 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         #self.image_size = (None, None)
         mime = mimetypes.guess_all_extensions('%s/%s' % tuple(self.image_mime[0:2]))
         if self.image_fileext.lower() not in mime:
-            pywikibot.output(u'WARNING: File extension does not match MIME type! File extension should be %s.' % mime)
+            pywikibot.warning(u'File extension does not match MIME type! File extension should be %s.' % mime)
 
         # SVG: rasterize the SVG to bitmap (MAY BE GET FROM WIKI BY DOWNLOAD?...)
         # (Mediawiki uses librsvg too: http://commons.wikimedia.org/wiki/SVG#SVGs_in_MediaWiki)
@@ -3481,12 +3479,12 @@ def main():
             Bot.downloadImage()
         except IOError, err:
             # skip if download not possible
-            pywikibot.output(u"WARNING: %s, skipped..." % err)
+            pywikibot.warning(u"%s, skipped..." % err)
             continue
         except Exception, err:
             # skip on any unexpected error, but report it
-            pywikibot.output(u"ERROR: %s" % err)
-            pywikibot.output(u"ERROR: was not able to process page %s !!!\n" %\
+            pywikibot.error(u"%s" % err)
+            pywikibot.error(u"was not able to process page %s !!!\n" %\
                              image.title(asLink=True))
             continue
         resultCheck = Bot.checkStep()
@@ -3496,8 +3494,8 @@ def main():
             if ret:
                 outresult.append( ret )
         except AttributeError:
-            pywikibot.output(u"ERROR: was not able to process page %s !!!\n" %\
-                             image.title(asLink=True))
+            pywikibot.error(u"was not able to process page %s !!!\n" %\
+                            image.title(asLink=True))
         limit += -1
         if not tagged:
             posfile = open(os.path.join(scriptdir, 'cache/catimages_start'), "w")
@@ -3548,13 +3546,13 @@ def trainbot(generator, Bot, image_old_namespace, image_namespace):
                 Bot.downloadImage()
             except IOError, err:
                 # skip if download not possible
-                pywikibot.output(u"WARNING: %s, skipped..." % err)
+                pywikibot.warning(u"%s, skipped..." % err)
                 continue
             except Exception, err:
                 # skip on any unexpected error, but report it
-                pywikibot.output(u"ERROR: %s" % err)
-                pywikibot.output(u"ERROR: was not able to process page %s !!!\n" %\
-                                 image.title(asLink=True))
+                pywikibot.error(u"%s" % err)
+                pywikibot.error(u"was not able to process page %s !!!\n" %\
+                                image.title(asLink=True))
                 continue
 
             # gather all features (information) related to current image

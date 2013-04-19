@@ -549,8 +549,8 @@ class ReplaceRobot:
                             u'Cannot change %s because of blacklist entry %s'
                             % (page.title(), e.url))
                     except pywikibot.PageNotSaved, error:
-                        pywikibot.output(u'Error putting page: %s'
-                                         % (error.args,))
+                        pywikibot.error(u'putting page: %s'
+                                        % (error.args,))
                     except pywikibot.LockedPage:
                         pywikibot.output(u'Skipping %s (locked page)'
                                          % (page.title(),))

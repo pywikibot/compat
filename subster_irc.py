@@ -130,7 +130,7 @@ class SubsterTagModifiedBot(articlenos.ArtNoDisp):
         try:
             thread.start_new_thread( main_subster, (self.refs[page_title], params) )
         except:
-            pywikibot.output(u"WARNING: unable to start thread")
+            pywikibot.warning(u"unable to start thread")
 
 # Define a function for the thread
 def main_subster(page, params=None):

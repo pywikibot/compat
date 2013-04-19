@@ -289,8 +289,8 @@ class XmlDump(object):
         """Return a generator that will yield XmlEntry objects"""
         print 'Reading XML dump...'
         if not 'iterparse' in globals():
-            pywikibot.output(
-u'''WARNING: cElementTree not found. Using slower fallback solution.
+            pywikibot.warning(
+u'''cElementTree not found. Using slower fallback solution.
 Consider installing the python-celementtree package.''')
             return self.regex_parse()
         else:

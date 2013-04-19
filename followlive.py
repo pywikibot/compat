@@ -456,14 +456,14 @@ class PageHandler:
                     choices = answer[1:].split(',')
                 except ValueError:
                     # User entered wrong value
-                    pywikibot.output(u'ERROR: "%s" is not valid' % answer)
+                    pywikibot.error(u'"%s" is not valid' % answer)
                     continue
             else:
                 try:
                     choices = answer.split(',')
                 except ValueError:
                     # User entered wrong value
-                    pywikibot.output(u'ERROR: "%s" is not valid' % answer)
+                    pywikibot.error(u'"%s" is not valid' % answer)
                     continue
             #test input
             for choice in choices:
@@ -474,7 +474,7 @@ class PageHandler:
                 else:
                     answered = x in range(1, len(questionlist)+1)
             if not answered:
-                pywikibot.output(u'ERROR: "%s" is not valid' % answer)
+                pywikibot.error(u'"%s" is not valid' % answer)
                 continue
         summary = u''
         for choice in choices:
@@ -489,8 +489,8 @@ class PageHandler:
                 pywikibot.output(u'appending %s...' % questionlist[answer])
                 self.content += '\n' + questionlist[answer]
             else:
-                pywikibot.output(
-                    u'ERROR: "pos" should be "top" or "bottom" for template '
+                pywikibot.error(
+                    u'"pos" should be "top" or "bottom" for template '
                     u'%s. Contact a developer.' % questionlist[answer])
                 sys.exit("Exiting")
             summary += tpl['msg']+' '
@@ -537,8 +537,8 @@ question = questions + question
 if __name__ == "__main__":
     try:
         for arg in pywikibot.handleArgs():
-            pywikibot.output(
-                u'Warning: argument "%s" not understood; ignoring.' % arg)
+            pywikibot.warning(
+                u'argument "%s" not understood; ignoring.' % arg)
         bot = CleaningBot()
         bot.run()
     except:

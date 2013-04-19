@@ -132,7 +132,7 @@ class SelflinkBot:
         try:
             linkedPage = pywikibot.Page(page.site(), match.group('title'))
         except pywikibot.InvalidTitle, err:
-            pywikibot.output(u'Warning: %s' % err)
+            pywikibot.warning(u'%s' % err)
             return text, False
 
         # Check whether the link found is to the current page itself.

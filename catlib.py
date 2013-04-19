@@ -655,8 +655,8 @@ def change_category(article, oldCat, newCat, comment=None, sortKey=None,
             newCatList.append(cat)
 
     if not changesMade:
-        wikipedia.output(u'ERROR: %s is not in category %s!'
-                         % (article.title(asLink=True), oldCat.title()))
+        wikipedia.error(u'%s is not in category %s!'
+                        % (article.title(asLink=True), oldCat.title()))
     else:
         text = article.get(get_redirect=True)
         try:

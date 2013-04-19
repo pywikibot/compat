@@ -93,8 +93,8 @@ def main():
         elif arg == '-force':
             force = True
         else:
-            pywikibot.output(
-                u'Warning: argument "%s" not understood; ignoring.' % arg)
+            pywikibot.warning(
+                u'argument "%s" not understood; ignoring.' % arg)
 
     mysite = pywikibot.getSite()
     for p in mysite.allpages(start = start):
@@ -111,12 +111,12 @@ def main():
                             u"Not creating %s - redirect already exists."
                             % goal)
                     else:
-                        pywikibot.output(
-                            u"WARNING!!! %s already exists but redirects elsewhere!"
+                        pywikibot.warning(
+                            u"%s already exists but redirects elsewhere!"
                             % goal)
                 except pywikibot.IsNotRedirectPage:
-                    pywikibot.output(
-                        u"WARNING!!! Page %s already exists and is not a redirect. Please check page!"
+                    pywikibot.warning(
+                        u"Page %s already exists and is not a redirect. Please check page!"
                         % goal)
                 except pywikibot.NoPage:
                     change=''

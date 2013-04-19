@@ -1600,7 +1600,7 @@ class checkImagesBot(object):
             elif imagechanges.lower() == 'true':
                 imagestatus = True
             else:
-                pywikibot.output(u"Error! Imagechanges set wrongly!")
+                pywikibot.error(u"Imagechanges set wrongly!")
                 self.settingsData = None
                 break
             summary = tupla[5]

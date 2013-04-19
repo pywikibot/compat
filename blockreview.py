@@ -82,7 +82,7 @@ class BlockreviewBot:
                                      self.unblock_tpl[self.site.lang],
                                      defaultNamespace=10)
         except KeyError:
-            pywikibot.output(u'ERROR: Language "%s" not supported by this bot.'
+            pywikibot.error(u'Language "%s" not supported by this bot.'
                              % self.site.lang)
         else:
             for page in genPage.getReferences(follow_redirects=False,

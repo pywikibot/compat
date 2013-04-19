@@ -9225,7 +9225,7 @@ def _outputOld(text, decoder=None, newline=True, toStdout=False, **kwargs):
             text += u'\n'
         caller = inspect.getouterframes(inspect.currentframe())[1][3]
         if not (caller == 'logoutput'):
-            _logOld(text)
+            logoutput(text)
         if input_lock.locked():
             cache_output(text, toStdout = toStdout)
         else:
@@ -9240,21 +9240,6 @@ def flush_output_cache():
     while(output_cache):
         (args, kwargs) = output_cache.pop(0)
         ui.output(*args, **kwargs)
-
-def _logOld(text):
-    """Write the given text to the logfile."""
-    if logger:
-        # remove all color markup
-        plaintext = colorTagR.sub('', text)
-        # save the text in a logfile (will be written in utf-8)
-        for line in plaintext.splitlines():
-            type = line.split(':')
-            func = 'info'
-            if len(type) > 1:
-                func = type[0].strip().lower()
-                if func not in ['debug', 'warning', 'error', 'critical']:
-                    func = 'info'
-            getattr(logger, func)(line.rstrip())
 
 output = _outputOld
 

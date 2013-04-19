@@ -354,7 +354,7 @@ def main():
 
         if changes == 0:
             # We tried to fix edit-protection templates, but it did not work.
-            pywikibot.output('Warning : No edit-protection template could be found')
+            pywikibot.warning('No edit-protection template could be found')
 
         if moveBlockCheck and changes > -1:
             # checking move protection now
@@ -402,7 +402,7 @@ def main():
 
             if changes == 0:
                 # We tried to fix move-protection templates, but it did not work.
-                pywikibot.output('Warning : No move-protection template could be found')
+                pywikibot.warning('No move-protection template could be found')
 
 
         if oldtext != text:

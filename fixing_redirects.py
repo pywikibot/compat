@@ -187,7 +187,7 @@ def workon(page):
         try:
             page.put(text, comment)
         except (pywikibot.Error):
-            pywikibot.output('Error: unable to put %s' % page)
+            pywikibot.error('unable to put %s' % page)
 
 def main():
     featured = False

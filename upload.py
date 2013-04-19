@@ -167,8 +167,8 @@ class UploadRobot:
                                 dt += 60
                     else:
                         if pywikibot.verbose:
-                            pywikibot.output(
-u"WARNING: No check length to retrieved data is possible.")
+                            pywikibot.warning(
+u"No check length to retrieved data is possible.")
             else:
                 # Opening local files with MyURLopener would be possible, but we
                 # don't do it because it only accepts ASCII characters in the

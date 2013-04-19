@@ -913,10 +913,10 @@ class uploader(threading.Thread):
 
 
 def main(args):
-    pywikibot.output(u'WARNING: This is an experimental bot')
-    pywikibot.output(u'WARNING: It will only work on self published work images')
-    pywikibot.output(u'WARNING: This bot is still full of bugs')
-    pywikibot.output(u'WARNING: Use at your own risk!')
+    pywikibot.warnnig(u'This is an experimental bot')
+    pywikibot.warning(u'It will only work on self published work images')
+    pywikibot.warning(u'This bot is still full of bugs')
+    pywikibot.warning(u'Use at your own risk!')
 
     generator = None;
     autonomous = False

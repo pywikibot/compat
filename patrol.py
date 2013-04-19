@@ -102,7 +102,7 @@ class PatrolBot:
             # cascade if there isnt a whitelist to fallback on
             if not self.whitelist:
                 raise
-            pywikibot.output(u'Error: ' + e)
+            pywikibot.error(u'%s' % e)
 
     def add_to_tuples(self, tuples, user, page):
         if pywikibot.verbose:

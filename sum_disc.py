@@ -387,7 +387,7 @@ class SumDiscBot(basic.AutoBasicBot):
         # warnings/exceptions are printed to log, could be get by panel.py from there!
         # (separate and explicit warning handling not used anymore)
         #for warning in self._global_warn:        # output all warnings to log (what about a special wiki page?)
-        #    pywikibot.output( "%s: %s" % warning )    
+        #    pywikibot.warning( "%s: %s" % warning )    
 
     def compressHistory(self, users = []):
         """Read history, and re-write new history without any duplicates.

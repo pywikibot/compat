@@ -466,7 +466,7 @@ class Table2WikiRobot:
         try:
             text = page.get()
         except pywikibot.NoPage:
-            pywikibot.output(u"ERROR: couldn't find %s" % page.title())
+            pywikibot.error(u"couldn't find %s" % page.title())
             return False
         except pywikibot.IsRedirectPage:
             pywikibot.output(u'Skipping redirect %s' % page.title())
@@ -476,8 +476,8 @@ class Table2WikiRobot:
         # Check if there are any marked tags left
         markedTableTagR = re.compile("<##table##|</##table##>", re.IGNORECASE)
         if markedTableTagR.search(newText):
-            pywikibot.output(
-                u'ERROR: not all marked table start or end tags processed!')
+            pywikibot.error(
+                u'not all marked table start or end tags processed!')
             return
 
         if convertedTables == 0:

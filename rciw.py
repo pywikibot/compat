@@ -70,7 +70,7 @@ class IWRCBot():
         self.queue.put_nowait(page)
 
 def main():
-    pywikibot.output('Warning: this script can not be run manually/directly, but automatically by maintainer.py')
+    pywikibot.warning('this script can not be run manually/directly, but automatically by maintainer.py')
 
 if __name__ == "__main__":
     main()

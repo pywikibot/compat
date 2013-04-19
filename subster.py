@@ -172,7 +172,7 @@ class SubsterBot(basic.AutoBasicBot):
             pywikibot.output(u'Setting process TimeZone (TZ): %s' % str(time.tzname))    # ('CET', 'CEST')
         else:
             # e.g. windows doesn't have that attribute
-            pywikibot.output(u'WARNING: This operating system has NO SUPPORT for setting TimeZone by code! Before running this script, please set the TimeZone manually to one approriate for use with the Wikipedia language and region you intend to.')
+            pywikibot.warning(u'This operating system has NO SUPPORT for setting TimeZone by code! Before running this script, please set the TimeZone manually to one approriate for use with the Wikipedia language and region you intend to.')
 
         # init constants
         self._bot_config = bot_config

@@ -208,7 +208,7 @@ def main():
         for j in refs:
             if j == None:
                 # We have to find out why the function returns that value
-                pywikibot.output(u'Error: 1 --> Skip page')
+                pywikibot.error(u'1 --> Skip page')
                 continue
             refsList.append(j)
         # This isn't possible with a generator
@@ -218,7 +218,7 @@ def main():
         # Never understood how a list can turn in "None", but it happened :-S
         elif refsList == None:
             # We have to find out why the function returns that value
-            pywikibot.output(u'Error: 2 --> Skip page')
+            pywikibot.error(u'2 --> Skip page')
             continue
         else:
             # Ok, no refs, no redirect... let's check if there's already the template

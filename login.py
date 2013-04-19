@@ -391,7 +391,7 @@ def main():
             return
 
     if pywikibot.verbose > 1:
-        pywikibot.output(u"WARNING: Using -v -v on login.py might leak private data. When sharing, please double check your password is not readable and log out your bots session.")
+        pywikibot.warning(u"Using -v -v on login.py might leak private data. When sharing, please double check your password is not readable and log out your bots session.")
         verbose = True # only use this verbose when running from login.py
     if logall:
         if sysop:

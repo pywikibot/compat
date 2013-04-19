@@ -230,7 +230,7 @@ def getOpenStreetMap(latitude, longitude):
 	elif addresspart.tag in invalidParts:
 	    pywikibot.output(u'Dropping %s, %s' % (addresspart.tag, addresspart.text))
 	else:
-	    pywikibot.output(u'WARNING %s, %s is not in addressparts lists' % (addresspart.tag, addresspart.text))
+	    pywikibot.warning(u'%s, %s is not in addressparts lists' % (addresspart.tag, addresspart.text))
     #print result
     return result
 
