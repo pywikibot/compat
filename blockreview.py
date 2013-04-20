@@ -140,7 +140,8 @@ class BlockreviewBot:
                         talkComment = pywikibot.translate(self.site.lang, self.msg_user % self.parts)
 
                         # some test stuff
-                        if pywikibot.debug and self.site().loggedInAs() == u'Xqbot:':
+                        if pywikibot.logger.isEnabledFor(pywikibot.DEBUG) \
+                           and self.site().loggedInAs() == u'Xqbot:':
                             testPage = pywikibot.Page(self.site, 'Benutzer:Xqt/Test')
                             test = testPage.get()
                             test += note

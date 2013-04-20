@@ -5053,7 +5053,7 @@ class _GetAll(object):
     def run(self):
         if self.pages:
             # Sometimes query does not contains revisions
-            if  self.site.has_api() and debug:
+            if  self.site.has_api() and logger.isEnabledFor(DEBUG):
                 while True:
                     try:
                         data = self.getDataApi()
@@ -5441,8 +5441,10 @@ def getall(site, pages, throttle=True, force=False):
     # TODO: why isn't this a Site method?
     pages = list(pages)  # if pages is an iterator, we need to make it a list
     output(u'Getting %d page%s %sfrom %s...'
-           % (len(pages), (u'', u's')[len(pages) != 1],
-              (u'', u'via API ')[site.has_api() and debug], site))
+           %(len(pages), 
+             (u'', u's')[len(pages) != 1],
+             (u'', u'via API ')[site.has_api() and logger.isEnabledFor(DEBUG)],
+             site))
     limit = config.special_page_limit / 4 # default is 500/4, but It might have good point for server.
     if len(pages) > limit:
         # separate export pages for bulk-retrieve
@@ -8831,7 +8833,7 @@ def handleArgs(*args):
     args may be passed as an argument, thereby overriding sys.argv
 
     """
-    global default_code, default_family, verbose, debug, simulate
+    global default_code, default_family, verbose, simulate
     # get commandline arguments if necessary
     if not args:
         args = sys.argv[1:]
@@ -8888,7 +8890,9 @@ def handleArgs(*args):
             simulate = True
         # global debug option for development purposes. Normally does nothing.
         elif arg == '-debug':
-            debug = True
+            if not logger:
+                setLogfileStatus(False)
+            logging.getLogger().setLevel(DEBUG)
             config.special_page_limit = 500
         else:
             # the argument is not global. Let the specific bot script care
@@ -8999,7 +9003,6 @@ sys.path.append(config.datafilepath('userinterfaces'))
 exec "import %s_interface as uiModule" % config.userinterface
 ui = uiModule.UI()
 verbose = 0
-debug = False
 simulate = False
 
 # TEST for bug #3081100
@@ -9084,7 +9087,7 @@ def setLogfileStatus(enabled, logname=None, header=False):
     # NOTE-2: enable 'logger.addHandler(ch)' below in order output to console
     #         also (e.g. for simplifying 'pywikibot.output')
     global logger
-    if enabled:
+    if not logger:
         if not logname:
             logname = '%s.log' % calledModuleName()
             if pywikibot.throttle.pid > 1:
@@ -9095,7 +9098,7 @@ def setLogfileStatus(enabled, logname=None, header=False):
         if logger.handlers:             # init just once (if re-called)
             logger = logging.getLogger('pywiki')
             return
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(INFO)
         # create file handler which logs even debug messages
         if config.loghandler.upper() == 'RFH':
             fh = logging.handlers.RotatingFileHandler(filename=logfn,
@@ -9118,10 +9121,10 @@ def setLogfileStatus(enabled, logname=None, header=False):
             if os.path.exists(logfn) and (ver == int('0206')):
                 t = os.stat(logfn).st_mtime
                 fh.rolloverAt = fh.computeRollover(t)
-        fh.setLevel(DEBUG if debug else INFO)
+        fh.setLevel(DEBUG)
         # create console handler with a higher log level
         ch = logging.StreamHandler()
-        ch.setLevel(INFO)
+        ch.setLevel(DEBUG)
         # create formatter and add it to the handlers (using LogRecord attributes)
         formatter = logging.Formatter(
                     fmt='%(asctime)s %(name)18s: %(levelname)-8s %(message)s',
@@ -9139,11 +9142,8 @@ def setLogfileStatus(enabled, logname=None, header=False):
 
         if header:
             writeLogfileHeader()
-    else:
-        # disable the log file
-        if logging.root:                # resethandlers of root logger
-            del logging.root.handlers[:]
-        logger = logging.getLogger()    # root logger
+
+    logger.propagate = enabled
 
 writeToCommandLogFile()
 
@@ -9190,7 +9190,8 @@ def logoutput(text, decoder=None, newline=True, _level=INFO, _logger="",
     # instead of logging handler for output to console (StreamHandler)
     if _level <> INFO:
         text = u'%s: %s' % (logging.getLevelName(_level), text)
-    _outputOld(text, decoder, newline, (_level == STDOUT), **kwargs)
+    if log.isEnabledFor(_level):
+        _outputOld(text, decoder, newline, (_level == STDOUT), **kwargs)
 
 def _outputOld(text, decoder=None, newline=True, toStdout=False, **kwargs):
     """Output a message to the user via the userinterface.

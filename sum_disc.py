@@ -260,6 +260,7 @@ class SumDiscBot(basic.AutoBasicBot):
 
         pywikibot.output(u'\03{lightgreen}* Initialization of bot:\03{default}')
 
+        # code debugging
         logging.basicConfig(level=logging.DEBUG if ('code' in debug) else logging.INFO)
 
         basic.AutoBasicBot.__init__(self)
@@ -314,9 +315,6 @@ class SumDiscBot(basic.AutoBasicBot):
         self._wday = time.gmtime().tm_wday
 
         # init variable/dynamic objects
-
-        # code debugging
-        pywikibot.debug = ('code' in debug)
 
     ## @todo re-write some functions to be pagegenerators and use pagegenerators.CombinedPageGenerator()
     #        and others to combine and use them

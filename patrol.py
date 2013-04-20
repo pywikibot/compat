@@ -150,8 +150,7 @@ class PatrolBot:
         # is registered as the user the rest of the structure
         # refers to.
         def process_children(obj,current_user):
-            if pywikibot.debug:
-                pywikibot.output(u'parsing node: %s' % obj)
+            pywikibot.debug(u'parsing node: %s' % obj)
             for c in obj.children:
                 temp = process_node(c,current_user)
                 if temp and not current_user:
@@ -227,8 +226,7 @@ class PatrolBot:
         if author_ns:
             author_ns_prefix = self.site.namespace(author_ns)
 
-        if pywikibot.debug:
-            pywikibot.output(u'Author ns: %d; name: %s' % (author_ns, author_ns_prefix))
+        pywikibot.debug(u'Author ns: %d; name: %s' % (author_ns, author_ns_prefix))
 
         if title.find(author_ns_prefix+':') == 0:
             return True
