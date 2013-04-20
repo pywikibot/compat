@@ -8842,7 +8842,6 @@ def handleArgs(*args):
     nonGlobalArgs = []
     username = None
     do_help = False
-    debug = False
     for arg in args:
         arg = _decodeArg(arg)
         if arg == '-help':
@@ -9137,12 +9136,14 @@ def setLogfileStatus(enabled, logname=None, header=False):
         #logger.addHandler(ch)           # output to terminal/shell console
 
         logger = logging.getLogger('pywiki')
+
+        if header:
+            writeLogfileHeader()
     else:
         # disable the log file
-        logger = None
-
-    if header:
-        writeLogfileHeader()
+        if logging.root:                # resethandlers of root logger
+            del logging.root.handlers[:]
+        logger = logging.getLogger()    # root logger
 
 writeToCommandLogFile()
 
@@ -9166,7 +9167,7 @@ def logoutput(text, decoder=None, newline=True, _level=INFO, _logger="",
 
     # make sure logging system has been initialized
     if not logger:
-        setLogfileStatus(True)
+        setLogfileStatus(False)
 
     context = {}
 
