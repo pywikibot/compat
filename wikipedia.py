@@ -9291,7 +9291,7 @@ def critical(text, decoder=None, newline=True, **kwargs):
     """Output a debug record to the log file."""
     logoutput(text, decoder, newline, CRITICAL, **kwargs)
 
-def debug(text, layer, decoder=None, newline=True, **kwargs):
+def debug(text, layer="", decoder=None, newline=True, **kwargs):
     """Output a debug record to the log file."""
     logoutput(text, decoder, newline, DEBUG, layer, **kwargs)
 
