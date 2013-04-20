@@ -8842,6 +8842,7 @@ def handleArgs(*args):
     nonGlobalArgs = []
     username = None
     do_help = False
+    debug = False
     for arg in args:
         arg = _decodeArg(arg)
         if arg == '-help':
