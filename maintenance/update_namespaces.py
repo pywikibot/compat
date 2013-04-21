@@ -63,7 +63,8 @@ def update_family(family, changes, upmain):
             output(msg % (namespace_id, lang, ', '.join(namespace_list)))
             once = False
             if family and not upmain and \
-               namespace_id in range(-2, 16) and namespace_id not in (4, 5):
+               namespace_id in range(-2, 16) + [828, 829]  and \
+               namespace_id not in (4, 5):
                 once = True
 ##                namespace_section = re.search(r_namespace_section_once
 ##                                              % (namespace_id, lang),
