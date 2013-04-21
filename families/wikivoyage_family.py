@@ -19,16 +19,26 @@ class Family(family.WikimediaFamily):
                            for lang in self.languages_by_size])
 
         # Override defaults
+        self.namespaces[829]['ru'] = [u'Обсуждение модуля']
+        self.namespaces[828]['ru'] = [u'Модуль']
         self.namespaces[3]['fr'] = [u'Discussion utilisateur', u'Discussion Utilisateur']
         self.namespaces[2]['fr'] = [u'Utilisateur']
         self.namespaces[12]['nl'] = [u'Help']
         self.namespaces[3]['pt'] = [u'Utilizador Discussão', u'Usuário Discussão', u'Utilizadora Discussão']
         self.namespaces[2]['pt'] = [u'Utilizador', u'Usuário', u'Utilizadora']
-        self.namespaces[12]['uk'] = [u'Довідка', u'Д']
-        self.namespaces[14]['uk'] = [u'Категорія', u'К']
-        self.namespaces[9]['ro'] = [u'Discuție MediaWiki', u'Discuţie MediaWiki']
+        self.namespaces[829]['it'] = [u'Discussioni modulo']
+        self.namespaces[828]['it'] = [u'Modulo']
+        self.namespaces[829]['pl'] = [u'Dyskusja modułu']
+        self.namespaces[828]['pl'] = [u'Moduł']
         self.namespaces[3]['pl'] = [u'Dyskusja użytkownika', u'Dyskusja użytkowniczki']
         self.namespaces[2]['pl'] = [u'Użytkownik', u'Użytkowniczka']
+        self.namespaces[12]['uk'] = [u'Довідка', u'Д']
+        self.namespaces[14]['uk'] = [u'Категорія', u'К']
+        self.namespaces[829]['uk'] = [u'Обговорення модуля']
+        self.namespaces[828]['uk'] = [u'Модуль']
+        self.namespaces[9]['ro'] = [u'Discuție MediaWiki', u'Discuţie MediaWiki']
+        self.namespaces[829]['es'] = [u'Módulo discusión']
+        self.namespaces[828]['es'] = [u'Módulo']
 
         # Most namespaces are inherited from family.Family.
         # Translation used on all wikis for the different namespaces.
