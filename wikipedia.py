@@ -126,10 +126,9 @@ __version__ = '$Id$'
 
 import os, sys
 import httplib, socket, urllib, urllib2, cookielib
-import traceback, inspect
+import traceback, pprint
 import time, threading, Queue
-import math
-import re, codecs, difflib, locale
+import re, codecs, difflib
 try:
     from hashlib import md5
 except ImportError:  # Python 2.4 compatibility
@@ -9049,38 +9048,6 @@ def writeToCommandLogFile():
     commandLogFile.write(s + os.linesep)
     commandLogFile.close()
 
-def writeLogfileHeader():
-    """
-    Save additional version, system and status info to the logfile in use,
-    so that the user can look it up later to track errors or report bugs.
-    """
-    logger.info(u'=== Pywikipediabot framework v1.0 -- Logging header ===')
-
-    # script call
-    logger.info(u'COMMAND: %s' % unicode(sys.argv))
-
-    # new framework release/revision?
-    site = getSite()
-    logger.info(u'VERSION: %s' % unicode((version.getversion().strip(' ()'),
-                                          version.getversion_onlinerepo(),
-                                          site.live_version())))
-
-    # system
-    if hasattr(os, 'uname'):
-        logger.info(u'SYSTEM: %s' % unicode(os.uname()))
-
-    # imported modules
-    logger.info(u'MODULES:')
-    for item in sys.modules.keys():
-        ver = version.getfileversion('%s.py' % item)
-        if ver and (ver[0] == u'$'):
-            logger.info(u'  %s' % ver)
-
-    # messages on bot discussion page?
-    logger.info(u'MESSAGES: %s' % ('unanswered' if site.messages() else 'none'))
-
-    logger.info(u'=== ' * 14)
-
 
 # Initialize the handlers and formatters for the logging system.
 #
@@ -9192,7 +9159,39 @@ def init_handlers(strm=None, logname=None, header=False):
         logger = logging.getLogger('pywiki')
 
         if header:
-            writeLogfileHeader()
+            writelogheader()
+
+def writelogheader():
+    """
+    Save additional version, system and status info to the logfile in use,
+    so that the user can look it up later to track errors or report bugs.
+    """
+    logger.info(u'=== Pywikipediabot framework v1.0 -- Logging header ===')
+
+    # script call
+    logger.info(u'COMMAND: %s' % unicode(sys.argv))
+
+    # new framework release/revision?
+    site = getSite()
+    logger.info(u'VERSION: %s' % unicode((version.getversion().strip(' ()'),
+                                          version.getversion_onlinerepo(),
+                                          site.live_version())))
+
+    # system
+    if hasattr(os, 'uname'):
+        logger.info(u'SYSTEM: %s' % unicode(os.uname()))
+
+    # imported modules
+    logger.info(u'MODULES:')
+    for item in sys.modules.keys():
+        ver = version.getfileversion('%s.py' % item)
+        if ver and (ver[0] == u'$'):
+            logger.info(u'  %s' % ver)
+
+    # messages on bot discussion page?
+    logger.info(u'MESSAGES: %s' % ('unanswered' if site.messages() else 'none'))
+
+    logger.info(u'=== ' * 14)
 
 writeToCommandLogFile()
 
@@ -9390,6 +9389,30 @@ def debug(text, layer="", decoder=None, newline=True, **kwargs):
     """Output a debug record to the log file."""
     logoutput(text, decoder, newline, DEBUG, layer, **kwargs)
 
+def debugDump(name, site, error, data):
+    name = unicode(name)
+    site = repr(site)
+    data = pprint.pformat(data)
+    if isinstance(error, BaseException):
+        error = traceback.format_exception_only(type(error), error)
+    else:
+        error = unicode(error)
+
+    filename = '%s_%s__%s.dump' % (name, site, time.asctime())
+    filename = filename.replace(' ','_').replace(':','-')
+    f = file(filename, 'wb') #trying to write it in binary
+    #f = codecs.open(filename, 'w', 'utf-8')
+
+    f.write(u'Error reported: %s\n\n' % error)
+    try:
+        f.write(data.encode("utf8"))
+    except UnicodeDecodeError:
+        f.write(data)
+    f.close()
+    #debug( u'%s caused error %s. Dump %s created.' % (name,error,filename),
+    error( u'%s caused error %s. Dump %s created.' % (name,error,filename),
+           u'dump' )
+
 
 # User input functions
 
@@ -9534,23 +9557,6 @@ Really exit?"""
 
 import atexit
 atexit.register(_flush)
-
-def debugDump(name, site, error, data):
-    import time
-    name = unicode(name)
-    error = unicode(error)
-    site = unicode(repr(site).replace(u':',u'_'))
-    filename = '%s_%s__%s.dump' % (name, site, time.asctime())
-    filename = filename.replace(' ','_').replace(':','-')
-    f = file(filename, 'wb') #trying to write it in binary
-    #f = codecs.open(filename, 'w', 'utf-8')
-    f.write(u'Error reported: %s\n\n' % error)
-    try:
-        f.write(data.encode("utf8"))
-    except UnicodeDecodeError:
-        f.write(data)
-    f.close()
-    error( u'%s caused error %s. Dump %s created.' % (name,error,filename) )
 
 get_throttle = Throttle()
 put_throttle = Throttle(write=True)
