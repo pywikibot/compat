@@ -9168,32 +9168,32 @@ def writelogheader():
     Save additional version, system and status info to the logfile in use,
     so that the user can look it up later to track errors or report bugs.
     """
-    logger.info(u'=== Pywikipediabot framework v1.0 -- Logging header ===')
+    output(u'=== Pywikipediabot framework v1.0 -- Logging header ===')
 
     # script call
-    logger.info(u'COMMAND: %s' % unicode(sys.argv))
+    output(u'COMMAND: %s' % unicode(sys.argv))
 
     # new framework release/revision?
     site = getSite()
-    logger.info(u'VERSION: %s' % unicode((version.getversion().strip(' ()'),
-                                          version.getversion_onlinerepo(),
-                                          site.live_version())))
+    output(u'VERSION: %s' % unicode((version.getversion().strip(' ()'),
+                                     version.getversion_onlinerepo(),
+                                     site.live_version())))
 
     # system
     if hasattr(os, 'uname'):
-        logger.info(u'SYSTEM: %s' % unicode(os.uname()))
+        output(u'SYSTEM: %s' % unicode(os.uname()))
 
     # imported modules
-    logger.info(u'MODULES:')
+    output(u'MODULES:')
     for item in sys.modules.keys():
         ver = version.getfileversion('%s.py' % item)
         if ver and (ver[0] == u'$'):
-            logger.info(u'  %s' % ver)
+            output(u'  %s' % ver)
 
     # messages on bot discussion page?
-    logger.info(u'MESSAGES: %s' % ('unanswered' if site.messages() else 'none'))
+    output(u'MESSAGES: %s' % ('unanswered' if site.messages() else 'none'))
 
-    logger.info(u'=== ' * 14)
+    output(u'=== ' * 14)
 
 writeToCommandLogFile()
 
