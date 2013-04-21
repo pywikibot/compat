@@ -15,7 +15,7 @@ class Family(family.WikimediaFamily):
             'fa', 'ca', 'hu', 'ar', 'cs', 'ko', 'sl', 'ro', 'fi', 'vi', 'te',
             'sa', 'el', 'sr', 'hr', 'bn', 'th', 'no', 'hy', 'nl', 'ml', 'la',
             'vec', 'tr', 'ja', 'eo', 'br', 'yi', 'mk', 'gu', 'uk', 'is', 'ta',
-            'id', 'be', 'da', 'li', 'et', 'bg', 'mr', 'bs', 'as', 'sah', 'az',
+            'id', 'be', 'da', 'li', 'et', 'bg', 'as', 'mr', 'bs', 'sah', 'az',
             'gl', 'kn', 'lt', 'cy', 'sk', 'zh-min-nan', 'fo',
         ]
 
