@@ -322,6 +322,7 @@ class Family(family.WikimediaFamily):
             'ro': u'Wikijunior',
             'ru': u'Импортировано',
             'sr': u'Кувар',
+            'th': u'หัวเรื่อง',
             'uk': u'Рецепт',
             'vi': u'Chủ đề',
         }
@@ -341,6 +342,7 @@ class Family(family.WikimediaFamily):
             'ro': u'Discuţie Wikijunior',
             'ru': u'Обсуждение импортированного',
             'sr': u'Разговор о кувару',
+            'th': u'คุยเรื่องหัวเรื่อง',
             'uk': u'Обговорення рецепта',
             'vi': u'Thảo luận Chủ đề',
         }

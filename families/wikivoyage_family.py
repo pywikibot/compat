@@ -25,7 +25,7 @@ class Family(family.WikimediaFamily):
         self.namespaces[3]['pt'] = [u'Utilizador Discussão', u'Usuário Discussão', u'Utilizadora Discussão']
         self.namespaces[2]['pt'] = [u'Utilizador', u'Usuário', u'Utilizadora']
         self.namespaces[12]['uk'] = [u'Довідка', u'Д']
-        self.namespaces[14]['uk'] = [u'Категорія', u'K']
+        self.namespaces[14]['uk'] = [u'Категорія', u'К']
         self.namespaces[9]['ro'] = [u'Discuție MediaWiki', u'Discuţie MediaWiki']
         self.namespaces[3]['pl'] = [u'Dyskusja użytkownika', u'Dyskusja użytkowniczki']
         self.namespaces[2]['pl'] = [u'Użytkownik', u'Użytkowniczka']

@@ -19,12 +19,6 @@ class Family(family.WikimediaFamily):
         # Override defaults
         self.namespaces[1]['repo'] = [u'Talk', u'Item talk']
         self.namespaces[0]['repo'] = [u'', u'Item']
-        self.namespaces[828]['client'] = [u'Module']
-        self.namespaces[829]['client'] = [u'Module talk']
-        self.namespaces[828]['wikidata'] = [u'Module']
-        self.namespaces[829]['wikidata'] = [u'Module talk']
-        del(self.namespaces[828]['_default'])
-        del(self.namespaces[829]['_default'])
 
         # Most namespaces are inherited from family.Family.
         # Translation used on all wikis for the different namespaces.

@@ -51,6 +51,18 @@ class Family(family.WikimediaFamily):
         self.namespaces[471] = {
             '_default': u'Schema talk',
         }
+        self.namespaces[480] = {
+            '_default': u'Zero',
+        }
+        self.namespaces[481] = {
+            '_default': u'Zero talk',
+        }
+        self.namespaces[866] = {
+            '_default': u'CNBanner',
+        }
+        self.namespaces[867] = {
+            '_default': u'CNBanner talk',
+        }
         self.namespaces[1198] = {
             '_default': u'Translations',
         }
