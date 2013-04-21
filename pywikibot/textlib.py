@@ -140,16 +140,23 @@ def replaceExcept(text, old, new, exceptions, caseInsensitive=False,
             text = text.replace(item, '%s%d%s' % (marker2, count, marker2))
             values[count] = item
         inside = {}
-        count = 0
+        seen = set()
         while TEMP_REGEX.search(text) is not None:
             for m in TEMP_REGEX.finditer(text):
-                count += 1
                 item = m.group()
+                if item in seen:
+                    continue  # speed up
+                seen.add(item)
+                count = len(seen)
                 text = text.replace(item, '%s%d%s' % (marker1, count, marker1))
 
                 # Make sure stored templates don't contain markers
-                for m2 in Rmarker1.finditer(item):
-                    item = item.replace(m2.group(), inside[int(m2.group(1))])
+                # We replace the last item first, otherwise inside templates
+                # like {{A{{B}}{{C}}1{{D}}}} could fail
+                for i in range(count - 1, 0, -1):
+                    item = item.replace(u'%(mark)s%(number)s%(mark)s'
+                                        % {'mark': marker1, 'number': i},
+                                        inside[i])
                 for m2 in Rmarker2.finditer(item):
                     item = item.replace(m2.group(), values[int(m2.group(1))])
                 inside[count] = item
@@ -745,7 +752,7 @@ def replaceCategoryLinks(oldtext, new, site=None, addOnly=False):
     if site is None:
         site = pywikibot.getSite()
     if site.sitename() == 'wikipedia:de' and "{{Personendaten" in oldtext:
-        raise Error("""\
+        raise pywikibot.Error("""\
 The PyWikipediaBot is no longer allowed to touch categories on the German
 Wikipedia on pages that contain the Personendaten template because of the
 non-standard placement of that template.
