@@ -945,8 +945,6 @@ def extract_templates_and_params(text, asList=False):
             for i in range(count - 1, 0, -1):
                 item = item.replace('%s%d%s' % (marker, count, marker),
                                     inside[i])
-            for m2 in Rmarker.finditer(item):
-                item = item.replace(m2.group(), inside[int(m2.group(1))])
             for m2 in Rmarker3.finditer(item):
                 item = item.replace(m2.group(), maths[int(m2.group(1))])
             for m2 in Rmarker4.finditer(item):
