@@ -154,8 +154,7 @@ def replaceExcept(text, old, new, exceptions, caseInsensitive=False,
                 # We replace the last item first, otherwise inside templates
                 # like {{A{{B}}{{C}}1{{D}}}} could fail
                 for i in range(count - 1, 0, -1):
-                    item = item.replace(u'%(mark)s%(number)s%(mark)s'
-                                        % {'mark': marker1, 'number': i},
+                    item = item.replace('%s%d%s' % (marker1, i, marker1),
                                         inside[i])
                 for m2 in Rmarker2.finditer(item):
                     item = item.replace(m2.group(), values[int(m2.group(1))])
@@ -917,35 +916,42 @@ def extract_templates_and_params(text, asList=False):
     count = 0
     for m in Rmath.finditer(thistxt):
         count += 1
-        text = m.group()
-        thistxt = thistxt.replace(text, '%s%d%s' % (marker3, count, marker3))
-        maths[count] = text
+        item = m.group()
+        thistxt = thistxt.replace(item, '%s%d%s' % (marker3, count, marker3))
+        maths[count] = item
 
     values = {}
     count = 0
     for m in Rvalue.finditer(thistxt):
         count += 1
-        text = m.group()
-        thistxt = thistxt.replace(text, '%s%d%s' % (marker4, count, marker4))
-        values[count] = text
+        item = m.group()
+        thistxt = thistxt.replace(item, '%s%d%s' % (marker4, count, marker4))
+        values[count] = item
 
     inside = {}
-    count = 0
+    seen = set()
     while TEMP_REGEX.search(thistxt) is not None:
         for m in TEMP_REGEX.finditer(thistxt):
             # Make sure it is not detected again
-            count += 1
-            text = m.group()
-            thistxt = thistxt.replace(text,
-                                      '%s%d%s' % (marker, count, marker))
+            item = m.group()
+            if item in seen:
+                continue  # speed up
+            seen.add(item)
+            count = len(seen)
+            thistxt = thistxt.replace(item, '%s%d%s' % (marker, count, marker))
             # Make sure stored templates don't contain markers
-            for m2 in Rmarker.finditer(text):
-                text = text.replace(m2.group(), inside[int(m2.group(1))])
-            for m2 in Rmarker3.finditer(text):
-                text = text.replace(m2.group(), maths[int(m2.group(1))])
-            for m2 in Rmarker4.finditer(text):
-                text = text.replace(m2.group(), values[int(m2.group(1))])
-            inside[count] = text
+            # We replace the last item first, otherwise inside templates
+            # like {{A|{{B}}{{C}}1{{D}}}} could fail
+            for i in range(count - 1, 0, -1):
+                item = item.replace('%s%d%s' % (marker, count, marker),
+                                    inside[i])
+            for m2 in Rmarker.finditer(item):
+                item = item.replace(m2.group(), inside[int(m2.group(1))])
+            for m2 in Rmarker3.finditer(item):
+                item = item.replace(m2.group(), maths[int(m2.group(1))])
+            for m2 in Rmarker4.finditer(item):
+                item = item.replace(m2.group(), values[int(m2.group(1))])
+            inside[count] = item
 
             # Name
             name = m.group('name').strip()
@@ -993,10 +999,10 @@ def extract_templates_and_params(text, asList=False):
                 count2 = 0
                 for m2 in pywikibot.link_regex.finditer(paramString):
                     count2 += 1
-                    text = m2.group(0)
+                    item = m2.group(0)
                     paramString = paramString.replace(
-                        text, '%s%d%s' % (marker2, count2, marker2))
-                    links[count2] = text
+                        item, '%s%d%s' % (marker2, count2, marker2))
+                    links[count2] = item
                 # Parse string
                 markedParams = paramString.split('|')
                 # Replace markers
@@ -1007,9 +1013,11 @@ def extract_templates_and_params(text, asList=False):
                         param_name = unicode(numbered_param)
                         param_val = param
                         numbered_param += 1
-                    for m2 in Rmarker.finditer(param_val):
-                        param_val = param_val.replace(m2.group(),
-                                                      inside[int(m2.group(1))])
+                    count = len(inside)
+                    for i in range(count - 1, 0, -1):
+                        param_val = param_val.replace('%s%d%s'
+                                                      % (marker, i, marker),
+                                                      inside[i])
                     for m2 in Rmarker2.finditer(param_val):
                         param_val = param_val.replace(m2.group(),
                                                       links[int(m2.group(1))])
