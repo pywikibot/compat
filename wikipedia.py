@@ -9111,6 +9111,8 @@ def init_handlers(strm=None, logname=None, header=False):
             logger = logging.getLogger('pywiki')
             return
         logger.setLevel(DEBUG+1) # all records except DEBUG go to logger
+        if hasattr(logger, 'captureWarnings'):
+            logger.captureWarnings(True)    # introduced in Python >= 2.7
 
         if not logname:
             logname = '%s.log' % moduleName
@@ -9382,7 +9384,7 @@ def log(text, decoder=None, newline=True, **kwargs):
     logoutput(text, decoder, newline, VERBOSE, **kwargs)
 
 def critical(text, decoder=None, newline=True, **kwargs):
-    """Output a debug record to the log file."""
+    """Output a critical error message to the log file."""
     logoutput(text, decoder, newline, CRITICAL, **kwargs)
 
 def debug(text, layer="", decoder=None, newline=True, **kwargs):
@@ -9390,11 +9392,12 @@ def debug(text, layer="", decoder=None, newline=True, **kwargs):
     logoutput(text, decoder, newline, DEBUG, layer, **kwargs)
 
 def debugDump(name, site, error, data, **kwargs):
+    """Output a very long debug/error message to own log file."""
     name = unicode(name)
     site = repr(site)
     data = pprint.pformat(data)
     if isinstance(error, BaseException):
-        error = traceback.format_exception_only(type(error), error)
+        error = traceback.format_exception_only(type(error), error)[-1]
     else:
         error = unicode(error)
 
@@ -9412,6 +9415,31 @@ def debugDump(name, site, error, data, **kwargs):
     logoutput(u'%s caused error %s. Dump %s created.' % (name,error,filename), 
     #          decoder=None, newline=True, _level=DEBUG, **kwargs)
               decoder=None, newline=True, _level=ERROR, **kwargs)
+
+def exception(msg=None, decoder=None, newline=True, full=False, **kwargs):
+    """Output an error traceback to the user via the userinterface.
+
+       Use directly after an 'except' statement:
+           ...
+           except:
+               pywikibot.exception()
+           ...
+       or alternatively:
+           ...
+           except Exception, e:
+               pywikibot.exception(e)
+           ...
+    """
+    if isinstance(msg, BaseException):
+        exc_info = 1
+    else:
+        exc_info = sys.exc_info()
+        msg = traceback.format_exception_only(exc_info[0], 
+                                              exc_info[1])[-1].strip()
+    if full:
+        kwargs['exc_info'] = exc_info
+        _outputOld(traceback.format_exc().strip())  # (temporary work-a-round)
+    logoutput(msg, decoder, newline, ERROR, **kwargs)
 
 
 # User input functions
@@ -9511,6 +9539,7 @@ def stopme():
        not slow down other bots any more.
     """
     get_throttle.drop()
+    logging.shutdown()
 
 def _flush():
     """Wait for the page-putter to flush its queue.
