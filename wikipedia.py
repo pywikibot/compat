@@ -9081,24 +9081,76 @@ def writeLogfileHeader():
 
     logger.info(u'=== ' * 14)
 
+
+# Initialize the handlers and formatters for the logging system.
+#
+# ( Please confer branches/rewrite/pywikibot/bot.py for further info )
+
 def setLogfileStatus(enabled, logname=None, header=False):
     # NOTE-1: disable 'fh.setFormatter(formatter)' below in order to get "old"
     #         logging format (without additional info)
     # NOTE-2: enable 'logger.addHandler(ch)' below in order output to console
     #         also (e.g. for simplifying 'pywikibot.output')
+    init_handlers(strm=None, logname=logname, header=header)
+    logger.propagate = enabled
+
+def init_handlers(strm=None, logname=None, header=False):
+    """Initialize logging system for terminal-based bots.
+
+    This function must be called before using pywikibot.output(); and must
+    be called again if the destination stream is changed.
+
+    @param strm: Output stream. If None, re-uses the last stream if one
+        was defined, otherwise uses sys.stderr
+
+    Note: this function is called by handleArgs(), so it should normally
+    not need to be called explicitly
+
+    All user output is routed through the logging module.
+    Each type of output is handled by an appropriate handler object.
+    This structure is used to permit eventual development of other
+    user interfaces (GUIs) without modifying the core bot code.
+    The following output levels are defined:
+       DEBUG - only for file logging; debugging messages
+       STDOUT - output that must be sent to sys.stdout (for bots that may
+                have their output redirected to a file or other destination)
+       VERBOSE - optional progress information for display to user
+       INFO - normal (non-optional) progress information for display to user
+       INPUT - prompts requiring user response
+       WARN - user warning messages
+       ERROR - user error messages
+       CRITICAL - fatal error messages
+    Accordingly, do ''not'' use print statements in bot code; instead,
+    use pywikibot.output function.
+    """
+
     global logger
+
     if not logger:
-        if not logname:
-            logname = '%s.log' % calledModuleName()
-            if pywikibot.throttle.pid > 1:
-                logname = '%s.%s.log' % (calledModuleName(), pywikibot.throttle.pid)
-        logfn = config.datafilepath('logs', logname)
+        moduleName = calledModuleName()
+        if not moduleName:
+            moduleName = "terminal-interface"
+
+        logging.addLevelName(VERBOSE, "VERBOSE")
+            # for messages to be displayed on terminal at "verbose" setting
+            # use INFO for messages to be displayed even on non-verbose setting
+        logging.addLevelName(STDOUT, "STDOUT")
+            # for messages to be displayed to stdout
+        logging.addLevelName(INPUT, "INPUT")
+            # for prompts requiring user response
 
         logger = logging.getLogger()    # root logger
         if logger.handlers:             # init just once (if re-called)
             logger = logging.getLogger('pywiki')
             return
-        logger.setLevel(INFO)
+        logger.setLevel(DEBUG+1) # all records except DEBUG go to logger
+
+        if not logname:
+            logname = '%s.log' % moduleName
+            if pywikibot.throttle.pid > 1:
+                logname = '%s.%s.log' % (moduleName, pywikibot.throttle.pid)
+        logfn = config.datafilepath('logs', logname)
+
         # create file handler which logs even debug messages
         if config.loghandler.upper() == 'RFH':
             fh = logging.handlers.RotatingFileHandler(filename=logfn,
@@ -9127,9 +9179,8 @@ def setLogfileStatus(enabled, logname=None, header=False):
         ch.setLevel(DEBUG)
         # create formatter and add it to the handlers (using LogRecord attributes)
         formatter = logging.Formatter(
-                    fmt='%(asctime)s %(name)18s: %(levelname)-8s %(message)s',
-                    #fmt="%(asctime)s %(filename)18s, %(lineno)4s "
-                    #    "in %(funcName)18s: %(levelname)-8s %(message)s",
+                    fmt="%(asctime)s %(caller_file)18s, %(caller_line)4s "
+                        "in %(caller_name)18s: %(levelname)-8s %(message)s",
                     datefmt="%Y-%m-%d %H:%M:%S"
                     )
         fh.setFormatter(formatter)
@@ -9143,8 +9194,6 @@ def setLogfileStatus(enabled, logname=None, header=False):
         if header:
             writeLogfileHeader()
 
-    logger.propagate = enabled
-
 writeToCommandLogFile()
 
 colorTagR = re.compile('\03{.*?}', re.UNICODE)
@@ -9152,6 +9201,47 @@ colorTagR = re.compile('\03{.*?}', re.UNICODE)
 output_lock = threading.Lock()
 input_lock = threading.Lock()
 output_cache = []
+
+
+# User output/logging functions
+
+# Six output functions are defined. Each requires a unicode or string
+# argument.  All of these functions generate a message to the log file if
+# logging is enabled ("-log" or "-debug" command line arguments).
+
+# The functions output(), stdout(), warning(), and error() all display a
+# message to the user through the logger object; the only difference is the
+# priority level,  which can be used by the application layer to alter the
+# display. The stdout() function should be used only for data that is
+# the "result" of a script, as opposed to information messages to the
+# user.
+
+# The function log() by default does not display a message to the user, but
+# this can be altered by using the "-verbose" command line option.
+
+# The function debug() only logs its messages, they are never displayed on
+# the user console. debug() takes a required second argument, which is a
+# string indicating the debugging layer.
+
+# ( Please confer branches/rewrite/pywikibot/bot.py for further info )
+
+# next bit filched from 1.5.2's inspect.py
+def currentframe():
+    """Return the frame object for the caller's stack frame."""
+    try:
+        raise Exception
+    except:
+        # go back two levels, one for logoutput and one for whatever called it
+        return sys.exc_traceback.tb_frame.f_back.f_back
+
+if hasattr(sys, '_getframe'):
+    # less portable but more efficient
+    currentframe = lambda: sys._getframe(3)
+    # frame0 is this lambda, frame1 is logoutput() in this module,
+    # frame2 is the convenience function (output(), etc.)
+    # so frame3 is whatever called the convenience function
+
+# done filching
 
 def logoutput(text, decoder=None, newline=True, _level=INFO, _logger="",
               **kwargs):
@@ -9169,7 +9259,12 @@ def logoutput(text, decoder=None, newline=True, _level=INFO, _logger="",
     if not logger:
         setLogfileStatus(False)
 
-    context = {}
+    frame = currentframe()
+    module = os.path.basename(frame.f_code.co_filename)
+    context = {'caller_name': frame.f_code.co_name,
+               'caller_file': module,
+               'caller_line': frame.f_lineno,
+               'newline': ("\n" if newline else "")}
 
     if decoder:
         text = unicode(text, decoder)
