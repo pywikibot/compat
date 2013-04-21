@@ -9389,7 +9389,7 @@ def debug(text, layer="", decoder=None, newline=True, **kwargs):
     """Output a debug record to the log file."""
     logoutput(text, decoder, newline, DEBUG, layer, **kwargs)
 
-def debugDump(name, site, error, data):
+def debugDump(name, site, error, data, **kwargs):
     name = unicode(name)
     site = repr(site)
     data = pprint.pformat(data)
@@ -9409,9 +9409,9 @@ def debugDump(name, site, error, data):
     except UnicodeDecodeError:
         f.write(data)
     f.close()
-    #debug( u'%s caused error %s. Dump %s created.' % (name,error,filename),
-    error( u'%s caused error %s. Dump %s created.' % (name,error,filename),
-           u'dump' )
+    logoutput(u'%s caused error %s. Dump %s created.' % (name,error,filename), 
+    #          decoder=None, newline=True, _level=DEBUG, **kwargs)
+              decoder=None, newline=True, _level=ERROR, **kwargs)
 
 
 # User input functions
