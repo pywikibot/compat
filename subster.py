@@ -527,24 +527,35 @@ class SubsterBot(basic.AutoBasicBot):
 
     def data_convertContent(self, substed_content):
         """Converts the substed content to Wikidata format in order to save.
-           (1 line of wiki text is converted to 1 claim/statement)
 
-           @param substed_content: New content (with tags).
+           Template page format:
+             <pre>
+             | key1 = value1
+             | key2 = value2
+             ...
+             </pre>
+           (1 line of wiki text is converted to 1 claim/statement, the lines
+           have to be embedded into pre-tags and start with '|')
+
+           @param substed_content: New/Changed content (including tags).
            @type  substed_content: string
+           
+           Returns the extracted and converted data.
         """
         # DRTRIGON-130: convert talk page result to wikidata(base)
-        # TODO: consider format; every line starting with "|" is data
-        # TODO: combine with 'outputContentDiff' in order to update changed only
+        data = u'\n'.join(re.findall('<pre>(.*?)</pre>', substed_content, 
+                                     re.S | re.I))
         res = {}
-        for line in substed_content.splitlines():
-            #data = self.get_var_regex('(.*?)', '(.*?)').findall(line)
-            data = self.get_var_regex('.*?', '(.*?)').sub('\g<1>', line)
-            #if not data:
-            if data == line:
+        for line in data.splitlines():
+            #line = self.get_var_regex('(.*?)', '(.*?)').findall(line)
+            line = self.get_var_regex('.*?', '(.*?)').sub('\g<1>', line)
+            line = line.strip()
+            if (not line) or (line[0] != u'|'):
                 continue
-            data = data.lstrip(u'|')
-            key, value = data.split(u'=')
-            res[key.strip()] = value.strip()
+            line = line.lstrip(u'|').split(u'=', 1)
+            if len(line) != 2:
+                continue
+            res[line[0].strip()] = line[1].strip()
 
         return res
 
@@ -562,14 +573,14 @@ class SubsterBot(basic.AutoBasicBot):
         datapage = pywikibot.DataPage(self.site, page.title())
         links = datapage.searchentities(u'%s:%s' % (self._bot_config['BotName'], datapage.title().split(u':')[1]))
         for element in links:
-            propid = self._bot_config['data_PropertyId']
+            propid = int(self._bot_config['data_PropertyId'])
             el = element[u'aliases'][0].split(u':')
             item = el[2]
             if item not in data:
                 pywikibot.output(u'Value "%s" not found.' % (item,))
                 data[item] = u'%s: N/A' % self._bot_config['BotName']
             if len(el) > 3:
-                propid = el[3]
+                propid = int(el[3])
 
             dataoutpage = pywikibot.DataPage(self.site, element['id'])
 
@@ -579,8 +590,8 @@ class SubsterBot(basic.AutoBasicBot):
             claim = [ claim for claim in buf[u'claims'] if (claim['m'][1] == propid) ]
             # TODO: does this check (if) work with multiple claims per property?
             if (not claim) or (claim[0]['m'][3] != data[item]):
-                pywikibot.output(u'%s in %s <--- %s = %s' %\
-                    (element[u'aliases'][0], dataoutpage.title(asLink=True), item, data[item]))
+                pywikibot.output(u'%s in %s changed to "%s"' %\
+                    (element[u'aliases'][0], dataoutpage.title(asLink=True), data[item]))
                 dataoutpage.editclaim(u'p%s' % propid, data[item],
                                       refs={"p%s" % propid:
                                           [{"snaktype":  "value",
