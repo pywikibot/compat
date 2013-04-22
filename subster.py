@@ -528,14 +528,14 @@ class SubsterBot(basic.AutoBasicBot):
     def data_convertContent(self, substed_content):
         """Converts the substed content to Wikidata format in order to save.
 
-           Template page format:
+           Template page format (adopted from #switch):
              <pre>
              | key1 = value1
              | key2 = value2
              ...
              </pre>
-           (1 line of wiki text is converted to 1 claim/statement, the lines
-           have to be embedded into pre-tags and start with '|')
+           every entry has to start with a '|' and contain a '=', the entries
+           have to be embedded into pre-tags (entries may share the same line)
 
            @param substed_content: New/Changed content (including tags).
            @type  substed_content: string
@@ -545,14 +545,10 @@ class SubsterBot(basic.AutoBasicBot):
         # DRTRIGON-130: convert talk page result to wikidata(base)
         data = u'\n'.join(re.findall('<pre>(.*?)</pre>', substed_content, 
                                      re.S | re.I))
+        data = self.get_var_regex('.*?', '(.*?)').sub('\g<1>', data)
         res = {}
-        for line in data.splitlines():
-            #line = self.get_var_regex('(.*?)', '(.*?)').findall(line)
-            line = self.get_var_regex('.*?', '(.*?)').sub('\g<1>', line)
-            line = line.strip()
-            if (not line) or (line[0] != u'|'):
-                continue
-            line = line.lstrip(u'|').split(u'=', 1)
+        for line in data.split(u'|'):
+            line = line.strip().split(u'=', 1)
             if len(line) != 2:
                 continue
             res[line[0].strip()] = line[1].strip()
