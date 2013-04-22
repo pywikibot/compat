@@ -9539,7 +9539,8 @@ def stopme():
        not slow down other bots any more.
     """
     get_throttle.drop()
-    logging.shutdown()
+    logger.flush()
+    #logging.shutdown()
 
 def _flush():
     """Wait for the page-putter to flush its queue.
