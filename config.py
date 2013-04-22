@@ -489,7 +489,12 @@ retry_on_fail = True
 actions_to_block = ['edit', 'watch', 'move', 'delete', 'undelete', 'protect',
                     'emailuser',
                     'submit',                               # for non-API
-                    'wbcreateclaim', 'wbsetclaimvalue']     # for Wikidata
+                    'wbcreateclaim', 'wbsetclaimvalue',     # for Wikidata
+                    'wbsetclaim', 'wbeditentity',           #
+                    'wbsetlabel', 'wbsetdescription',       #
+                    'wbsetaliases', 'wbsetsitelink',        #
+                    'wbsetreference', 'wblinktitles',       #
+                    'wbremoveclaims', 'wbremovereferences'] #
 
 # How many pages should be put to a queue in asynchroneous mode.
 # If maxsize is <= 0, the queue size is infinite.
