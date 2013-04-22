@@ -4312,7 +4312,7 @@ class DataPage(Page):
                 value = "{\"entity-type\":\"item\",\"numeric-id\":%s}" % value
         else:
             pass
-        claims = self.get()['claims'] if 'claims' in self.get() else []
+        claims = self.get()['claims']
         theclaim = None
         for claim in claims:
             if claim['m'][1] == propertyID:
@@ -4352,7 +4352,7 @@ class DataPage(Page):
                 raise RuntimeError("API query error: %s" % data)
             if 'warnings' in data:
                 output(str(data[u'warnings']))
-            guid=data['claim']['id']
+            guid=data['claim']['id'] if 'claim' in data else ''
         if refs:
             snak = []
             if isinstance(refs, dict):
