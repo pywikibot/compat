@@ -859,7 +859,7 @@ def compileLinkR(withoutBracketed=False, onlyBracketed=False):
     regex = r'(?P<url>http[s]?://[^%(notInside)s]*?[^%(notAtEnd)s]' \
             r'(?=[%(notAtEnd)s]*\'\')|http[s]?://[^%(notInside)s]*' \
             r'[^%(notAtEnd)s])' % {'notInside': notInside, 'notAtEnd': notAtEnd}
-    regexb = r'(?P<url>http[s]?://[^%(notInside)s]*?[^%(notAtEnd)s]' \
+    regexb = r'(?P<urlb>http[s]?://[^%(notInside)s]*?[^%(notAtEnd)s]' \
             r'(?=[%(notAtEnd)s]*\'\')|http[s]?://[^%(notInside)s]*' \
             r'[^%(notAtEnd)s])' % {'notInside': notInside, 'notAtEnd': notAtEndb}
     if withoutBracketed:
