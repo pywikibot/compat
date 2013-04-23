@@ -867,7 +867,7 @@ def compileLinkR(withoutBracketed=False, onlyBracketed=False):
     elif onlyBracketed:
         regex = r'\[' + regexb
     else:
-        regex=r'(?:(?<!\[)'+ regex+r'|\['+regexb=')'
+        regex=r'(?:(?<!\[)'+ regex+r'|\['+regexb+')'
     linkR = re.compile(regex)
     return linkR
 
