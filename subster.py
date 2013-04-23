@@ -443,7 +443,7 @@ class SubsterBot(basic.AutoBasicBot):
                     external_data_dict = {param['value']: external_data[0]}
                 else:
                     external_data_dict = {param['value']: str(external_data)}
-            logging.getLogger('subster').debug( str(external_data_dict) )
+            pywikibot.debug( str(external_data_dict) )
 
             param['postproc'] = eval(param['postproc'])
             # should be secured as given below, but needs code changes in wiki too
@@ -461,7 +461,7 @@ class SubsterBot(basic.AutoBasicBot):
                 if func:
                     exec(self._code + (self._bot_config['CodeTemplate'] % func), scope, scope)
                     external_data = DATA[0]
-                logging.getLogger('subster').debug( external_data )
+                pywikibot.debug( external_data )
 
                 # 5.) subst content
                 (content, tags) = self.subTag(content, value, external_data, int(param['count']))
@@ -776,10 +776,9 @@ class SubsterMailbox(mailbox.mbox):
 def main():
     args = pywikibot.handleArgs()
     bot  = SubsterBot()   # for several user's, but what about complete automation (continous running...)
-    if len(args) > 0:
-        for arg in args:
-            pywikibot.showHelp()
-            return
+    for arg in args:
+        pywikibot.showHelp()
+        return
     try:
         bot.run()
     except KeyboardInterrupt:

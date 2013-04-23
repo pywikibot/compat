@@ -145,12 +145,22 @@ def main_subster(page, params=None):
     del bot
 
 def main():
+    args = pywikibot.handleArgs()
     subster.debug = debug
     site = pywikibot.getSite()
     site.forceLogin()
     chan = '#' + site.language() + '.' + site.family.name
     bot = SubsterTagModifiedBot(site, chan, site.loggedInAs(), "irc.wikimedia.org")
-    bot.start()
+    for arg in args:
+        pywikibot.showHelp()
+        return
+    try:
+        bot.start()
+    except KeyboardInterrupt:
+        pywikibot.output('\nQuitting program...')
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    finally:
+        pywikibot.stopme()

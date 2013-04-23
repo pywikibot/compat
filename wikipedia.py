@@ -9173,9 +9173,9 @@ def writelogheader():
     # script call
     output(u'COMMAND: %s' % unicode(sys.argv))
 
-    # new framework release/revision?
+    # new framework release/revision? (handleArgs needs to be called first)
     site = getSite()
-    output(u'VERSION: %s' % unicode((version.getversion().strip(' ()'),
+    output(u'VERSION: %s' % unicode((version.getversion().strip(),
                                      version.getversion_onlinerepo(),
                                      site.live_version())))
 
