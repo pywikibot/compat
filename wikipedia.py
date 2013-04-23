@@ -9539,7 +9539,6 @@ def stopme():
        not slow down other bots any more.
     """
     get_throttle.drop()
-    logger.flush()
     #logging.shutdown()
 
 def _flush():
