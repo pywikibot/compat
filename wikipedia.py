@@ -51,10 +51,18 @@ Other functions:
         path component and file name of the currently executing script and
         revision is the SVN revision of Pywikipediabot.
 
-    output(text): Prints the text 'text' in the encoding of the user's
-        console. **Use this instead of "print" statements**
-    input(text): Asks input from the user, printing the text 'text' first.
-    inputChoice: Shows user a list of choices and returns user's selection.
+    output(text):   Prints the text 'text' in the encoding of the user's
+                    console. **Use this instead of "print" statements**
+    stdout(text):   Prints to stdout **Use this for script results only!**
+    warning(text):  Prints warnings.
+    error(text):    Prints errors.
+    log(text):      Prints general log messages.
+    critical(text): Prints critical errors.
+    debug(text):    Prints debug information.
+    debugDump():    Prints huge debug information.
+    exception(msg): Prints excpetions and tracebacks.
+    input(text):    Asks input from the user, printing the text 'text' first.
+    inputChoice:    Shows user a list of choices and returns user's selection.
 
     showDiff(oldtext, newtext): Prints the differences between oldtext and
         newtext on the screen
@@ -2173,7 +2181,7 @@ u'Page %s is semi-protected. Getting edit page to find out if we are allowed to 
             except httplib.BadStatusLine, line:
                 raise PageNotSaved('Bad status line: %s' % line.line)
             except ServerError:
-                output(u''.join(traceback.format_exception(*sys.exc_info())))
+                exception(tb=True)
                 retry_attempt += 1
                 if retry_attempt > config.maxretries:
                     raise
@@ -2307,7 +2315,7 @@ u'Page %s is semi-protected. Getting edit page to find out if we are allowed to 
                 # to "Wikipedia has a problem", but I'm not sure. Maybe we could
                 # just check for HTTP Status 500 (Internal Server Error)?
                 else:
-                    output("Unknown Error. API Error code:%s" % data['error']['code'] )
+                    error("API Error code:%s" % data['error']['code'] )
                     output("Information:%s" % data['error']['info'])
             else:
                 if data['edit']['result'] == u"Success":
@@ -2415,7 +2423,7 @@ u'Page %s is semi-protected. Getting edit page to find out if we are allowed to 
             except httplib.BadStatusLine, line:
                 raise PageNotSaved('Bad status line: %s' % line.line)
             except ServerError:
-                output(u''.join(traceback.format_exception(*sys.exc_info())))
+                exception(tb=True)
                 retry_attempt += 1
                 if retry_attempt > config.maxretries:
                     raise
@@ -3280,7 +3288,7 @@ u'Page %s is semi-protected. Getting edit page to find out if we are allowed to 
             #elif err == 'protectedpage':
             #
             else:
-                output("Unknown Error: %s" % result)
+                error("%s" % result)
             return False
         elif 'move' in result:
             if deleteAndMove:
@@ -3797,7 +3805,7 @@ u'Page %s is semi-protected. Getting edit page to find out if we are allowed to 
 
             if 'error' in result: #error occured
                 err = result['error']['code']
-                output('%s' % result)
+                error('%s' % result)
                 #if err == '':
                 #
                 #elif err == '':
@@ -4127,7 +4135,7 @@ class DataPage(Page):
             except httplib.BadStatusLine, line:
                 raise PageNotSaved('Bad status line: %s' % line.line)
             except ServerError:
-                output(u''.join(traceback.format_exception(*sys.exc_info())))
+                exception(tb=True)
                 retry_attempt += 1
                 if retry_attempt > config.maxretries:
                     raise
@@ -4226,7 +4234,7 @@ class DataPage(Page):
             except httplib.BadStatusLine, line:
                 raise PageNotSaved('Bad status line: %s' % line.line)
             except ServerError:
-                output(u''.join(traceback.format_exception(*sys.exc_info())))
+                exception(tb=True)
                 retry_attempt += 1
                 if retry_attempt > config.maxretries:
                     raise
@@ -4333,7 +4341,7 @@ class DataPage(Page):
                 raise RuntimeError("API query error: %s" % data)
             if (u'warnings' in data) and \
                (not data[u'warnings'][u'messages'][u'0'][u'name'] == u'edit-no-change'):
-                output(str(data[u'warnings']))
+                warning(str(data[u'warnings']))
             guid=theclaim['g']
         else:
             params = {
@@ -4351,7 +4359,7 @@ class DataPage(Page):
             if 'error' in data:
                 raise RuntimeError("API query error: %s" % data)
             if 'warnings' in data:
-                output(str(data[u'warnings']))
+                warning(str(data[u'warnings']))
             guid=data['claim']['id'] if 'claim' in data else ''
         if refs:
             snak = []
@@ -4434,7 +4442,7 @@ class DataPage(Page):
                 raise RuntimeError("API query error: %s" % data)
             if (u'warnings' in data) and \
                (not data[u'warnings'][u'messages'][u'0'][u'name'] == u'edit-no-change'):
-                output(str(data[u'warnings']))
+                warning(str(data[u'warnings']))
     def removeclaim(self,WDproperty ,value = None, raw_value=False, botflag= True, token=None, sysop=False):
         if isinstance(WDproperty, int):
             propertyID = WDproperty
@@ -4501,7 +4509,7 @@ class DataPage(Page):
         if 'error' in data:
             raise RuntimeError("API query error: %s" % data)
         if 'warnings' in data:
-            output(str(data[u'warnings']))
+            warning(str(data[u'warnings']))
     def _getentity(self,force=False, get_redirect=False, throttle=True,
                   sysop=False, change_edit_time=True):
         """Returns items of a entity in a dictionary
@@ -5058,11 +5066,9 @@ class _GetAll(object):
                         data = self.getDataApi()
                     except (socket.error, httplib.BadStatusLine, ServerError):
                         # Print the traceback of the caught exception
-                        s = ''.join(traceback.format_exception(*sys.exc_info()))
-                        if not isinstance(s, unicode):
-                            s = s.decode('utf-8')
-                        debug(u'%s\nDBG> got network error in _GetAll.run. ' \
-                               'Sleeping for %d seconds...' % (s, self.sleeptime))
+                        exception(tb=True)
+                        debug(u'got network error in _GetAll.run. ' \
+                               'Sleeping for %d seconds...' % self.sleeptime)
                         self.sleep()
                     else:
                         if 'error' in data:
@@ -5081,11 +5087,9 @@ class _GetAll(object):
                         data = self.getData()
                     except (socket.error, httplib.BadStatusLine, ServerError):
                         # Print the traceback of the caught exception
-                        s = ''.join(traceback.format_exception(*sys.exc_info()))
-                        if not isinstance(s, unicode):
-                            s = s.decode('utf-8')
-                        debug(u'%s\nDBG> got network error in _GetAll.run. ' \
-                               'Sleeping for %d seconds...' % (s, self.sleeptime))
+                        exception(tb=True)
+                        debug(u'got network error in _GetAll.run. ' \
+                               'Sleeping for %d seconds...' % self.sleeptime)
                         self.sleep()
                     else:
                         if "<title>Wiki does not exist</title>" in data:
@@ -6505,11 +6509,8 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                 else:
                     output(u"Result: %s %s" % (e.code, e.msg))
                     raise
-            except Exception, e:
-                output(u'%s' %e)
-                if pywikibot.verbose:
-                    import traceback
-                    traceback.print_exc()
+            except Exception:
+                exception(tb=pywikibot.verbose)
 
                 if config.retry_on_fail:
                     retry_attempt += 1
@@ -6568,9 +6569,9 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
         # Convert HTML to Unicode
         try:
             text = unicode(text, charset, errors = 'strict')
-        except UnicodeDecodeError, e:
+        except UnicodeDecodeError:
             if verbose:
-                output(u'%s' %e)
+                exception()
             error(u'Invalid characters found on %s://%s%s, replaced by \\ufffd.'
                   % (self.protocol(), self.hostname(), address))
             # We use error='replace' in case of bad encoding.
@@ -6797,7 +6798,8 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                     else:
                         output(u'Your bot account does not have global the bot flag, checking local flag.')
         else:
-            if verbose: output(u'Note: this language does not allow global bots.')
+            if verbose:
+                output(u'Note: this language does not allow global bots.')
         if m and checkLocal:
             rights = m.group(1)
             rights = rights.split('", "')
@@ -9416,19 +9418,21 @@ def debugDump(name, site, error, data, **kwargs):
     #          decoder=None, newline=True, _level=DEBUG, **kwargs)
               decoder=None, newline=True, _level=ERROR, **kwargs)
 
-def exception(msg=None, decoder=None, newline=True, full=False, **kwargs):
+def exception(msg=None, decoder=None, newline=True, tb=False, **kwargs):
     """Output an error traceback to the user via the userinterface.
 
-       Use directly after an 'except' statement:
-           ...
-           except:
-               pywikibot.exception()
-           ...
-       or alternatively:
-           ...
-           except Exception, e:
-               pywikibot.exception(e)
-           ...
+    @param tb: Set to True in order to output traceback also.
+
+    Use directly after an 'except' statement:
+      ...
+      except:
+          pywikibot.exception()
+      ...
+    or alternatively:
+      ...
+      except Exception, e:
+          pywikibot.exception(e)
+      ...
     """
     if isinstance(msg, BaseException):
         exc_info = 1
@@ -9436,7 +9440,7 @@ def exception(msg=None, decoder=None, newline=True, full=False, **kwargs):
         exc_info = sys.exc_info()
         msg = traceback.format_exception_only(exc_info[0], 
                                               exc_info[1])[-1].strip()
-    if full:
+    if tb:
         kwargs['exc_info'] = exc_info
         _outputOld(traceback.format_exc().strip())  # (temporary work-a-round)
     logoutput(msg, decoder, newline, ERROR, **kwargs)
@@ -9523,8 +9527,8 @@ def async_put():
         elif isinstance(error, NoUsername):
             output(u"Page %s not saved; sysop privileges required." % page)
         elif error is not None:
-            tb = traceback.format_exception(*sys.exc_info())
-            output(u"Saving page %s failed:\n%s" % (page, "".join(tb)))
+            exception(error, tb=True)
+            output(u"Saving page %s failed!" % page)
 
 _putthread = threading.Thread(target=async_put)
 # identification for debugging purposes
