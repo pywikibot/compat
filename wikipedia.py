@@ -9188,7 +9188,7 @@ def writelogheader():
     # imported modules
     output(u'MODULES:')
     for item in sys.modules.keys():
-        ver = version.getfileversion('%s.py' % item)
+        ver = version.getfileversion('%s.py' % item.replace('.', '/'))
         if ver and (ver[0] == u'$'):
             output(u'  %s' % ver)
 
