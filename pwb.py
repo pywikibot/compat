@@ -7,13 +7,13 @@
 # Tip from Merlissimo: use (a=reschedule or abort, s= suspended) to send mail
 # by SGE and exitcode 99 to restart the job and 100 to stop it in error state.
 """Wrapper script to use trunk in 'server' mode as cronjob - run scripts using
-python bot_control.py <name_of_script> <options>
+python pwb.py <name_of_script> <options>
 
 and it will start logging, care about error reporting by mail and SGE.
 It will also catch all output to stdout and stderr and report those incidents.
 (compare to rewrite/pwb.py)
 """
-## @package bot_control
+## @package pwb
 #  @brief   General DrTrigonBot Robot(s) Wrapper (see rewrite/pwb.py too)
 #
 #  @copyright Dr. Trigon, 2008-2013
@@ -33,7 +33,7 @@ It will also catch all output to stdout and stderr and report those incidents.
 #
 #  @section Usage
 #  @li Run any bot on server (according to rewrite/pwb.py):
-#  @verbatim python bot_control.py <name_of_script> <options> @endverbatim
+#  @verbatim python pwb.py <name_of_script> <options> @endverbatim
 #
 __version__ = '$Id$'
 #
