@@ -155,8 +155,10 @@ def weblinksIn(text, withoutBracketed = False, onlyBracketed = False):
     # Also remove text inside nowiki links etc.
     text = pywikibot.removeDisabledParts(text)
     for m in linkR.finditer(text):
-        yield m.group('url')
-
+        if m.group('url'):
+            yield m.group('url')
+        else:
+            yield m.group('urlb')
 class InternetArchiveConsulter:
     def __init__(self, url):
         self.url = url
