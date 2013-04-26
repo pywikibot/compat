@@ -15,5 +15,10 @@ class PyWikiTestCase(unittest.TestCase):
     def setUp(self):
         self.site = pywikibot.getSite('en', 'wikipedia')
 
+    def _check_member(self, obj, member, call=False):
+        self.assertTrue( hasattr(obj, member) )
+        if call:
+            self.assertTrue( callable(getattr(obj, member)) )
+
 if __name__ == "__main__":
     unittest.main()

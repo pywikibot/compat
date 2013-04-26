@@ -15,6 +15,8 @@ __version__ = '$Id$'
 import unittest
 import test_pywiki
 
+import sys
+
 import wikipedia as pywikibot
 
 
@@ -172,33 +174,126 @@ u'Wikipedia:Fotowerkstatt',
 u'Wikipedia:Urheberrechtsfragen',
 ]
 
+PAGE_SINGLE_GENERIC = PAGE_SET_Page_getSections[0]
+
+ITEM_SINGLE_GENERIC = u'Q4115189'
+
 
 class PyWikiWikipediaTestCase(test_pywiki.PyWikiTestCase):
 
     def setUp(self):
         result    = test_pywiki.PyWikiTestCase.setUp(self)
         self.site = pywikibot.getSite('de', 'wikipedia')
+        self.repo = self.site.data_repository()
         return result
 
+    def test_module_import(self):
+        self.assertTrue( "pywikibot" in sys.modules )
+
+    def test_Site(self):
+        self._check_member(pywikibot, "Site", call=True)
+
+    def test_Site_getParsedString(self):
+        self._check_member(self.site, "getParsedString", call=True)
+        test_text = u'{{CURRENTTIMESTAMP}}'
+        text = self.site.getParsedString(test_text, keeptags = [])
+        self.assertTrue( len(text) <= len(test_text) )
+        text = self.site.getParsedString(test_text)
+        self.assertTrue( len(text) >= len(test_text) )
+
+    def test_Site_getExpandedString(self):
+        self._check_member(self.site, "getExpandedString", call=True)
+        test_text = u'{{CURRENTTIMESTAMP}}'
+        text = self.site.getExpandedString(test_text)
+        self.assertTrue( len(text) <= len(test_text) )
+
+    def test_Page(self):
+        self._check_member(pywikibot, "Page", call=True)
+
     def test_Page_getSections(self):
-        self.assertEqual( len(PAGE_SET_Page_getSections), 148 )
+        self._check_member(pywikibot.Page(self.site, PAGE_SINGLE_GENERIC),
+                           "getSections", call=True)
+        self.assertEqual( len(PAGE_SET_Page_getSections), 146 )
         count = 0
         problems = []
         for i, TESTPAGE in enumerate(PAGE_SET_Page_getSections):
             page = pywikibot.Page(self.site, TESTPAGE)
             try:
                 sections = page.getSections(minLevel=1)
-            except pywikibot.exceptions.Error:
+            except pywikibot.Error:
                 count += 1
                 problems.append( (i, page) )
         print "Number of pages total:", len(PAGE_SET_Page_getSections)
         print "Number of problematic pages:", count
         #print "Problematic pages:", problems
         print "Problematic pages:\n", "\n".join( map(str, problems) )
-        #self.assertLessEqual( count, 4 )
-        self.assertTrue( count <= 0 )
+        self.assertLessEqual(count, round(len(PAGE_SET_Page_getSections)/50.))
+        #self.assertTrue( count <= 0 )
 
-        return
+    def test_Page_purgeCache(self):
+        page = pywikibot.Page(self.site, PAGE_SINGLE_GENERIC)
+        self._check_member(page, "purgeCache", call=True)
+        self.assertEqual( page.purgeCache(), True )
+
+    def test_Page_isRedirectPage(self):
+        page = pywikibot.Page(self.site, PAGE_SINGLE_GENERIC)
+        self._check_member(page, "isRedirectPage", call=True)
+        page.isRedirectPage()
+
+    def test_Page_getVersionHistory(self):
+        page = pywikibot.Page(self.site, PAGE_SINGLE_GENERIC)
+        self._check_member(page, "getVersionHistory", call=True)
+        self.assertEqual( len(page.getVersionHistory(revCount=1)), 1 )
+        self.assertGreater( len(page.getVersionHistory()), 1 )
+
+    def test_Page_get(self):
+        page = pywikibot.Page(self.site, PAGE_SINGLE_GENERIC)
+        self._check_member(page, "get", call=True)
+        page.get()
+
+    def test_DataPage(self):
+        self._check_member(pywikibot, "DataPage", call=True)
+
+    def test_DataPage_setitem(self):
+        page = pywikibot.DataPage(self.repo, ITEM_SINGLE_GENERIC)
+        self._check_member(page, "setitem", call=True)
+        # more tests ... ?!
+
+    def test_DataPage_editclaim(self):
+        page = pywikibot.DataPage(self.repo, ITEM_SINGLE_GENERIC)
+        self._check_member(page, "editclaim", call=True)
+        # more tests ... ?!
+
+    def test_DataPage_createitem(self):
+        page = pywikibot.DataPage(self.repo, ITEM_SINGLE_GENERIC)
+        self._check_member(page, "createitem", call=True)
+        # more tests ... ?!
+
+    def test_DataPage_get(self):
+        page = pywikibot.DataPage(self.repo, ITEM_SINGLE_GENERIC)
+        self._check_member(page, "get", call=True)
+        self._check_member(page, "getentities", call=True)
+        page.get()
+
+    def test_DataPage_searchentities(self):
+        page = pywikibot.DataPage(self.repo, ITEM_SINGLE_GENERIC)
+        self._check_member(page, "searchentities", call=True)
+        # more tests ... ?!
+
+    def test_DataPage_linktitles(self):
+        page = pywikibot.DataPage(self.repo, ITEM_SINGLE_GENERIC)
+        self._check_member(page, "linktitles", call=True)
+        # more tests ... ?!
+
+    def test_DataPage_removeclaim(self):
+        page = pywikibot.DataPage(self.repo, ITEM_SINGLE_GENERIC)
+        self._check_member(page, "removeclaim", call=True)
+        # more tests ... ?!
+
+    def test_DataPage_removereferences(self):
+        page = pywikibot.DataPage(self.repo, ITEM_SINGLE_GENERIC)
+        self._check_member(page, "removereferences", call=True)
+        # more tests ... ?!
 
 if __name__ == "__main__":
     unittest.main()
