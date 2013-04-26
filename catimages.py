@@ -3481,11 +3481,11 @@ def main():
             # skip if download not possible
             pywikibot.warning(u"%s, skipped..." % err)
             continue
-        except Exception, err:
+        except:
             # skip on any unexpected error, but report it
-            pywikibot.error(u"%s" % err)
+            pywikibot.exception(tb=True)
             pywikibot.error(u"was not able to process page %s !!!\n" %\
-                             image.title(asLink=True))
+                            image.title(asLink=True))
             continue
         resultCheck = Bot.checkStep()
         tagged = False
@@ -3494,6 +3494,7 @@ def main():
             if ret:
                 outresult.append( ret )
         except AttributeError:
+            pywikibot.exception(tb=True)
             pywikibot.error(u"was not able to process page %s !!!\n" %\
                             image.title(asLink=True))
         limit += -1

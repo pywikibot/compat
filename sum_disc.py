@@ -221,16 +221,13 @@ bot_config = {    # unicode values
                     },
 }
 
-# debug tools
-# (look at 'bot_control.py' for more info)
-debug = []                   # no write, all users
-#debug.append( 'user' )       # skip users
-#debug.append( 'page' )       # skip pages
-#debug.append( 'write2hist' ) # write history (operational mode)
-#debug.append( 'toolserver' ) # toolserver down
-#debug.append( 'code' )       # code debugging
-debug_params = {'user': lambda user: (user.name()  != u'DrTrigon'),
-                'page': lambda page: (page.title() != u'...'),}
+# debug switches
+_debug_switch = {
+    #'user': lambda user: (user.name()  != u'DrTrigon'),
+    'user': lambda user: False,
+    #'page': lambda page: (page.title() != u'...'),
+    'page': lambda page: False,
+}
 
 docuReplacements = {
 #    '&params;': pagegenerators.parameterHelp
@@ -260,9 +257,6 @@ class SumDiscBot(basic.AutoBasicBot):
 
         pywikibot.output(u'\03{lightgreen}* Initialization of bot:\03{default}')
 
-        # code debugging
-        logging.basicConfig(level=logging.DEBUG if ('code' in debug) else logging.INFO)
-
         basic.AutoBasicBot.__init__(self)
 
         # modification of timezone to be in sync with wiki
@@ -275,8 +269,6 @@ class SumDiscBot(basic.AutoBasicBot):
         # convert e.g. namespaces to corret language
         self._bot_config['TemplateName'] = pywikibot.Page(self.site, self._bot_config['TemplateName']).title()
         self._template_regex = re.compile('\{\{' + self._bot_config['TemplateName'] + '(.*?)\}\}', re.S)
-
-        self._debug = debug
 
 
         lang = locale.locale_alias.get(self.site.lang, locale.locale_alias['en']).split('.')[0]
@@ -326,10 +318,10 @@ class SumDiscBot(basic.AutoBasicBot):
 
         pywikibot.output(u'\03{lightgreen}* Processing User List (wishes):\03{default}')
 
-        if 'user' in debug: pywikibot.output(u'\03{lightyellow}=== ! DEBUG MODE USERS WILL BE SKIPPED ! ===\03{default}')
-
         for user in self._user_list:                    # may be try with PreloadingGenerator?!
-            if (('user' in debug) and debug_params['user'](user)): continue
+            if _debug_switch['user'](user):
+                pywikibot.warning(u'\03{lightyellow}=== ! USER WILL BE SKIPPED ! ===\03{default}')
+                continue
 
             # set user and init params
             self.setUser(user)
@@ -803,7 +795,9 @@ class SumDiscBot(basic.AutoBasicBot):
         #gen4 = pagegenerators.RedirectFilterPageGenerator(gen3)
         # lets hope that no generator loses pages... (since sometimes this may happen)
         for page in gen3:
-            if (('page' in debug) and debug_params['page'](page)): continue
+            if _debug_switch['page'](page):
+                pywikibot.warning(u'\03{lightyellow}=== ! PAGE WILL BE SKIPPED ! ===\03{default}')
+                continue
 
             name = page.title()
             #print ">>>", name, "<<<"
@@ -898,8 +892,8 @@ class SumDiscBot(basic.AutoBasicBot):
         hist = self.pages.hist
 
         # get global wiki notifications (toolserver/merl)        
-        if 'toolserver' in debug:
-            pywikibot.output(u'\03{lightyellow}=== ! DEBUG MODE TOOLSERVER ACCESS WILL BE SKIPPED ! ===\03{default}')
+        if pywikibot.simulate:
+            pywikibot.warning(u'\03{lightyellow}=== ! TOOLSERVER ACCESS WILL BE SKIPPED ! ===\03{default}')
             globalnotify = []
         else:
             globalnotify = self._globalnotifications()
@@ -1088,10 +1082,10 @@ class SumDiscBot(basic.AutoBasicBot):
 
             pywikibot.output(u'\03{lightpurple}*** Discussion updates added to: %s (purge: %s)\03{default}' % (self._userPage.title(asLink=True), purge))
 
-            if 'write2hist' in debug:
+            if not pywikibot.simulate:
                 self.putHistory(self.pages.hist)
             else:
-                pywikibot.output(u'\03{lightyellow}=== ! DEBUG MODE NOTHING WRITTEN TO HISTORY ! ===\03{default}')
+                pywikibot.warning(u'\03{lightyellow}=== ! NOTHING WRITTEN TO HISTORY ! ===\03{default}')
         else:
             pywikibot.output(u'\03{lightpurple}*** Discussion up to date: NOTHING TO DO\03{default}')
 
@@ -1420,8 +1414,7 @@ class PageSections(object):
         self._user  = user
 
         # code debugging
-        if 'code' in debug:
-            pywikibot.output(page.title())
+        pywikibot.debug(page.title())
 
         # get content and sections (content was preloaded earlier)
         #buf = page.get(force=True)

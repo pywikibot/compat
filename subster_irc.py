@@ -39,10 +39,6 @@ import thread
 
 # Configuration imported from 'subster.py'.
 
-# debug tools
-# (look at 'bot_control.py' and 'subster.py' for more info)
-debug = []
-
 
 class SubsterTagModifiedBot(articlenos.ArtNoDisp):
 #    def __init__(self, site, channel, nickname, server, port=6667):
@@ -146,7 +142,6 @@ def main_subster(page, params=None):
 
 def main():
     args = pywikibot.handleArgs()
-    subster.debug = debug
     site = pywikibot.getSite()
     site.forceLogin()
     chan = '#' + site.language() + '.' + site.family.name

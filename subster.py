@@ -138,11 +138,6 @@ bot_config = {
         'EditFlags':        {'minorEdit': True, 'botflag': True},
 }
 
-# debug tools
-# (look at 'bot_control.py' for more info)
-debug = []
-#debug.append( 'code' )  # code debugging
-
 
 class SubsterBot(basic.AutoBasicBot):
     '''
@@ -160,8 +155,6 @@ class SubsterBot(basic.AutoBasicBot):
         '''Constructor of SubsterBot(), initialize needed vars.'''
 
         pywikibot.output(u'\03{lightgreen}* Initialization of bot:\03{default}')
-
-        logging.basicConfig(level=logging.DEBUG if ('code' in debug) else logging.INFO)
 
         basic.AutoBasicBot.__init__(self)
 
@@ -181,8 +174,6 @@ class SubsterBot(basic.AutoBasicBot):
         self._template_regex = re.compile('\{\{' + self._bot_config['TemplateName'] + '(.*?)\}\}', re.S)
         if self.site.is_data_repository():
             self._bot_config['VerboseMessage'] = self._bot_config['data_VerboseMessage']
-
-        self._debug = debug
 
         # init constants
         self._userListPage        = pywikibot.Page(self.site, self._bot_config['TemplateName'])
