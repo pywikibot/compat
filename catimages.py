@@ -93,14 +93,14 @@ import pagegenerators, catlib
 import checkimages
 
 # DrTrigonBot framework packages
-import dtbext.pycolorname as pycolorname
-#import dtbext._mlpy as mlpy
 target = os.path.join(scriptdir, 'dtbext')
 sys.path.append(target)
+import pycolorname
+#import _mlpy as mlpy
 from colormath.color_objects import RGBColor
 from py_w3c.validators.html.validator import HTMLValidator, ValidationFault
-sys.path.remove(target)
-#from dtbext.pdfminer import pdfparser, pdfinterp, pdfdevice, converter, cmapdb, layout
+#from pdfminer import pdfparser, pdfinterp, pdfdevice, converter, cmapdb, layout
+#sys.path.remove(target)
 
 locale.setlocale(locale.LC_ALL, '')
 
@@ -694,7 +694,7 @@ class FileData(object):
         #   BoWclassify /data/toolserver/pywikipedia/dtbext/opencv/VOC2007 /data/toolserver/pywikipedia/dtbext/opencv/data FAST SURF BruteForce | tee run.log
         #   BoWclassify /data/toolserver/pywikipedia/dtbext/opencv/VOC2007 /data/toolserver/pywikipedia/dtbext/opencv/data HARRIS SIFT BruteForce | tee run.log
         # http://experienceopencv.blogspot.com/2011/02/object-recognition-bag-of-keypoints.html
-        import dtbext.opencv as opencv
+        import opencv
 
         if os.path.exists(bowDescPath):
             os.remove(bowDescPath)
@@ -1016,7 +1016,7 @@ class FileData(object):
         # ^^^  THUS RESCALING TO ABOUT 200px ABOVE  ^^^
 
         # sys.stdout handeled, but with freopen which could give issues
-        import dtbext.jseg as jseg
+        import jseg
         # e.g. "segdist -i test3.jpg -t 6 -r9 test3.map.gif"
         enable_recovery()   # enable recovery from hard crash
         jseg.segdist_cpp.main( ("segdist -i %s -t 6 -r9 %s"%(tmpjpg, tmpgif)).split(" ") )
@@ -1040,7 +1040,7 @@ class FileData(object):
     # http://peekaboo-vision.blogspot.ch/2012/05/superpixels-for-python-pretty-slic.html
     # http://ivrg.epfl.ch/supplementary_material/RK_SLICSuperpixels/index.html
     def _util_detect_ColorSegments_SLIC(self, img):
-        import dtbext.slic as slic
+        import slic
 
         im = np.array(img)
         image_argb = np.dstack([im[:, :, :1], im]).copy("C")
@@ -1394,9 +1394,9 @@ class FileData(object):
 
         # DataMatrix
         try:
-            from pydmtx import DataMatrix           # linux distro package (fedora)
+            from pydmtx import DataMatrix   # linux distro package (fedora)
         except:
-            from dtbext._pydmtx import DataMatrix   # TS (debian)
+            from _pydmtx import DataMatrix  # TS (debian)
 
         ## Write a Data Matrix barcode
         #dm_write = DataMatrix()
@@ -1444,9 +1444,9 @@ class FileData(object):
 
         # supports many popular symbologies
         try:
-            import zbar                     # TS (debian)
+            import zbar             # TS (debian)
         except:
-            import dtbext._zbar as zbar     # other distros (fedora)
+            import _zbar as zbar    # other distros (fedora)
         
         try:
             img = Image.open(self.image_path_JPEG).convert('L')
