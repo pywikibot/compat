@@ -37,8 +37,6 @@ os.chdir( scriptdir )
 
 print '* create docs from docstrings in HTML and LaTeX (PDF) format\n' \
       '  [doxygen]'
-if not os.path.exists(docsdir):
-    os.mkdir(docsdir)
 os.system('date > %s' % os.path.join(docsdir, 'release-doxygen.log'))
 os.system('doxygen &>> %s' % os.path.join(docsdir, 'release-doxygen.log'))
 
@@ -59,4 +57,4 @@ os.system('nosetests 2>> %s' % os.path.join(docsdir, 'release-nosetests.log'))
 print '* create coverage report in HTML format\n' \
       '  [coverage]'
 #os.system('coverage report -m')
-os.system('coverage html --directory=%s' % os.path.join(docsdir, 'coverage/'))
+os.system('coverage html --directory=%s' % coveragedir)
