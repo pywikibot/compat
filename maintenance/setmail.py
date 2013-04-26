@@ -1,6 +1,13 @@
 # -*- coding: utf-8  -*-
 """ This tool sets an email address on all bot accounts and email confirms them.
 """
+#
+# (C) Pywikipedia bot team, 2013
+#
+# Distributed under the terms of the MIT license.
+#
+__version__ = '$Id$'
+#
 
 import sys, os, getpass
 sys.path.insert(1, '..')

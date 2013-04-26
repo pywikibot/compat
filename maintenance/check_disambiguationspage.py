@@ -12,6 +12,7 @@ with Family.disambiguationTemplates dictionary
 #
 __version__ = '$Id$'
 #
+
 import sys
 sys.path.insert(1, '..')
 import pywikibot

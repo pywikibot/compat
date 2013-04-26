@@ -1,5 +1,13 @@
-""" This module contains a read-write class that represents the user preferences. """
 # -*- coding: utf-8  -*-
+""" This module contains a read-write class that represents the user preferences. """
+#
+# (C) Pywikipedia bot team, ?-2013
+#
+# Distributed under the terms of the MIT license.
+#
+__version__ = '$Id$'
+#
+
 from HTMLParser import HTMLParser
 from htmlentitydefs import name2codepoint
 
