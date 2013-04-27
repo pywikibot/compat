@@ -1634,3 +1634,18 @@ GENERATE_LEGEND        = YES
 # the various graphs.
 
 DOT_CLEANUP            = YES
+
+#---------------------------------------------------------------------------
+# Configuration options related to doxypy (http://code.foosel.org/doxypy)
+#---------------------------------------------------------------------------
+
+# If the FILTER_SOURCE_FILES tag is set to YES, the doxypy input filter (if set
+# using INPUT_FILTER) will be used to filter the input files when producing
+# docs. The doxypy filter reformats python comments to conform to doxygen
+# documentation blocks. This makes it possible to use the Doxygen/Javadoc
+# syntax inside of docstrings when writing code documentation and automatically
+# generate API documentation out of it instead of being forced to use non-
+# python documentation blocks or to document code redundantly. 
+
+#FILTER_SOURCE_FILES = YES
+#INPUT_FILTER = "python docs/doxypy.py"
