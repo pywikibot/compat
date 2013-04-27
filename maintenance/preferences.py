@@ -167,9 +167,9 @@ def set_all(keys, values, verbose=False):
                 set_for(lang, family, keys, values, verbose)
             except (SystemExit, KeyboardInterrupt):
                 return
-            except Exception, e:
-                pywikibot.output(u'Warning! An exception occured! %s: %s'
-                                 % (e.__class__.__name__, str(e)))
+            except:
+                pywikibot.exception(tb=True)
+                pywikibot.warning(u'An exception occured!')
                 log.write('FAILED\t%s\t%s\n' % (family, lang))
             else:
                 log.write('SUCCESS\t%s\t%s\n' % (family, lang))
@@ -194,7 +194,7 @@ def set_for(lang, family, keys, values, verbose=False):
 
 def main():
 
-    pywikibot.output(u'Warning! This script will set preferences on all '
+    pywikibot.warning(u'This script will set preferences on all '
                      u'configured accounts!')
     pywikibot.output(u'You have %s accounts configured.'
                      % sum([len(family)
