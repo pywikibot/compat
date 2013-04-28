@@ -200,7 +200,7 @@ class SandboxBot:
                     else:
                         diff = minutesDiff(sandboxPage.editTime(), time.strftime("%Y%m%d%H%M%S", time.gmtime()))
                         if pywikibot.verbose:
-                            pywikibot.output(str((sandboxPage.editTime(), time.strftime("%Y%m%d%H%M%S", time.gmtime()))))
+                            pywikibot.output(unicode((sandboxPage.editTime(), time.strftime("%Y%m%d%H%M%S", time.gmtime()))))
                         #Is the last edit more than 5 minutes ago?
                         if diff >= self.delay:
                             sandboxPage.put(translatedContent, translatedMsg)
