@@ -828,7 +828,7 @@ not supported by PyWikipediaBot!"""
         # I raise a ServerError() yet, but maybe it should be NoPage().
         if not textareaFound:
             if verbose:
-                output(str(pageInfo))
+                output(unicode(pageInfo))
             raise ServerError('ServerError: No textarea found in %s' % self)
 
         self.editRestriction = ''
@@ -4565,7 +4565,7 @@ class DataPage(Page):
         # I raise a ServerError() yet, but maybe it should be NoPage().
         if not textareaFound:
             if verbose:
-                output(str(pageInfo))
+                output(unicode(pageInfo))
             raise ServerError('ServerError: No textarea found in %s' % self)
 
         self.editRestriction = ''
@@ -5255,7 +5255,7 @@ class _GetAll(object):
         pagenames = u'\r\n'.join(pagenames)
         if type(pagenames) is not unicode:
             warning(u'xmlreader.WikipediaXMLHandler.getData() got non-unicode page names. Please report this.')
-            output(str(pagenames))
+            output(unicode(pagenames))
         # convert Unicode string to the encoding used on that wiki
         pagenames = pagenames.encode(self.site.encoding())
         predata = {
@@ -6882,7 +6882,7 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
             params['siprop'].extend(['statistics', ])
             if key in ['specialpagealiases', 'interwikimap', 'namespacealiases', 'usergroups', ]:
                 if verbose:
-                    output('getting huge siprop %s...' % key)
+                    output(u'getting huge siprop %s...' % key)
                 params['siprop'] = [key]
 
         #ver 1.13 handle
@@ -6891,7 +6891,7 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                 params['siprop'].extend(['fileextensions', 'rightsinfo', ])
             if key in ['magicwords', 'extensions', ]:
                 if verbose:
-                    output('getting huge siprop %s...' % key)
+                    output(u'getting huge siprop %s...' % key)
                 params['siprop'] = [key]
         try:
             data = query.GetData(params, self)['query']
@@ -7810,7 +7810,7 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
                 get_throttle()
             data = query.GetData(params, self)
             if verbose:
-                debug('allpages>>> data.keys() %s' % data.keys())
+                debug(u'allpages>>> data.keys() %s' % data.keys())
             if 'warnings' in data:
                 warning = data['warnings']['allpages']['*']
                 raise RuntimeError("API query warning: %s" % warning)
