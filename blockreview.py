@@ -15,7 +15,7 @@ All other parameters will be regarded as part of the title of a single page,
 and the bot will only work on that single page.
 """
 #
-# (C) xqt, 2010-2011
+# (C) xqt, 2010-2013
 #
 # Distributed under the terms of the MIT license.
 #
@@ -23,7 +23,8 @@ __version__ = '$Id$'
 #
 
 import wikipedia as pywikibot
-import userlib, query
+import userlib
+import query
 
 class BlockreviewBot:
     # notes
@@ -49,17 +50,17 @@ class BlockreviewBot:
     }
 
     unblock_tpl = {
-        'de' : u'Benutzer:TAXman/Sperrprüfungsverfahren',
-        'pt' : u'Predefinição:Discussão de bloqueio',
+        'de': u'Benutzer:TAXman/Sperrprüfungsverfahren',
+        'pt': u'Predefinição:Discussão de bloqueio',
     }
 
     review_cat = {
-        'de' : u'Wikipedia:Sperrprüfung',
+        'de': u'Wikipedia:Sperrprüfung',
     }
 
     project_name = {
-        'de' : u'Benutzer:TAXman/Sperrprüfung Neu',
-        'pt' : u'Wikipedia:Pedidos a administradores/Discussão de bloqueio',
+        'de': u'Benutzer:TAXman/Sperrprüfung Neu',
+        'pt': u'Wikipedia:Pedidos a administradores/Discussão de bloqueio',
     }
 
     def __init__(self, dry):
@@ -83,7 +84,7 @@ class BlockreviewBot:
                                      defaultNamespace=10)
         except KeyError:
             pywikibot.error(u'Language "%s" not supported by this bot.'
-                             % self.site.lang)
+                            % self.site.lang)
         else:
             for page in genPage.getReferences(follow_redirects=False,
                                               withTemplateInclusion=True,
@@ -113,16 +114,18 @@ class BlockreviewBot:
                 # Step 1
                 # a new template is set on blocked users talk page.
                 # Notify the blocking admin
-                if templates[1]==[] or templates[1][0]==u'1':
+                if templates[1] == [] or templates[1][0] == u'1':
                     if self.info['action'] == 'block' or user.isBlocked():
                         if self.site.sitename() == 'wikipedia:de':
                             admin = userlib.User(self.site, self.info['user'])
                             adminPage = admin.getUserTalkPage()
                             adminText = adminPage.get()
                             note = pywikibot.translate(self.site.lang,
-                                                       self.note_admin) % self.parts
+                                                       self.note_admin,
+                                                       self.parts)
                             comment = pywikibot.translate(self.site.lang,
-                                                          self.msg_admin) % self.parts
+                                                          self.msg_admin,
+                                                          self.parts)
                             adminText += note
                             self.save(adminText, adminPage, comment, False)
                         ### test for pt-wiki
@@ -137,37 +140,43 @@ class BlockreviewBot:
                                                     u'{{%s|2}}' % unblock_tpl)
                         talkText = talkText.replace(u'{{%s|1}}' % unblock_tpl,
                                                     u'{{%s|2}}' % unblock_tpl)
-                        talkComment = pywikibot.translate(self.site.lang, self.msg_user % self.parts)
+                        talkComment = pywikibot.translate(self.site.lang,
+                                                          self.msg_user
+                                                          % self.parts)
 
                         # some test stuff
-                        if pywikibot.logger.isEnabledFor(pywikibot.DEBUG) \
-                           and self.site().loggedInAs() == u'Xqbot:':
-                            testPage = pywikibot.Page(self.site, 'Benutzer:Xqt/Test')
+                        if True and self.site().loggedInAs() == u'Xqbot:':
+                            testPage = pywikibot.Page(self.site,
+                                                      'Benutzer:Xqt/Test')
                             test = testPage.get()
                             test += note
-                            self.save(test, testPage, '[[WP:BA#SPP-Bot|SPPB-Test]]')
+                            self.save(test, testPage,
+                                      '[[WP:BA#SPP-Bot|SPPB-Test]]')
                     else:
                         # nicht blockiert. Fall auf DS abschließen
                         talkText = talkText.replace(u'{{%s}}'   % unblock_tpl,
                                                     u'{{%s|4}}' % unblock_tpl)
                         talkText = talkText.replace(u'{{%s|1}}' % unblock_tpl,
                                                     u'{{%s|4}}' % unblock_tpl)
-                        talkComment = pywikibot.translate(self.site.lang, self.msg_done)
+                        talkComment = pywikibot.translate(self.site.lang,
+                                                          self.msg_done)
                 # Step 2
                 # Admin has been notified.
                 # Wait for 2 hours, than put a message to the project page
-                elif templates[1][0]==u'2':
+                elif templates[1][0] == u'2':
                     if self.info['action'] == 'block' or user.isBlocked():
                         # TODO: check whether wait time is gone
                         #       check whether this entry already esists
                         project = pywikibot.Page(self.site, project_name)
                         projText = project.get()
                         note = pywikibot.translate(self.site.lang,
-                                                   self.note_project) % self.parts
+                                                   self.note_project,
+                                                   self.parts)
                         comment = pywikibot.translate(self.site.lang,
-                                                      self.msg_admin) % self.parts
+                                                      self.msg_admin,
+                                                      self.parts)
                         projText += note
-                        self.save(projText, project, comment, botflag = False)
+                        self.save(projText, project, comment, botflag=False)
                         talkText = talkText.replace(u'{{%s|2}}' % unblock_tpl,
                                                     u'{{%s|3}}' % unblock_tpl)
                         talkComment = u'Bot: [[%s|Wikipedia:Sperrprüfung]] eingetragen' \
@@ -176,22 +185,24 @@ class BlockreviewBot:
                         # User is unblocked. Review can be closed
                         talkText = talkText.replace(u'{{%s|2}}' % unblock_tpl,
                                                     u'{{%s|4}}' % unblock_tpl)
-                        talkComment = pywikibot.translate(self.site.lang, self.msg_done)
+                        talkComment = pywikibot.translate(self.site.lang,
+                                                          self.msg_done)
                 # Step 3
                 # Admin is notified, central project page has a message
                 # Discussion is going on
                 # Check whether it can be closed
-                elif templates[1][0]==u'3':
+                elif templates[1][0] == u'3':
                     if self.info['action'] == 'block' or user.isBlocked():
                         pass
                     else:
                         # User is unblocked. Review can be closed
                         talkText = talkText.replace(u'{{%s|3}}' % unblock_tpl,
                                                     u'{{%s|4}}' % unblock_tpl)
-                        talkComment = pywikibot.translate(self.site.lang, self.msg_done)
+                        talkComment = pywikibot.translate(self.site.lang,
+                                                          self.msg_done)
                 # Step 4
                 # Review is closed
-                elif templates[1][0]==u'4':
+                elif templates[1][0] == u'4':
                     # nothing left to do
                     pass
             else:
@@ -208,29 +219,30 @@ class BlockreviewBot:
                                            title=user.getUserPage().title(),
                                            dump=True).next()
             self.parts = {
-                'admin'    : self.info['user'],
-                'user'     : self.info['title'],
-                'usertalk' : user.getUserTalkPage().title(),
-                'section'  : u'Sperrprüfung',
-                'time'     : self.info['timestamp'],
-                'duration' : self.info['block']['duration'],
-                'comment'  : self.info['comment'],
+                'admin':    self.info['user'],
+                'user':     self.info['title'],
+                'usertalk': user.getUserTalkPage().title(),
+                'section':  u'Sperrprüfung',
+                'time':     self.info['timestamp'],
+                'duration': self.info['block']['duration'],
+                'comment':  self.info['comment'],
             }
 
     def SysopGenerator(self):
         params = param = {
-            'action'  : 'query',
-            'list'    : 'allusers',
-            'augroup' : 'sysop',
-            'auprop'  : 'groups',
-            'aulimit' : 500,
-    }
+            'action':  'query',
+            'list':    'allusers',
+            'augroup': 'sysop',
+            'auprop':  'groups',
+            'aulimit': 500,
+        }
         data = query.GetData(params, self.site)
         for user in data['query']['allusers']:
             # exclude sysop bots
             if 'bot' not in user['groups']:
                 # yield the sysop talkpage
-                yield pywikibot.Page(self.site, user['name'], defaultNamespace=3)
+                yield pywikibot.Page(self.site, user['name'],
+                                     defaultNamespace=3)
 
     def load(self, page):
         """
@@ -257,7 +269,7 @@ class BlockreviewBot:
                              % page.title())
             # show what was changed
             pywikibot.showDiff(page.get(), text)
-            pywikibot.output(u'Comment: %s' %comment)
+            pywikibot.output(u'Comment: %s' % comment)
             if not self.dry:
                 choice = pywikibot.inputChoice(
                     u'Do you want to accept these changes?',
@@ -276,11 +288,12 @@ class BlockreviewBot:
                             % (page.title()))
                     except pywikibot.SpamfilterError, error:
                         pywikibot.output(
-u'Cannot change %s because of spam blacklist entry %s'
-                            % (page.title(), error.url))
+                            u'Cannot change %s because of spam blacklist entry '
+                            u'%s' % (page.title(), error.url))
                     else:
                         return True
-        return False
+        return
+
 
 def main():
     show = False
