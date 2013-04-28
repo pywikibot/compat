@@ -5060,7 +5060,9 @@ class _GetAll(object):
     def run(self):
         if self.pages:
             # Sometimes query does not contains revisions
-            if  self.site.has_api() and logger.isEnabledFor(DEBUG):
+            # or some pages are missing. Deactivate api call and use the
+            # old API special:export
+            if  self.site.has_api() and False:
                 while True:
                     try:
                         data = self.getDataApi()
@@ -5081,7 +5083,7 @@ class _GetAll(object):
                     self._norm = dict([(x['from'],x['to']) for x in data['query']['normalized']])
                 for vals in data['query']['pages'].values():
                     self.oneDoneApi(vals)
-            else: #read pages via Special:Export
+            else:  # read pages via Special:Export
                 while True:
                     try:
                         data = self.getData()
