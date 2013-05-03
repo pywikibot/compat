@@ -505,7 +505,6 @@ class User(object):
 
             raise BlockError
         return True
-
     def unblock(self, reason=None):
         """
         Unblock the user.
@@ -518,6 +517,8 @@ class User(object):
             blockID = self.name()[1:]
         else:
             blockID = self._getBlockID()
+        if not self.site().has_api() or self.site().versionnumber() < 12:
+            return self._unblockOld(blockID, reason)
         self._unblock(blockID,reason)
 
     def _getBlockID(self):
@@ -526,15 +527,28 @@ class User(object):
             usertype="ip"
         else:
             usertype="users"
+        if not self.site().has_api() or self.site().versionnumber() < 12:
+            return getBlockIDOld()
         data = self.site().blocksearch_address(self.name(),usertype)
         try:
             bIDre = data[1]["query"]["blocks"][0]["id"]
-        except KeyError:
+        except IndexError:
             pywikibot.output(data)
             raise BlockIDError
         return bIDre
-
     def _unblock(self, blockID, reason):
+        pywikibot.output(u"Unblocking [[User:%s]]..." % self.name())
+        params = {
+            'action':'unblock',
+            'reason':reason,
+            'id': blockID,
+            'token': self.site().getToken(self, sysop = True),
+        }
+        data = query.GetData(params, self.site(), back_response=True,sysop=True)
+        if 'error' in data:
+            pywikibot.output("Error happend: %s" % str(data['error']))
+        return True
+    def _unblockOld(self, blockID, reason):
         pywikibot.output(u"Unblocking [[User:%s]]..." % self.name())
         token = self.site().getToken(self, sysop = True)
         predata = {
@@ -550,8 +564,15 @@ class User(object):
                 raise AlreadyUnblockedError
             raise UnblockError, data
         return True
-
-
+    def getBlockIDOld(self):
+        self.family.blocksearch_address(self.lang, s)
+        address = self.site().blocksearch_address(self.name())
+        data = self.site().getUrl(address)
+        bIDre = re.search(r'action=unblock&amp;id=(\d+)', data)
+        if not bIDre:
+            pywikibot.output(data)
+            raise BlockIDError
+        return bIDre.group(1)
 def getall(site, users, throttle=True, force=False):
     """Bulk-retrieve users data from site
 

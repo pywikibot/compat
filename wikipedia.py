@@ -8309,6 +8309,8 @@ sysopnames['%s']['%s']='name' to your user-config.py"""
 
     def blocksearch_address(self, s, usertype):
         """Return path to search for blocks on IP address 's'."""
+        if not self.has_api() or self.versionnumber() <12:
+            return self.family.blocksearch_address(self.lang, s)
         params = {
             'bk%s' % usertype : s,
             'action' : 'query',
