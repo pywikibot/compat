@@ -5062,7 +5062,7 @@ class _GetAll(object):
             # Sometimes query does not contains revisions
             # or some pages are missing. Deactivate api call and use the
             # old API special:export
-            if  self.site.has_api() and False:
+            if  self.site.has_api() and logger.isEnabledFor(DEBUG):
                 while True:
                     try:
                         data = self.getDataApi()
@@ -5450,7 +5450,7 @@ def getall(site, pages, throttle=True, force=False):
                                {'count': len(pages),
                                 # API is deactivated since r8036 because some pages are missing
                                 'API': (u'',
-                                        u'via API ')[site.has_api() and False],
+                                        u'via API ')[site.has_api() and logger.isEnabledFor(DEBUG)],
                                 'site': site}))
     limit = config.special_page_limit / 4 # default is 500/4, but It might have good point for server.
     if len(pages) > limit:
@@ -8898,7 +8898,7 @@ def handleArgs(*args):
         # global debug option for development purposes. Normally does nothing.
         elif arg == '-debug':
             if not logger:
-                setLogfileStatus(False)
+                init_handlers()
             logging.getLogger().setLevel(DEBUG)
             config.special_page_limit = 500
         else:
@@ -8908,6 +8908,8 @@ def handleArgs(*args):
 
     if username:
         config.usernames[default_family][default_code] = username
+
+    #init_handlers()
 
     # TEST for bug #3081100
     if unicode_error:
@@ -9022,7 +9024,6 @@ if unicode_error:
 
 default_family = config.family
 default_code = config.mylang
-logger = None
 # Check
 
 # if the default family+wiki is a non-public one,
@@ -9061,66 +9062,23 @@ def writeToCommandLogFile():
 #
 # ( Please confer branches/rewrite/pywikibot/bot.py for further info )
 
+logger = None
+#_handlers_initialized = False
+
 def setLogfileStatus(enabled, logname=None, header=False):
     # NOTE-1: disable 'fh.setFormatter(formatter)' below in order to get "old"
     #         logging format (without additional info)
     # NOTE-2: enable 'logger.addHandler(ch)' below in order output to console
     #         also (e.g. for simplifying 'pywikibot.output')
-    init_handlers(strm=None, logname=logname, header=header)
-    logger.propagate = enabled
-
-def init_handlers(strm=None, logname=None, header=False):
-    """Initialize logging system for terminal-based bots.
-
-    This function must be called before using pywikibot.output(); and must
-    be called again if the destination stream is changed.
-
-    @param strm: Output stream. If None, re-uses the last stream if one
-        was defined, otherwise uses sys.stderr
-
-    Note: this function is called by handleArgs(), so it should normally
-    not need to be called explicitly
-
-    All user output is routed through the logging module.
-    Each type of output is handled by an appropriate handler object.
-    This structure is used to permit eventual development of other
-    user interfaces (GUIs) without modifying the core bot code.
-    The following output levels are defined:
-       DEBUG - only for file logging; debugging messages
-       STDOUT - output that must be sent to sys.stdout (for bots that may
-                have their output redirected to a file or other destination)
-       VERBOSE - optional progress information for display to user
-       INFO - normal (non-optional) progress information for display to user
-       INPUT - prompts requiring user response
-       WARN - user warning messages
-       ERROR - user error messages
-       CRITICAL - fatal error messages
-    Accordingly, do ''not'' use print statements in bot code; instead,
-    use pywikibot.output function.
-    """
-
-    global logger
+    global logger #_handlers_initialized
 
     if not logger:
+        init_handlers()
+
+    if not logger.handlers:         # init just once (if re-called)
         moduleName = calledModuleName()
         if not moduleName:
             moduleName = "terminal-interface"
-
-        logging.addLevelName(VERBOSE, "VERBOSE")
-            # for messages to be displayed on terminal at "verbose" setting
-            # use INFO for messages to be displayed even on non-verbose setting
-        logging.addLevelName(STDOUT, "STDOUT")
-            # for messages to be displayed to stdout
-        logging.addLevelName(INPUT, "INPUT")
-            # for prompts requiring user response
-
-        logger = logging.getLogger()    # root logger
-        if logger.handlers:             # init just once (if re-called)
-            logger = logging.getLogger('pywiki')
-            return
-        logger.setLevel(DEBUG+1) # all records except DEBUG go to logger
-        if hasattr(logger, 'captureWarnings'):
-            logger.captureWarnings(True)    # introduced in Python >= 2.7
 
         if not logname:
             logname = '%s.log' % moduleName
@@ -9171,6 +9129,59 @@ def init_handlers(strm=None, logname=None, header=False):
         if header:
             writelogheader()
 
+    logger.propagate = enabled
+
+def init_handlers(strm=None):#, logname=None, header=False):
+    """Initialize logging system for terminal-based bots.
+
+    This function must be called before using pywikibot.output(); and must
+    be called again if the destination stream is changed.
+
+    @param strm: Output stream. If None, re-uses the last stream if one
+        was defined, otherwise uses sys.stderr
+
+    Note: this function is called by handleArgs(), so it should normally
+    not need to be called explicitly
+
+    All user output is routed through the logging module.
+    Each type of output is handled by an appropriate handler object.
+    This structure is used to permit eventual development of other
+    user interfaces (GUIs) without modifying the core bot code.
+    The following output levels are defined:
+       DEBUG - only for file logging; debugging messages
+       STDOUT - output that must be sent to sys.stdout (for bots that may
+                have their output redirected to a file or other destination)
+       VERBOSE - optional progress information for display to user
+       INFO - normal (non-optional) progress information for display to user
+       INPUT - prompts requiring user response
+       WARN - user warning messages
+       ERROR - user error messages
+       CRITICAL - fatal error messages
+    Accordingly, do ''not'' use print statements in bot code; instead,
+    use pywikibot.output function.
+    """
+    # currently only the logger is initialized here
+    # the handlers are initialized in setLogfileStatus
+
+    global logger #_handlers_initialized
+
+    if not logger:
+        logging.addLevelName(VERBOSE, "VERBOSE")
+            # for messages to be displayed on terminal at "verbose" setting
+            # use INFO for messages to be displayed even on non-verbose setting
+        logging.addLevelName(STDOUT, "STDOUT")
+            # for messages to be displayed to stdout
+        logging.addLevelName(INPUT, "INPUT")
+            # for prompts requiring user response
+
+        logger = logging.getLogger()    # root logger
+        if logger.handlers:             # init just once (if re-called)
+            logger = logging.getLogger('pywiki')
+            return
+        logger.setLevel(DEBUG+1) # all records except DEBUG go to logger
+        if hasattr(logger, 'captureWarnings'):
+            logger.captureWarnings(True)    # introduced in Python >= 2.7
+
 def writelogheader():
     """
     Save additional version, system and status info to the logfile in use,
@@ -9202,6 +9213,8 @@ def writelogheader():
     output(u'MESSAGES: %s' % ('unanswered' if site.messages() else 'none'))
 
     output(u'=== ' * 14)
+
+init_handlers()     # guarantee 'logger' to be defined
 
 writeToCommandLogFile()
 
@@ -9266,7 +9279,7 @@ def logoutput(text, decoder=None, newline=True, _level=INFO, _logger="",
 
     # make sure logging system has been initialized
     if not logger:
-        setLogfileStatus(False)
+        init_handlers()
 
     frame = currentframe()
     module = os.path.basename(frame.f_code.co_filename)

@@ -145,7 +145,8 @@ class BlockreviewBot:
                                                           % self.parts)
 
                         # some test stuff
-                        if True and self.site().loggedInAs() == u'Xqbot:':
+                        if pywikibot.logger.isEnabledFor(pywikibot.DEBUG) \
+                           and self.site().loggedInAs() == u'Xqbot:':
                             testPage = pywikibot.Page(self.site,
                                                       'Benutzer:Xqt/Test')
                             test = testPage.get()
