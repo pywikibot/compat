@@ -56,7 +56,7 @@ class Family(family.WikimediaFamily):
             'fr': [u'Wikiversité', u'Wikiversity'],
             'it': [u'Wikiversità', u'Wikiversity'],
             'ja': u'Wikiversity',
-            'ko': u'Wikiversity',
+            'ko': [u'위키배움터', u'Wikiversity'],
             'pt': [u'Wikiversidade', u'Wikiversity'],
             'ru': [u'Викиверситет', u'Wikiversity'],
             'sl': [u'Wikiverza', u'Wikiversity'],
@@ -75,7 +75,7 @@ class Family(family.WikimediaFamily):
             'fr': u'Discussion Wikiversité',
             'it': u'Discussioni Wikiversità',
             'ja': [u'Wikiversity・トーク', u'Wikiversity talk', u'Wikiversity‐ノート'],
-            'ko': u'Wikiversity토론',
+            'ko': [u'위키배움터토론', u'Wikiversity토론'],
             'pt': u'Wikiversidade Discussão',
             'ru': u'Обсуждение Викиверситета',
             'sl': u'Pogovor o Wikiverzi',
@@ -107,6 +107,7 @@ class Family(family.WikimediaFamily):
             'fr': u'Projet',
             'it': u'Corso',
             'ja': u'Portal',
+            'ko': u'포털',
         }
         self.namespaces[103] = {
             'ar': u'نقاش البوابة',
@@ -115,6 +116,7 @@ class Family(family.WikimediaFamily):
             'fr': u'Discussion Projet',
             'it': u'Discussioni corso',
             'ja': u'Portal‐ノート',
+            'ko': u'포털토론',
         }
         self.namespaces[104] = {
             'ar': u'موضوع',
