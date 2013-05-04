@@ -202,8 +202,8 @@ class FileData(object):
         # http://opencv.itseez.com/modules/objdetect/doc/cascade_classification.html
         try:
             #image = cv.LoadImage(self.image_path)
-            #img    = cv2.imread( self.image_path, 1 )
-            img    = cv2.imread( self.image_path_JPEG, 1 )
+            #img    = cv2.imread( self.image_path, cv.CV_LOAD_IMAGE_COLOR )
+            img    = cv2.imread( self.image_path_JPEG, cv.CV_LOAD_IMAGE_COLOR )
             #image  = cv.fromarray(img)
             if img == None:
                 raise IOError
@@ -405,7 +405,7 @@ class FileData(object):
         self._info['People'] = []
         scale = 1.
         try:
-            img = cv2.imread(self.image_path_JPEG, 1)
+            img = cv2.imread(self.image_path_JPEG, cv.CV_LOAD_IMAGE_COLOR)
 
             if (img == None) or (min(img.shape[:2]) < 100) or (not img.data) \
                or (self.image_size[0] is None):
@@ -518,7 +518,7 @@ class FileData(object):
 
         scale = 1.
         try:
-            img = cv2.imread(self.image_path_JPEG, 1)
+            img = cv2.imread(self.image_path_JPEG, cv.CV_LOAD_IMAGE_COLOR)
 
             if (img == None):
                 raise IOError
@@ -1180,7 +1180,7 @@ class FileData(object):
 
         scale = 1.
         try:
-            img    = cv2.imread( self.image_path_JPEG, 1 )
+            img    = cv2.imread( self.image_path_JPEG, cv.CV_LOAD_IMAGE_COLOR )
             if (img == None) or (self.image_size[0] is None):
                 raise IOError
             
@@ -1519,8 +1519,8 @@ class FileData(object):
         try:
             #found_all, corners = cv.FindChessboardCorners( im, chessboard_dim )
             found_all, corners = cv2.findChessboardCorners( im, chessboard_dim )
-        except cv2.error, e:
-            pywikibot.error(u'%s' % e)
+        except cv2.error:
+            pywikibot.exception(tb=True)
 
         #cv2.drawChessboardCorners( im, chessboard_dim, corners, found_all )
         ##cv2.imshow("win", im)
@@ -1530,6 +1530,7 @@ class FileData(object):
             corners = [ tuple(item[0]) for item in corners ]
             self._info['Chessboard'] = [{ 'Corners': corners, }]
 
+# TODO: improve chessboard detection
 #        # chess board recognition (more tolerant)
 #        # http://codebazaar.blogspot.ch/2011/08/chess-board-recognition-project-part-1.html
 #        # https://code.ros.org/trac/opencv/browser/trunk/opencv/samples/python/houghlines.py?rev=2770
@@ -1578,6 +1579,8 @@ class FileData(object):
 #        cv2.imshow("win", color_dst)
 #        cv2.waitKey()
 
+# TODO: improve pose estimation/detection
+# TODO: then apply it to faces (eyes, mouth, ... or landmark) also
         if found_all:
             # pose detection
             # http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
@@ -2825,7 +2828,7 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
                 else:
                     try:
                         # since opencv might still work, try this as fall-back
-                        img = cv2.imread( self.image_path, 1 )
+                        img = cv2.imread( self.image_path, cv.CV_LOAD_IMAGE_COLOR )
                         cv2.imwrite(self.image_path_JPEG, img)
 
                         self.image_size = (img.shape[1], img.shape[0])
@@ -2916,7 +2919,25 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         pywikibot.get_throttle()
         content = self.image.get()
 
-        content = self._append_to_template(content, u"Information", tmpl_FileContentsByBot)
+        # check the type of template used on page; Information, Artwork, ...
+        for temp in [u"Information", u"Artwork"]:
+            pos = content.find(u'{{%s' % temp) + 2
+            if pos > 1:
+                break
+        if pos > 1:
+            # cosmetic changes: format the page well to have '\n\n' after the template
+            diff = content[:(pos-2)].count(u'{{') - content[:(pos-2)].count(u'}}')
+            while (content[:pos].count(u'{{') - content[:pos].count(u'}}')) != diff:
+                pos = content.find(u'}}', pos) + 2
+            if content[pos:(pos+2)] != (u"\n"*2):
+                content = content[:pos] + (u"\n"*2) + content[pos:].lstrip()
+        else:
+            pywikibot.warning(u'Page layout issue; Information template could '
+                              u'not be found and thus the data not appended!')
+            return False
+
+        # append template and fill it with data
+        content = self._append_to_template(content, temp, tmpl_FileContentsByBot)
         for i, key in enumerate(self._info_filter):
             item = self._info_filter[key]
 
@@ -2924,20 +2945,24 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
             if info:
                 content = self._append_to_template(content, u"FileContentsByBot", info)
 
+        # append categories
         tags = set([])
         for i, cat in enumerate(list(set(self._result_check + self._result_add))):
             tags.add( u"[[:Category:%s]]" % cat )
             content = pywikibot.replaceCategoryLinks(content, [cat], site=self.site, addOnly=True)
 
+        # cleanup double categories, remove obsolete ones and add templates
         content = pywikibot.replaceCategoryLinks( content, 
                 list(set(pywikibot.getCategoryLinks(content, site=self.site))),
                 site=self.site )
         content = self._remove_category_or_template(content, u"Uncategorized")  # template
         content = self._add_template(content, u"Check categories|year={{subst:#time:Y}}|month={{subst:#time:F}}|day={{subst:#time:j}}|category=[[Category:Categorized by DrTrigonBot]]", top=True)
 
+        # add category guesses
         for i, cat in enumerate(self._result_guess):
             content += u"\n<!--DrTrigonBot-guess-- [[Category:%s]] -->" % cat
 
+        # verbosely output info about changes and apply them
         pywikibot.output(u"--- " * 20)
         pywikibot.output(content)
         pywikibot.output(u"--- " * 20)
@@ -3129,11 +3154,14 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
 
     # place into 'textlib' (or else e.g. 'catlib'/'templib'...)
     def _append_to_template(self, text, name, append):
+        # mask/search template to append to
         pattern  = re.compile(u"(\{\{%s.*?\n)(\s*\}\}\n{2})" % name, flags=re.S)
         template = pattern.search(text).groups()
-        
+
+        # append to template
         template = u"".join( [template[0], append, u"\n", template[1]] )
-        
+
+        # apply changes
         text = pattern.sub(template, text)
         return text
 
