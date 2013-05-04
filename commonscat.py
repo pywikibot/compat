@@ -523,7 +523,7 @@ u'Cannot change %s because of spam blacklist entry %s'
                     (logpage, loguser, logtimestamp, logcomment) = logitem
                     # Some logic to extract the target page.
                     regex = u'moved to \[\[\:?Category:(?P<newcat1>[^\|\}]+)(\|[^\}]+)?\]\]|Robot: Changing Category:(.+) to Category:(?P<newcat2>.+)'
-                    m = re.search(regex, logcomment)
+                    m = re.search(regex, logcomment, flags=re.I)
                     if m:
                         if m.group('newcat1'):
                             return self.checkCommonscatLink(m.group('newcat1'))
