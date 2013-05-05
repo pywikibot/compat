@@ -19,25 +19,12 @@ class Family(family.WikimediaFamily):
                            for lang in self.languages_by_size])
 
         # Override defaults
-        self.namespaces[829]['ru'] = [u'Обсуждение модуля']
-        self.namespaces[828]['ru'] = [u'Модуль']
-        self.namespaces[3]['fr'] = [u'Discussion utilisateur', u'Discussion Utilisateur']
-        self.namespaces[2]['fr'] = [u'Utilisateur']
-        self.namespaces[3]['pt'] = [u'Utilizador Discussão', u'Usuário Discussão', u'Utilizadora Discussão']
-        self.namespaces[2]['pt'] = [u'Utilizador', u'Usuário', u'Utilizadora']
-        self.namespaces[829]['ko'] = [u'모듈토론']
-        self.namespaces[828]['ko'] = [u'모듈']
-        self.namespaces[829]['it'] = [u'Discussioni modulo']
-        self.namespaces[828]['it'] = [u'Modulo']
-        self.namespaces[829]['ar'] = [u'نقاش الوحدة']
-        self.namespaces[828]['ar'] = [u'وحدة']
-        self.namespaces[829]['sl'] = [u'Pogovor o modulu']
-        self.namespaces[828]['sl'] = [u'Modul']
+        self.namespaces[2]['cs'] = [u'Uživatel', u'Uživatelka']
         self.namespaces[3]['cs'] = [u'Diskuse s uživatelem', u'Uživatel diskuse', u'Uživatelka diskuse', u'Diskuse s uživatelkou']
-        self.namespaces[829]['ja'] = [u'モジュール・トーク']
-        self.namespaces[828]['ja'] = [u'モジュール']
-        self.namespaces[829]['es'] = [u'Módulo discusión']
-        self.namespaces[828]['es'] = [u'Módulo']
+        self.namespaces[2]['fr'] = [u'Utilisateur']
+        self.namespaces[3]['fr'] = [u'Discussion utilisateur', u'Discussion Utilisateur']
+        self.namespaces[2]['pt'] = [u'Utilizador', u'Usuário', u'Utilizadora']
+        self.namespaces[3]['pt'] = [u'Utilizador Discussão', u'Usuário Discussão', u'Utilizadora Discussão']
 
         # Most namespaces are inherited from family.Family.
         # Translation used on all wikis for the different namespaces.

@@ -17,6 +17,7 @@ class Family(family.WikimediaFamily):
         }
 
         # Override defaults
+        self.namespaces[1]['repo'] = [u'Talk', u'Item talk']
         self.namespaces[0]['repo'] = [u'', u'Item']
 
         # Most namespaces are inherited from family.Family.
