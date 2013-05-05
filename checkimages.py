@@ -133,7 +133,7 @@ n_txt = {
 # Text that the bot will try to see if there's already or not. If there's a
 # {{ I'll use a regex to make a better check.
 # This will work so:
-# '{{no license' --> '\{\{(?:template:|)no[ _]license ?(?:\||\n|\}) ?' (case
+# '{{no license' --> '\{\{(?:template:)?no[ _]license ?(?:\||\n|\}|/) ?' (case
 # insensitive).
 # If there's not a {{ it will work as usual (if x in Text)
 txt_find = {
@@ -703,15 +703,19 @@ class checkImagesBot(object):
             reportPageText = reportPageObject.get()
         except pywikibot.NoPage:
             pywikibot.output(u'%s has been deleted...' % self.imageName)
-            return False
+            return
         # You can use this function also to find only the user that
         # has upload the image (FixME: Rewrite a bit this part)
         if put:
             pywikibot.showDiff(reportPageText,
                                self.newtext + "\n" + reportPageText)
             pywikibot.output(self.commImage)
-            reportPageObject.put(self.newtext + "\n" + reportPageText,
-                                 comment=self.commImage)
+            try:
+                reportPageObject.put(self.newtext + "\n" + reportPageText,
+                                     comment=self.commImage)
+            except pywikibot.LockedPage:
+                pywikibot.output(u'File is locked. Skipping.')
+                return
         # paginetta it's the image page object.
         try:
             if reportPageObject == self.image and self.uploader:
@@ -725,7 +729,7 @@ class checkImagesBot(object):
             repme = u"\n*[[:File:%s]] problems '''with the APIs'''"
             self.report_image(self.image_to_report, self.rep_page, self.com,
                               repme)
-            return False
+            return
         upBots = pywikibot.translate(self.site, uploadBots, fallback=False)
         luser = pywikibot.url2link(nick, self.site, self.site)
 
@@ -938,7 +942,7 @@ class checkImagesBot(object):
                          % re.escape(self.imageName)
         hash_found = self.image.getHash()
         if not hash_found:
-            return False  # Image deleted, no hash found. Skip the image.
+            return  # Image deleted, no hash found. Skip the image.
 
         commons_image_with_this_hash = commons_site.getFilesFromAnHash(hash_found)
         if commons_image_with_this_hash and \
@@ -963,7 +967,7 @@ class checkImagesBot(object):
                 # We have to skip the check part for that image because
                 # it's on commons but someone has added something on your
                 # project.
-                return False
+                return
             if re.findall(r'\bstemma\b', self.imageName.lower()) and \
                self.site.lang == 'it':
                 pywikibot.output(
@@ -1005,7 +1009,7 @@ class checkImagesBot(object):
         duplicates = self.site.getFilesFromAnHash(hash_found)
 
         if not duplicates:
-            return False  # Error, image deleted, no hash found. Skip the image.
+            return # Error, image deleted, no hash found. Skip the image.
 
         if len(duplicates) > 1:
             if len(duplicates) == 2:
@@ -1061,7 +1065,7 @@ class checkImagesBot(object):
                         pywikibot.output(
                             u"Already put the dupe-template in the files's page"
                             u" or in the dupe's page. Skip.")
-                        return False  # Ok - Let's continue the checking phase
+                        return  # Ok - Let's continue the checking phase
 
                 older_image_ns = u'%s%s' % (self.image_namespace, older_image)
                 only_report = False  # true if the image are not to be tagged as dupes
@@ -1137,7 +1141,7 @@ class checkImagesBot(object):
                     return True  # If Errors, exit (but continue the check)
 
             if older_image != self.imageName:
-                return False  # The image is a duplicate, it will be deleted. So skip the check-part, useless
+                return  # The image is a duplicate, it will be deleted. So skip the check-part, useless
         return True  # Ok - No problem. Let's continue the checking phase
 
     def report_image(self, image_to_report, rep_page=None, com=None,
@@ -1320,10 +1324,9 @@ class checkImagesBot(object):
             try:
                 self.allLicenses.remove(template)
             except ValueError:
-                return False
+                return
             else:
                 self.whiteTemplatesFound = True
-                return False
 
     def templateInList(self):
         """
@@ -1481,7 +1484,7 @@ class checkImagesBot(object):
         # same number
         if skip_number == 0:
             pywikibot.output(u'\t\t>> No files to skip...<<')
-            return False
+            return
         if skip_number > limit:
             skip_number = limit
         # Print a starting message only if no images has been skipped
@@ -1500,7 +1503,6 @@ class checkImagesBot(object):
             return True
         else:
             pywikibot.output('')
-            return False
 
     def wait(self, waitTime, generator, normal, limit):
         """ Skip the images uploaded before x seconds to let
@@ -1577,7 +1579,7 @@ class checkImagesBot(object):
             # If there are {{ use regex, otherwise no (if there's not the
             # {{ may not be a template and the regex will be wrong)
             if '{{' in i:
-                regexP = re.compile(r'\{\{(?:template|)%s ?(?:\||\n|\}|<) ?'
+                regexP = re.compile(r'\{\{(?:template)?%s ?(?:\||\r?\n|\}|<|/) ?'
                                     % i.split('{{')[1].replace(u' ', u'[ _]'),
                                     re.I)
                 result = regexP.findall(self.imageCheckText)
@@ -1585,7 +1587,6 @@ class checkImagesBot(object):
                     return True
             elif i.lower() in self.imageCheckText:
                 return True
-        return False
 
     def findAdditionalProblems(self):
         # In every tuple there's a setting configuration
