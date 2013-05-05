@@ -60,7 +60,7 @@ if not os.path.isabs(scriptdir):
 # additional python packages (more exotic and problematic ones)
 try:
     import numpy as np
-    from scipy import ndimage, fftpack, linalg
+    from scipy import ndimage, fftpack, linalg#, signal
     import cv
     # TS: nonofficial cv2.so backport of the testing-version of
     # python-opencv because of missing build-host, done by DaB
@@ -393,6 +393,80 @@ class FileData(object):
         self._info['Faces'] += result
         return
 
+    # https://pypi.python.org/pypi/xbob.flandmark
+    # http://cmp.felk.cvut.cz/~uricamic/flandmark/
+    def _detect_FaceLandmark_xBOB(self):
+        """Prints the locations of any face landmark(s) found, respective
+           converts them to usual face position data"""
+
+        #self._info['Faces'] = []
+        scale = 1.
+        try:
+            #video = bob.io.VideoReader(self.image_path_JPEG.encode('utf-8'))
+            video = [cv2.imread( self.image_path_JPEG, cv.CV_LOAD_IMAGE_COLOR )]
+            #if img == None:
+            #    raise IOError
+            
+            # !!! the 'scale' here IS RELEVANT FOR THE DETECTION RATE;
+            # how small and how many features are detected as faces (or eyes)
+            scale  = max([1., np.average(np.array(video[0].shape)[0:2]/750.)])
+        except IOError:
+            pywikibot.warning(u'unknown file type [_detect_FaceLandmark_xBOB]')
+            return
+        except AttributeError:
+            pywikibot.warning(u'unknown file type [_detect_FaceLandmark_xBOB]')
+            return
+
+        smallImg = np.empty( (cv.Round(video[0].shape[1]/scale), cv.Round(video[0].shape[0]/scale)), dtype=np.uint8 )
+        video = [ cv2.resize( img, smallImg.shape, interpolation=cv2.INTER_LINEAR ) for img in video ]
+
+        import _bob as bob
+        import xbob_flandmark as xbob
+
+        localize = xbob.flandmark.Localizer()
+
+        result = []
+        for frame in video:     # currently ALWAYS contains ONE (1!) entry
+            frame = np.transpose(frame, (2,0,1))
+            img   = np.transpose(frame, (1,2,0))
+
+            for i, flm in enumerate(localize(frame)):
+                #for pi, point in enumerate(flm['landmark']):
+                #    cv2.circle(img, tuple(map(int, point)), 3, (  0,   0, 255))
+                #    cv2.circle(img, tuple(map(int, point)), 5, (  0, 255,   0))
+                #    cv2.circle(img, tuple(map(int, point)), 7, (255,   0,   0))
+                #    cv2.putText(img, str(pi), tuple(map(int, point)), cv2.FONT_HERSHEY_PLAIN, 1.0, (0,255,0))
+                #cv2.rectangle(img, tuple(map(int, flm['bbox'][:2])), tuple(map(int, (flm['bbox'][0]+flm['bbox'][2], flm['bbox'][1]+flm['bbox'][3]))), (0, 255, 0))
+                mat = np.array([flm['landmark'][3], flm['landmark'][4]])
+                mi  = np.min(mat, axis=0)
+                mouth = tuple(mi.astype(int)) + tuple((np.max(mat, axis=0)-mi).astype(int))
+                #cv2.rectangle(img, tuple(mi.astype(int)), tuple(np.max(mat, axis=0).astype(int)), (0, 255, 0))
+                mat = np.array([flm['landmark'][5], flm['landmark'][1]])
+                mi  = np.min(mat, axis=0)
+                leye  = tuple(mi.astype(int)) + tuple((np.max(mat, axis=0)-mi).astype(int))
+                #cv2.rectangle(img, tuple(mi.astype(int)), tuple(np.max(mat, axis=0).astype(int)), (0, 255, 0))
+                mat = np.array([flm['landmark'][2], flm['landmark'][6]])
+                mi  = np.min(mat, axis=0)
+                reye  = tuple(mi.astype(int)) + tuple((np.max(mat, axis=0)-mi).astype(int))
+                #cv2.rectangle(img, tuple(mi.astype(int)), tuple(np.max(mat, axis=0).astype(int)), (0, 255, 0))
+                data = { 'ID':       (i+1),
+                         'Position': flm['bbox'], 
+                         'Type':     u'Landmark',
+                         'Eyes':     [leye, reye],
+                         'Mouth':    mouth,
+                         'Nose':     tuple(np.array(flm['landmark'][7]).astype(int)) + (0, 0),
+                         'Ears':     [],
+                         'Landmark': [tuple(lm) for lm in np.array(flm['landmark']).astype(int)], }
+                data['Coverage'] = float(data['Position'][2]*data['Position'][3])/(self.image_size[0]*self.image_size[1])
+                result.append(data)
+
+            #img = img.astype('uint8')
+            #cv2.imshow("people detector", img)
+            #cv2.waitKey()
+
+        self._info['Faces'] += result
+        return
+
     # .../opencv/samples/cpp/peopledetect.cpp
     # + Haar/Cascade detection
     def _detect_People_CV(self):
@@ -499,8 +573,9 @@ class FileData(object):
 
         result = self._util_get_Geometry_CVnSCIPY()
 
-        self._info['Geometry'] = [{'Lines': result['Lines'], 'Circles': result['Circles'], 'Corners': result['Corners'],
-                                   'FFT_Comp': result['FFT_Comp'], 'SVD_Comp': result['SVD_Comp'], 'SVD_Min': result['SVD_Min']}]
+        self._info['Geometry'] = [{'Lines': result['Lines'],
+                                   'Circles': result['Circles'],
+                                   'Corners': result['Corners'],}]
         return
 
     # https://code.ros.org/trac/opencv/browser/trunk/opencv/samples/python/houghlines.py?rev=2770
@@ -514,7 +589,7 @@ class FileData(object):
             return self._buffer_Geometry
 
         self._buffer_Geometry = {'Lines': '-', 'Circles': '-', 'Edge_Ratio': '-', 'Corners': '-',
-                                 'FFT_Comp': '-', 'FFT_Peaks': '-', 'SVD_Comp': '-', 'SVD_Min': '-'}
+                                 'FFT_Peaks': '-'}
 
         scale = 1.
         try:
@@ -610,54 +685,48 @@ class FileData(object):
         #cv2.imshow("people detector", color_dst)
         #c = cv2.waitKey(0) & 255
 
-        # fft
+        # fft spectral/frequency/momentum analysis with svd peak detection
         gray = cv2.resize( _gray, smallImg.shape, interpolation=cv2.INTER_LINEAR )
-        #s = (self.image_size[1], self.image_size[0])
-        s = gray.shape
+        ##s = (self.image_size[1], self.image_size[0])
+        #s = gray.shape
         fft = fftpack.fftn(gray)
-        peaks = np.where(fft > (fft.max()*0.001))[0].shape[0]
-        # shift quadrants so that low spatial frequencies are in the center
-        #fft = fftpack.fftshift(fft)
         #fft = np.fft.fftn(gray)
-        c = (np.array(s)/2.).astype(int)
-        for i in range(0, min(c)-1, max( int(min(c)/50.), 1 )):
-            fft[(c[0]-i):(c[0]+i+1),(c[1]-i):(c[1]+i+1)] = 0.
-            #new = np.zeros(s)
-            #new[(c[0]-i):(c[0]+i+1),(c[1]-i):(c[1]+i+1)] = fft[(c[0]-i):(c[0]+i+1),(c[1]-i):(c[1]+i+1)]
-            #Image.fromarray(fftpack.fftshift(fft).real).show()
-            ##Image.fromarray(fftpack.ifftn(fftpack.ifftshift(new)).real - gray).show()
-            #Image.fromarray(fftpack.ifftn(fft).real - gray).show()
-            if ((fftpack.ifftn(fft).real - gray).max() >= (255/2.)):
-                break
-        #fft = fftpack.ifftshift(fft)
-        #Image.fromarray(fftpack.ifftn(fft).real).show()
-        #Image.fromarray(np.fft.ifftn(fft).real).show()
-        data['FFT_Comp']  = 1.-float(i*i)/(s[0]*s[1])
-        data['FFT_Peaks'] = peaks
-        #pywikibot.output( u'FFT_Comp: %s %s' % (1.-float(i*i)/(s[0]*s[1]), peaks) )
-
-        # svd
+        #Image.fromarray(fft.real).show()
+        # shift quadrants so that low spatial frequencies are in the center
+        fft = fftpack.fftshift(fft)
+        #Image.fromarray(fft.real).show()
+        ##Image.fromarray(fftpack.ifftn(fft).real).show()
+        ##Image.fromarray(fftpack.ifftn(fftpack.ifftshift(fft)).real).show()
+        ##Image.fromarray(fftpack.ifftn(fftpack.ifftshift(fft.real)).real).show()
         try:
-            U, S, Vh = linalg.svd(np.matrix(gray))
-            #U, S, Vh = linalg.svd(np.matrix(fft))      # do combined 'svd of fft'
-            SS = np.zeros(s)
-            ss = min(s)
-            for i in range(0, len(S)-1, max( int(len(S)/100.), 1 )):   # (len(S)==ss) -> else; problem!
-                #SS = np.zeros(s)
-                #SS[:(ss-i),:(ss-i)] = np.diag(S[:(ss-i)])
-                SS[:(i+1),:(i+1)] = np.diag(S[:(i+1)])
-                #Image.fromarray(np.dot(np.dot(U, SS), Vh) - gray).show()
-                #if ((np.dot(np.dot(U, SS), Vh) - gray).max() >= (255/4.)):
-                if ((np.dot(np.dot(U, SS), Vh) - gray).max() < (255/4.)):
-                    break
-            #data['SVD_Comp'] = 1.-float(i)/ss
-            data['SVD_Comp'] = float(i)/ss
-            data['SVD_Min']  = S[:(i+1)].min()
-            #pywikibot.output( u'SVD_Comp: %s' % (1.-float(i)/ss) )
-            #pywikibot.output( u'SVD_Comp: %s %s %s' % (float(i)/ss, S[:(i+1)].min(), S[:(i+1)].max()) )
+            U, S, Vh = linalg.svd(np.matrix(fft))
+            ma    = 0.01*max(S)
+            count = sum([int(c > ma) for c in S])
+
+            #SS = np.zeros(s)
+            #ss = min(s)
+            #for i in range(0, len(S)-1, max( int(len(S)/100.), 1 )):   # (len(S)==ss) -> else; problem!
+            #    #SS = np.zeros(s)
+            #    #SS[:(ss-i),:(ss-i)] = np.diag(S[:(ss-i)])
+            #    SS[:(i+1),:(i+1)] = np.diag(S[:(i+1)])
+            #    #Image.fromarray((np.dot(np.dot(U, SS), Vh) - fft).real).show()
+            #    #Image.fromarray(fftpack.ifftn(fftpack.ifftshift(np.dot(np.dot(U, SS), Vh))).real - gray).show()
+            #    print i, ((np.dot(np.dot(U, SS), Vh) - fft).real).max()
+            #    print i, (fftpack.ifftn(fftpack.ifftshift(np.dot(np.dot(U, SS), Vh))).real - gray).max()
+            #    #if ((np.dot(np.dot(U, SS), Vh) - fft).max() < (255/4.)):
+            #    #    break
+            #data['SVD_Comp'] = float(i)/ss
+            #data['SVD_Min']  = S[:(i+1)].min()
+
+            data['FFT_Peaks'] = float(count)/len(S)
+            #pywikibot.output( u'FFT_Peaks: %s' % data['FFT_Peaks'] )
         except linalg.LinAlgError:
             # SVD did not converge; in fact this should NEVER happen...(?!?)
             pass
+        # use wavelet transformation (FWT) from e.g. pywt, scipy signal or mlpy
+        # (may be other) in addition to FFT and compare the spectra with FFT...
+        # confer; "A Practical Guide to Wavelet Analysis" (http://journals.ametsoc.org/doi/pdf/10.1175/1520-0477%281998%29079%3C0061%3AAPGTWA%3E2.0.CO%3B2)
+        # on how to convert and adopt FFT and wavlet spectra frequency scales
 
         if data:
             self._buffer_Geometry.update(data)
@@ -666,6 +735,8 @@ class FileData(object):
     # .../opencv/samples/cpp/bagofwords_classification.cpp
     def _detectclassify_ObjectAll_CV(self):
         """Uses the 'The Bag of Words model' for detection and classification"""
+
+        # CAN ALSO BE USED FOR: TEXT, ...
 
         # http://app-solut.com/blog/2011/07/the-bag-of-words-model-in-opencv-2-2/
         # http://app-solut.com/blog/2011/07/using-the-normal-bayes-classifier-for-image-categorization-in-opencv/
@@ -721,6 +792,41 @@ class FileData(object):
         # http://people.csail.mit.edu/torralba/shortCourseRLOC/index.html
 
         self._info['Classify'] = [dict([ (trained[i], r) for i, r in enumerate(result) ])]
+        return
+
+    def _detectclassify_ObjectAll_PYWT(self):
+        """Uses the 'Fast Wavelet-Based Visual Classification' for detection
+           and classification"""
+        # Fast Wavelet-Based Visual Classification
+        # http://www.cmap.polytechnique.fr/~yu/publications/ICPR08Final.pdf
+
+        # CAN ALSO BE USED FOR: TEXT, AUDIO, (VIDEO), ...
+# TODO: for audio and video (time-based) also...!!!
+
+        import pywt         # python-pywt
+
+# TODO: improve (honestly; truly apply) wavelet in a meaningful and USEFUL (correct) way/manner!
+# TODO: truly apply FFT and SVD (used before)
+        # wavelet transformation
+        # https://github.com/nigma/pywt/tree/master/demo
+        # image_blender, dwt_signal_decomposition.py, wp_scalogram.py, dwt_multidim.py, user_filter_banks.py:
+        #coeffs = pywt.dwtn(gray, 'db1')       # Single-level n-dimensional Discrete Wavelet Transform
+        coeffs = pywt.dwt2(gray, 'db1')       # 2D Discrete Wavelet Transform
+        #coeffs = pywt.wavedec2(gray, 'db1')   # Multilevel 2D Discrete Wavelet Transform
+        pass
+        result = pywt.idwt2(coeffs, 'db1')    # 2D Inverse Discrete Wavelet Transform
+        #result = pywt.waverec2(coeffs, 'db1') # Multilevel 2D Inverse Discrete Wavelet Transform
+        result = result[:gray.shape[0],:gray.shape[1]]
+        # consider 'swt' (2D Stationary Wavelet Transform) instead of 'dwt' too
+        pywikibot.output(u'%s' % coeffs)
+        pywikibot.output(u'%s' % np.abs(result - gray).max())
+        #data['Wavelet_Comp'] = coeffs
+
+        # https://github.com/nigma/pywt/blob/master/demo/image_blender.py
+        # http://www.ncbi.nlm.nih.gov/pubmed/18713675
+        # https://github.com/nigma/pywt/blob/master/demo/wp_scalogram.py
+        # https://github.com/nigma/pywt/blob/master/demo/swt2.py
+
         return
 
     # a lot more paper and possible algos exist; (those with code are...)
@@ -939,6 +1045,12 @@ class FileData(object):
         # count number of colors used more than 1% of maximum
         ma    = 0.01*max(h)
         count = sum([int(c > ma) for c in h])
+
+#        # TODO: peak detection (not supported by my local scipy version yet)
+#        # http://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks_cwt.html
+#        peakind = signal.find_peaks_cwt(fft, np.arange(1,10))
+#        print peaks
+#        print len(peakind), peakind
 
         data = { #'histogram': h,
                  'RGB':   rgb,
@@ -2515,7 +2627,7 @@ class CatImages_Default(FileData):
         result = self._info_filter['ColorAverage']
         relevance = (result and result[0]['Gradient'] < 0.1) and \
                     (0.005 < result[0]['Peaks'] < 0.1)  # black/white texts are below that
-                    #(result[0]['FFT_Peaks'] < 500)      # has to be tested first !!!
+                    #(result[0]['FFT_Peaks'] < 0.2)      # has to be tested first !!!
 
         return (u'Graphics', bool(relevance))
 
@@ -3175,6 +3287,8 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         self._detect_Faces_EXIF()
         # Faces and eyes (opencv pre-trained haar)
         self._detect_Faces_CV()
+        # Face via Landmark(s)
+#        self._detect_FaceLandmark_xBOB()
         # exclude duplicates (CV and EXIF)
         faces = [item['Position'] for item in self._info['Faces']]
         for i in self._util_merge_Regions(faces)[1]:
@@ -3208,9 +3322,11 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         # Chessboard (opencv reference detector)
         self._detect_Chessboard_CV()
 
-        # general (self-trained) detection WITH classification (BoW)
-        # uses feature detection (SIFT, SURF, ...) AND classification (SVM, ...)
+        # general (self-trained) detection WITH classification
+        # BoW: uses feature detection (SIFT, SURF, ...) AND classification (SVM, ...)
 #        self._detectclassify_ObjectAll_CV()
+        # Wavelet: uses wavelet transformation AND classification (machine learning)
+#        self._detectclassify_ObjectAll_PYWT()
 
         # general handling of all audio and video formats
         self._detect_Streams_FFMPEG()
