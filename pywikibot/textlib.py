@@ -1073,6 +1073,7 @@ def glue_template_and_params(template_and_params):
 #----------------------------------
 
 def does_text_contain_section(pagetext, section):
+    section = re.sub('[ _]', '[ _]', section)
     """Determines whether the page text contains the given section title."""
     m = re.search("=+[ ']*%s[ ']*=+" % re.escape(section), pagetext)
     return bool(m)
