@@ -1013,7 +1013,7 @@ def extract_templates_and_params(text, asList=False):
                 # Replace wikilinks with markers
                 links = {}
                 count2 = 0
-                for m2 in pywikibot.link_regex.finditer(paramString):
+                for m2 in pywikibot.Rlink.finditer(paramString):
                     count2 += 1
                     item = m2.group(0)
                     paramString = paramString.replace(
