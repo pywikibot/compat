@@ -9194,9 +9194,12 @@ def writelogheader():
 
     # new framework release/revision? (handleArgs needs to be called first)
     site = getSite()
-    output(u'VERSION: %s' % unicode((version.getversion().strip(),
-                                     version.getversion_onlinerepo(),
-                                     site.live_version())))
+    try:
+        output(u'VERSION: %s' % unicode((version.getversion().strip(),
+                                         version.getversion_onlinerepo(),
+                                         site.live_version())))
+    except version.ParseError:
+        exception()
 
     # system
     if hasattr(os, 'uname'):

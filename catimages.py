@@ -1002,8 +1002,8 @@ class FileData(object):
             d = self._util_get_DataStreams_FFMPEG()
             #print d
             result = { 'Format': u'%s' % d['format']['format_name'].upper() }
-        #elif self.image_mime[0] =='audio':  # MIME: 'audio/midi; charset=binary'
-        #    result = {}
+        elif self.image_mime[0] == 'audio': # MIME: 'audio/midi; charset=binary'
+            result = {}
         # djvu: python-djvulibre or python-djvu for djvu support
         # http://pypi.python.org/pypi/python-djvulibre/0.3.9
         #elif self.image_fileext == u'.xcf'
@@ -1639,8 +1639,8 @@ class FileData(object):
         ##cv2.waitKey()
 
         if corners is not None:
-            corners = [ tuple(item[0]) for item in corners ]
-            self._info['Chessboard'] = [{ 'Corners': corners, }]
+            self._info['Chessboard'] = [{ 'Corners': [tuple(item[0]) 
+                                                      for item in corners], }]
 
 # TODO: improve chessboard detection
 #        # chess board recognition (more tolerant)
@@ -2253,6 +2253,72 @@ class FileData(object):
 
         return (regs, drop)
 
+    def _detect_AudioFeatures_MUSIC21(self):
+        # skip file formats not supported
+        if (self.image_mime[1] not in ['midi']):
+            return
+
+        self._info['Audio'] = []
+
+        import _music21 as music21
+
+        #audiofile = '/home/ursin/Desktop/3_Ships.mid'
+        audiofile = self.image_path
+
+        #music21.features.jSymbolic.getCompletionStats()
+        try:
+            #s = music21.converter.ConverterMidi()
+            #s.parseFile(audiofile)
+            #s = s.stream
+            s = music21.midi.translate.midiFilePathToStream(audiofile)
+        except music21.midi.base.MidiException:
+            pywikibot.warning(u'unknown file type [_detect_AudioFeatures_MUSIC21]')
+            return
+
+        #fs = music21.features.jSymbolic.extractorsById
+        #for k in fs:
+        #    for i in range(len(fs[k])):
+        #        if fs[k][i] is not None:
+        #            n = fs[k][i].__name__
+        #            if fs[k][i] not in music21.features.jSymbolic.featureExtractors:
+        #                n += " (not implemented)"
+        #                print k, i, n
+        #            else:
+        #                fe = fs[k][i](s)
+        #                print k, i, n,
+        #                try:
+        #                    f = fe.extract()
+        #                    print f.name, f.vector
+        #                except AttributeError:
+        #                    print "ERROR"
+        data = {}
+        for item in ['MostCommonPitchFeature',
+                     'ImportanceOfBassRegisterFeature',
+                     'ImportanceOfMiddleRegisterFeature',
+                     'ImportanceOfHighRegisterFeature',
+                     'AverageNoteDurationFeature',
+                     'MaximumNoteDurationFeature',
+                     #'DurationFeature',
+                     'InitialTempoFeature',
+                     'MaximumNumberOfIndependentVoicesFeature',
+                     'AverageNumberOfIndependentVoicesFeature',]:
+            fe = getattr(music21.features.jSymbolic, item)(s)
+            f = fe.extract()
+            #data[f.name] = f.vector[0]
+            data[item.replace('Feature', '')] = f.vector[0]
+        #print s.duration
+        data['Duration'] = s.highestTime
+        #print s.offsetMap
+        #print s.measureOffsetMap()
+        data['Metadata'] = s.metadata
+        data['Lyrics']   = s.lyrics()
+        #print s.seconds
+        #print s.secondsMap
+
+        self._info['Audio'] = [data]
+#        print self._info['Audio']
+        return
+
     def _detect_AudioFeatures_YAAFE(self):
         # http://yaafe.sourceforge.net/manual/tools.html
         # http://yaafe.sourceforge.net/manual/quickstart.html - yaafe.py
@@ -2306,7 +2372,7 @@ class FileData(object):
         #         $ export PYTHONPATH=/home/ursin/Desktop/yaafe-v0.64/src_python
 
         # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg']):
+        if (self.image_mime[1] in ['ogg']):#, 'midi']):
             return
 
         self._info['Audio'] = []
@@ -3336,6 +3402,9 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
 
         # general audio feature extraction
 #        self._detect_AudioFeatures_YAAFE()
+
+        # midi audio feature extraction
+#        self._detect_AudioFeatures_MUSIC21()
 
     def _existInformation(self, info, ignore = ['Properties', 'ColorAverage']):
         result = []
