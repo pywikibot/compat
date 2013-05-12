@@ -98,11 +98,11 @@ modules_needed = {
                           'path': 'haarcascades',}),                       # OK
 #          'pdfminer' is not used anymore/at the moment...
 #       'pycolorname': $ svn propset svn:externals 'pycolorname https://svn.toolserver.org/svnroot/drtrigon/externals/pycolorname' .
-            '_pydmtx': ({'linux-fedora': ['python-libdmtx'],
+             'pydmtx': ({'linux-fedora': ['python-libdmtx'],
                          'linux-ubuntu': ['libdmtx-dev'],},
                         {  'url': 'https://github.com/dmtx/dmtx-wrappers/archive/master.zip',
                           'path': 'dmtx-wrappers-master/python',
-                         #$ diff -Naur TEST__pydmtx/ _pydmtx/ > patch-pydmtx
+                         #$ diff -Nau --exclude="*.pyc" TEST_pydmtx/ pydmtx/ > patch-pydmtx
                          'patch': 'patch-pydmtx',}),                       # OK
              'py_w3c': ({},
                         {  'url': 'https://bitbucket.org/nmb10/py_w3c/downloads/py_w3c-v0.1.0.tar.gz',
@@ -134,11 +134,11 @@ modules_needed = {
 
 #modules_order = ['crontab', 'odf', 'openpyxl',
 #                 'colormath', 'jseg', 'jseg/jpeg-6b', '_mlpy', '_music21',
-#                 '_ocropus', 'opencv', 'opencv/haarcascades', '_pydmtx',
+#                 '_ocropus', 'opencv', 'opencv/haarcascades', 'pydmtx',
 #                 'py_w3c', 'slic', '_zbar', '_bob', 'xbob_flandmark',]
 modules_order = [#'crontab', 'odf', 'openpyxl',
                  'colormath', 'jseg', 'jseg/jpeg-6b', '_music21',
-                 'opencv/haarcascades', '_pydmtx', 'py_w3c', '_zbar',]
+                 'opencv/haarcascades', 'pydmtx', 'py_w3c', '_zbar',]
 
 
 import os, sys
