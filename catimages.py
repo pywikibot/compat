@@ -91,6 +91,8 @@ except:
 import wikipedia as pywikibot
 import pagegenerators, catlib
 import checkimages
+import dtbext as externals          # check for and install needed 'externals'
+externals.check_setup_all()         #
 
 # DrTrigonBot framework packages
 target = os.path.join(scriptdir, 'dtbext')
