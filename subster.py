@@ -70,8 +70,6 @@ import difflib, traceback
 import BeautifulSoup
 import StringIO, zipfile, csv
 import mailbox, mimetypes, datetime, email.utils
-import openpyxl.reader.excel
-import crontab
 import logging
 import ast
 import shelve, pprint
@@ -81,6 +79,12 @@ import pagegenerators, basic
 import wikipedia as pywikibot
 from pywikibot import i18n
 from pywikibot.comms import http
+import externals                     # check for and install needed 'externals'
+externals.check_setup('crontab')     # 
+externals.check_setup('odf')         # 
+externals.check_setup('openpyxl')    # 
+import openpyxl.reader.excel
+import crontab
 
 
 # TODO: think about what config to move to 'subster-config.css' (per wiki)
