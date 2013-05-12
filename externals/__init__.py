@@ -25,22 +25,16 @@ __version__ = '$Id$'
 #          (?. checkout from svn/mercurial repo)
 #           3. svn:externals
 modules_needed = {
-# TODO: vvv
-#           'crontab' has to be moved and integrated (in)to externals as well
             'crontab': ({},
                         #{  'url': 'https://github.com/josiahcarlson/parse-crontab/archive/master.zip',
                         #  'path': 'parse-crontab-master/crontab',}),       # OK
                         {  'url': 'https://github.com/josiahcarlson/parse-crontab/archive/1ec538ff67df6a207993a6c5b6988f4f628c5776.zip',
                           'path': 'parse-crontab-1ec538ff67df6a207993a6c5b6988f4f628c5776/crontab',}),# OK
-# TODO: vvv
-#               'odf' has to be moved and integrated (in)to externals as well
                 'odf': ({},
                         #{  'url': 'https://pypi.python.org/packages/source/o/odfpy/odfpy-0.9.6.tar.gz',
                         #  'path': 'odfpy-0.9.6/odf',}),                    # OK
                         {  'url': 'https://pypi.python.org/packages/source/o/odfpy/odfpy-0.9.4.tar.gz',
                           'path': 'odfpy-0.9.4/odf',}),                    # OK
-# TODO: vvv
-#          'openpyxl' has to be moved and integrated (in)to externals as well
            'openpyxl': ({},
                         {  'url': 'https://bitbucket.org/ericgazoni/openpyxl/get/1.5.6.tar.gz',
                           'path': 'ericgazoni-openpyxl-e5934500ffac/openpyxl',}),# OK
@@ -136,7 +130,7 @@ modules_needed = {
 #                 'colormath', 'jseg', 'jseg/jpeg-6b', '_mlpy', '_music21',
 #                 '_ocropus', 'opencv', 'opencv/haarcascades', 'pydmtx',
 #                 'py_w3c', 'slic', '_zbar', '_bob', 'xbob_flandmark',]
-modules_order = [#'crontab', 'odf', 'openpyxl',
+modules_order = ['crontab', 'odf', 'openpyxl',
                  'colormath', 'jseg', 'jseg/jpeg-6b', '_music21',
                  'opencv/haarcascades', 'pydmtx', 'py_w3c', '_zbar',]
 
@@ -144,6 +138,7 @@ modules_order = [#'crontab', 'odf', 'openpyxl',
 import os, sys
 
 import wikipedia as pywikibot
+from pywikibot.comms import http
 
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.join(os.curdir, __file__))))
@@ -230,8 +225,10 @@ def download_install(package, module, path):
     if package:
         pywikibot.warning(u'Download package "%s" from %s'
                           % (module, package['url']))
-        import urllib2, mimetypes
-        response = urllib2.urlopen(package['url'])
+        import mimetypes#, urllib2
+        #response = urllib2.urlopen(package['url'])
+        response = http.request(pywikibot.getSite(), package['url'],
+                                no_hostname = True, back_response = True)[0]
         pywikibot.warning(u'Size of download: %s byte(s)'
                           % response.headers['Content-Length'])
         #mime = response.headers['Content-Type'].lower().split('/')
@@ -281,8 +278,7 @@ def check_setup(m):
             return
 #        if svn_repo_install(modules_needed[m][2]):
 #            return
-        pywikibot.error(u'Package "%s" could not be found nor installed!'
-                            % m) 
+        pywikibot.error(u'Package "%s" could not be found nor installed!' % m) 
 
 def check_setup_all():
     #for m in modules_needed:
