@@ -101,16 +101,11 @@ externals.check_setup('opencv/haarcascades') #
 externals.check_setup('pydmtx')              # <<< !!! test OS package management here !!!
 externals.check_setup('py_w3c')              #
 externals.check_setup('_zbar')               #
-
-# DrTrigonBot framework packages
-target = os.path.join(scriptdir, 'dtbext')
-sys.path.append(target)
 import pycolorname
 #import _mlpy as mlpy
 from colormath.color_objects import RGBColor
 from py_w3c.validators.html.validator import HTMLValidator, ValidationFault
 #from pdfminer import pdfparser, pdfinterp, pdfdevice, converter, cmapdb, layout
-#sys.path.remove(target)
 
 locale.setlocale(locale.LC_ALL, '')
 
@@ -775,6 +770,7 @@ class FileData(object):
         #   BoWclassify /data/toolserver/pywikipedia/dtbext/opencv/VOC2007 /data/toolserver/pywikipedia/dtbext/opencv/data FAST SURF BruteForce | tee run.log
         #   BoWclassify /data/toolserver/pywikipedia/dtbext/opencv/VOC2007 /data/toolserver/pywikipedia/dtbext/opencv/data HARRIS SIFT BruteForce | tee run.log
         # http://experienceopencv.blogspot.com/2011/02/object-recognition-bag-of-keypoints.html
+        sys.path.append(os.path.join(scriptdir, 'dtbext'))
         import opencv
 
         if os.path.exists(bowDescPath):
