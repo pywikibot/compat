@@ -72,13 +72,8 @@ modules_needed = {
 #                        {}),                                               # OPEN
 # TODO: vvv (further clean-up and unlink - check with 'svn list')
 #             'opencv': $ svn propedit svn:externals .
-#                         bagofwords_classification.cpp https://svn.toolserver.org/svnroot/drtrigon/externals/opencv/bagofwords_classification.cpp
-#                         bagofwords_classification_python.cpp https://svn.toolserver.org/svnroot/drtrigon/externals/opencv/bagofwords_classification_python.cpp
-#                         camera_virtual_default https://svn.toolserver.org/svnroot/drtrigon/externals/opencv/camera_virtual_default
-#                         facetest.pl https://svn.toolserver.org/svnroot/drtrigon/externals/opencv/facetest.pl
-#                         __init.py__ https://svn.toolserver.org/svnroot/drtrigon/externals/opencv/__init__.py
-#                         makefile https://svn.toolserver.org/svnroot/drtrigon/externals/opencv/makefile
-#                         peopledetect.py https://svn.toolserver.org/svnroot/drtrigon/externals/opencv/peopledetect.py
+#                         opencv https://svn.toolserver.org/svnroot/drtrigon/externals/opencv
+#                         (in directory 'externals', not 'externals/opencv')
 #                       $ svn propedit svn:externals haarcascades/haartraining/
 #                         HaarTraining https://svn.toolserver.org/svnroot/drtrigon/externals/haartraining/HaarTraining
 #                         HaarTraining.tar.gz https://svn.toolserver.org/svnroot/drtrigon/externals/haartraining/HaarTraining.tar.gz
