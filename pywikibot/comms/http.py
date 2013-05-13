@@ -242,6 +242,11 @@ def request(site, uri, retry=None, sysop=False, data=None, compress=True,
                     % (site.protocol(), site.hostname(), uri))
         # We use error='replace' in case of bad encoding.
         text = unicode(text, charset, errors = 'replace')
+    except LookupError:
+        if back_response:
+            pywikibot.exception()
+        else:
+            raise
 
     if back_response:
         return f, text
