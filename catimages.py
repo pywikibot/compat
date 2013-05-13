@@ -425,6 +425,7 @@ class FileData(object):
         smallImg = np.empty( (cv.Round(video[0].shape[1]/scale), cv.Round(video[0].shape[0]/scale)), dtype=np.uint8 )
         video = [ cv2.resize( img, smallImg.shape, interpolation=cv2.INTER_LINEAR ) for img in video ]
 
+        sys.path.append(os.path.join(scriptdir, 'dtbext'))
         import _bob as bob
         import xbob_flandmark as xbob
 
