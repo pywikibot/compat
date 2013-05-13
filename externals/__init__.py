@@ -58,10 +58,9 @@ modules_needed = {
        'jseg/jpeg-6b': ({},
                         {  'url': 'http://vision.ece.ucsb.edu/segmentation/jseg/software/jpeg-6b.zip',
                           'path': 'jpeg-6b',}),                            # OK
-# TODO: vvv (future; enable for and use in 'catimages.py')
-#              '_mlpy': ({},
-#                        {  'url': 'http://downloads.sourceforge.net/project/mlpy/mlpy%203.5.0/mlpy-3.5.0.tar.gz',
-#                          'path': 'mlpy-3.5.0/mlpy',}),                    # OK
+              '_mlpy': ({},
+                        {  'url': 'http://downloads.sourceforge.net/project/mlpy/mlpy%203.5.0/mlpy-3.5.0.tar.gz',
+                          'path': 'mlpy-3.5.0/mlpy',}),                    # OK
            '_music21': ({},
                         {  'url': 'http://music21.googlecode.com/files/music21-1.4.0.tar.gz',
                           'path': 'music21-1.4.0',
@@ -131,7 +130,7 @@ modules_needed = {
 #                 '_ocropus', 'opencv', 'opencv/haarcascades', 'pydmtx',
 #                 'py_w3c', 'slic', '_zbar', '_bob', 'xbob_flandmark',]
 modules_order = ['crontab', 'odf', 'openpyxl',
-                 'colormath', 'jseg', 'jseg/jpeg-6b', '_music21',
+                 'colormath', 'jseg', 'jseg/jpeg-6b', '_mlpy', '_music21',
                  'opencv/haarcascades', 'pydmtx', 'py_w3c', '_zbar',]
 
 

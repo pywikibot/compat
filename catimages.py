@@ -91,15 +91,13 @@ except:
 import wikipedia as pywikibot
 import pagegenerators, catlib
 import checkimages
-import dtbext                        # check for and install needed 'externals'
-dtbext.check_setup_all()             #
 import externals                             # check for and install needed
 externals.check_setup('colormath')           # 'externals' modules
 externals.check_setup('jseg')                #
 externals.check_setup('jseg/jpeg-6b')        #
 #externals.check_setup('_mlpy')               #
 externals.check_setup('_music21')            #
-#externals.check_setup('opencv/haarcascades') #
+externals.check_setup('opencv/haarcascades') #
 externals.check_setup('pydmtx')              # <<< !!! test OS package management here !!!
 externals.check_setup('py_w3c')              #
 externals.check_setup('_zbar')               #
@@ -165,44 +163,44 @@ class FileData(object):
             return
 
         # https://code.ros.org/trac/opencv/browser/trunk/opencv_extra/testdata/gpu/haarcascade?rev=HEAD
-        xml = os.path.join(scriptdir, 'dtbext/opencv/haarcascades/haarcascade_eye_tree_eyeglasses.xml')
-        #xml = os.path.join(scriptdir, 'dtbext/opencv/haarcascades/haarcascade_eye.xml')
+        xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_eye_tree_eyeglasses.xml')
+        #xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_eye.xml')
         if not os.path.exists(xml):
             raise IOError(u"No such file: '%s'" % xml)
         #nestedCascade = cv.Load(
         nestedCascade = cv2.CascadeClassifier(xml)
         # http://tutorial-haartraining.googlecode.com/svn/trunk/data/haarcascades/
-        xml = os.path.join(scriptdir, 'dtbext/opencv/haarcascades/haarcascade_frontalface_alt.xml')
+        xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_frontalface_alt.xml')
         # MAY BE USE 'haarcascade_frontalface_alt_tree.xml' ALSO / INSTEAD...?!!
         if not os.path.exists(xml):
             raise IOError(u"No such file: '%s'" % xml)
         #cascade       = cv.Load(
         cascade       = cv2.CascadeClassifier(xml)
-        xml = os.path.join(scriptdir, 'dtbext/opencv/haarcascades/haarcascade_profileface.xml')
+        xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_profileface.xml')
         if not os.path.exists(xml):
             raise IOError(u"No such file: '%s'" % xml)
         cascadeprofil = cv2.CascadeClassifier(xml)
-        xml = os.path.join(scriptdir, 'dtbext/opencv/haarcascades/haarcascade_mcs_mouth.xml')
+        xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_mcs_mouth.xml')
         if not os.path.exists(xml):
             raise IOError(u"No such file: '%s'" % xml)
         cascademouth = cv2.CascadeClassifier(xml)
-        xml = os.path.join(scriptdir, 'dtbext/opencv/haarcascades/haarcascade_mcs_nose.xml')
+        xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_mcs_nose.xml')
         if not os.path.exists(xml):
             raise IOError(u"No such file: '%s'" % xml)
         cascadenose = cv2.CascadeClassifier(xml)
-        xml = os.path.join(scriptdir, 'dtbext/opencv/haarcascades/haarcascade_lefteye_2splits.xml')
+        xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_lefteye_2splits.xml')
         if not os.path.exists(xml):
             raise IOError(u"No such file: '%s'" % xml)
         cascadelefteye = cv2.CascadeClassifier(xml)        # (http://yushiqi.cn/research/eyedetection)
-        xml = os.path.join(scriptdir, 'dtbext/opencv/haarcascades/haarcascade_righteye_2splits.xml')
+        xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_righteye_2splits.xml')
         if not os.path.exists(xml):
             raise IOError(u"No such file: '%s'" % xml)
         cascaderighteye = cv2.CascadeClassifier(xml)       # (http://yushiqi.cn/research/eyedetection)
-        xml = os.path.join(scriptdir, 'dtbext/opencv/haarcascades/haarcascade_mcs_leftear.xml')
+        xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_mcs_leftear.xml')
         if not os.path.exists(xml):
             raise IOError(u"No such file: '%s'" % xml)
         cascadeleftear = cv2.CascadeClassifier(xml)
-        xml = os.path.join(scriptdir, 'dtbext/opencv/haarcascades/haarcascade_mcs_rightear.xml')
+        xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_mcs_rightear.xml')
         if not os.path.exists(xml):
             raise IOError(u"No such file: '%s'" % xml)
         cascaderightear = cv2.CascadeClassifier(xml)
@@ -534,9 +532,9 @@ class FileData(object):
 
         # people haar/cascaded classifier
         # use 'haarcascade_fullbody.xml', ... also (like face detection)
-        xml = os.path.join(scriptdir, 'dtbext/opencv/haarcascades/haarcascade_fullbody.xml')
-        #xml = os.path.join(scriptdir, 'dtbext/opencv/haarcascades/haarcascade_lowerbody.xml')
-        #xml = os.path.join(scriptdir, 'dtbext/opencv/haarcascades/haarcascade_upperbody.xml')
+        xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_fullbody.xml')
+        #xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_lowerbody.xml')
+        #xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_upperbody.xml')
         if not os.path.exists(xml):
             raise IOError(u"No such file: '%s'" % xml)
         cascade       = cv2.CascadeClassifier(xml)
@@ -1297,7 +1295,7 @@ class FileData(object):
 
         # http://tutorial-haartraining.googlecode.com/svn/trunk/data/haarcascades/
         # or own xml files trained onto specific file database/set
-        xml = os.path.join(scriptdir, ('dtbext/opencv/haarcascades/' + cascade_file))
+        xml = os.path.join(scriptdir, ('externals/opencv/haarcascades/' + cascade_file))
         if not os.path.exists(xml):
             raise IOError(u"No such file: '%s'" % xml)
         cascade       = cv2.CascadeClassifier(xml)
@@ -1706,7 +1704,7 @@ class FileData(object):
             # pose detection
             # http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
             # http://stackoverflow.com/questions/10022568/opencv-2-3-camera-calibration
-            d = shelve.open( os.path.join(scriptdir, 'dtbext/opencv/camera_virtual_default') )
+            d = shelve.open( os.path.join(scriptdir, 'externals/opencv/camera_virtual_default') )
             if ('retval' not in d):
                 # http://commons.wikimedia.org/wiki/File:Mutilated_checkerboard_3.jpg
                 pywikibot.output(u"Doing (virtual) camera calibration onto reference image 'File:Mutilated_checkerboard_3.jpg'")
@@ -2504,8 +2502,8 @@ class CatImages_Default(FileData):
                      (u'Ears', 'haarcascade_mcs_rightear.xml'),
                      (u'Eyes', 'haarcascade_lefteye_2splits.xml'),        # (http://yushiqi.cn/research/eyedetection)
                      (u'Eyes', 'haarcascade_righteye_2splits.xml'),       # (http://yushiqi.cn/research/eyedetection)
-                     #dtbext/opencv/haarcascades/haarcascade_mcs_lefteye.xml
-                     #dtbext/opencv/haarcascades/haarcascade_mcs_righteye.xml
+                     #externals/opencv/haarcascades/haarcascade_mcs_lefteye.xml
+                     #externals/opencv/haarcascades/haarcascade_mcs_righteye.xml
                      # (others include indifferent (left and/or right) and pair)
                      (u'Automobiles', 'cars3.xml'),                       # http://www.youtube.com/watch?v=c4LobbqeKZc
                      (u'Hands', '1256617233-2-haarcascade-hand.xml', 300.),]    # http://www.andol.info/
