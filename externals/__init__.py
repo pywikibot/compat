@@ -23,7 +23,7 @@ __version__ = '$Id$'
 # supports: 0. svn:externals
 #           1. package management system (yum, apt-get, ...)
 #           2. download from url (or svn, git repo)
-#          (?. checkout from mercurial repo 'hg clone ...')
+#           3. checkout from mercurial repo ('hg clone ...')
 modules_needed = {
             'crontab': ({},
                         #{  'url': 'https://github.com/josiahcarlson/parse-crontab/archive/master.zip',
@@ -40,17 +40,17 @@ modules_needed = {
                           'path': 'ericgazoni-openpyxl-e5934500ffac/openpyxl',}),# OK
 #           'spelling': $ svn propedit svn:externals externals/.
 #                         spelling http://svn.wikimedia.org/svnroot/pywikipedia/trunk/spelling/
-# TODO: vvv (adopt 'wikipedia.py' in order to be able to download 'simplejson', 'BeautifulSoup.py' before importing!!!)
-##         'simplejson': $ svn propedit svn:externals externals/.
-##                         simplejson http://simplejson.googlecode.com/svn/tags/simplejson-2.1.3/simplejson/
-##         'simplejson': ({'linux-fedora': ['python-simplejson'],
-##                         'linux-ubuntu': [''],},
-#   'BeautifulSoup.py': ({'linux-fedora': ['python-BeautifulSoup'],
+#         'simplejson': $ svn propedit svn:externals externals/.
+#                         simplejson http://simplejson.googlecode.com/svn/tags/simplejson-2.1.3/simplejson/
+#         'simplejson': ({'linux-fedora': ['python-simplejson'],
 #                         'linux-ubuntu': [''],},
-#                        {  'url': 'https://pypi.python.org/packages/source/B/BeautifulSoup/BeautifulSoup-3.2.0.tar.gz',
-#                          'path': 'BeautifulSoup-3.2.0/BeautifulSoup.py',
-#                         #$ diff -Nau TEST_BeautifulSoup.py BeautifulSoup.py > patch-BeautifulSoup
-#                         'patch': 'patch-BeautifulSoup',}),                # OK
+   'BeautifulSoup.py': ({'linux-fedora': ['python-BeautifulSoup'],
+                         'linux-ubuntu': [''],},
+                        {  'url': 'https://pypi.python.org/packages/source/B/BeautifulSoup/BeautifulSoup-3.2.0.tar.gz',
+                          'path': 'BeautifulSoup-3.2.0/BeautifulSoup.py',
+                         #$ diff -Nau TEST_BeautifulSoup.py BeautifulSoup.py > patch-BeautifulSoup
+                         'patch': 'patch-BeautifulSoup',}),                # OK
+# TODO: ^^^ how to apply patches under windows, e.g. ... ? (afterwards remove the file from repo!)
           'colormath': ({'linux-fedora': [],
                          'linux-ubuntu': ['python-colormath'],},
                         {  'url': 'https://github.com/gtaylor/python-colormath/archive/master.zip',
@@ -128,7 +128,7 @@ modules_needed = {
 #                 'colormath', 'jseg', 'jseg/jpeg-6b', '_mlpy', '_music21',
 #                 '_ocropus', 'opencv', 'opencv/haarcascades', 'pydmtx',
 #                 'py_w3c', 'slic', '_zbar', '_bob', 'xbob_flandmark',]
-modules_order = ['crontab', 'odf', 'openpyxl', #'BeautifulSoup.py',
+modules_order = ['crontab', 'odf', 'openpyxl', 'BeautifulSoup.py',
                  'colormath', 'jseg', 'jseg/jpeg-6b', '_mlpy', '_music21',
                  'opencv/haarcascades', 'pydmtx', 'py_w3c', '_zbar',]
 
@@ -136,26 +136,63 @@ modules_order = ['crontab', 'odf', 'openpyxl', #'BeautifulSoup.py',
 import os, sys
 
 import wikipedia as pywikibot   # sets externals path
-from pywikibot.comms import http
+#from pywikibot.comms import http
+
+# allow imports from externals
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
 ### BEGIN of VisTrails inspired and copied code ### ### ### ### ### ### ### ###
+
+def has_logger():
+    #return hasattr(sys.modules['wikipedia'], 'logger')
+    return hasattr(pywikibot, 'logger')
+
+# TODO: solve properly because this is just a work-a-round, because module
+# externals get imported in wikipedia.py before logger is setup properly, which
+# should be changed! (meanwhile this is acceptable because code here should be
+# executed once only...)
+def lowlevel_warning(text):
+    if has_logger():
+        pywikibot.warning(text)
+    else:
+        print "WARNING:", text
+
 
 def guess_system():
     import platform
     return ("%s-%s" % (platform.system(), platform.dist()[0])).lower()
 
 def show_question(which_files):
-    pywikibot.output("Required package missing")
-    pywikibot.output("A required package is missing, but externals can"
+    lowlevel_warning("Required package missing: %s" % which_files)
+    lowlevel_warning("A required package is missing, but externals can"
                      " automatically install it."
                      " If you say Yes, externals will need administrator"
                      " privileges, and you might be asked for the administrator"
                      " password.")
-    pywikibot.output("Give externals permission to try to install package?"
+    lowlevel_warning("Give externals permission to try to install package?"
                      " (y/N)")
     v = raw_input().upper()
     return v == 'Y' or v == 'YES'
+
+
+def python_module_exists(module_name):
+    """python_module_exists(module_name): Boolean.
+Returns if python module of given name can be safely imported."""
+
+    module_name = module_name.replace(u'.py', u'')
+    module_name = module_name[1:] if module_name[0] == u'_' else module_name
+
+    try:
+        sys.modules[module_name]
+        return True
+    except KeyError:
+        pass
+    try:
+        __import__(module_name)
+        return True
+    except ImportError:
+        return False
 
 
 def linux_ubuntu_install(package_name):
@@ -169,8 +206,8 @@ def linux_ubuntu_install(package_name):
                 raise TypeError("Expected string or list of strings")
             cmd += ' ' + package
 
-    pywikibot.warning("externals wants to install package(s) '%s'" %
-                      package_name)
+    lowlevel_warning("externals wants to install package(s) '%s'" %
+                     package_name)
     sucmd = "sudo %s" % cmd
 
     result = os.system(sucmd)
@@ -188,8 +225,8 @@ def linux_fedora_install(package_name):
                 raise TypeError("Expected string or list of strings")
             cmd += ' ' + package
 
-    pywikibot.warning("externals wants to install package(s) '%s'" %
-                      package_name)
+    lowlevel_warning("externals wants to install package(s) '%s'" %
+                     package_name)
     sucmd = "su -c'%s'" % cmd
 
     result = os.system(sucmd)
@@ -218,20 +255,24 @@ about which system it runs on."""
 
 def download_install(package, module, path):
     if package:
-        pywikibot.warning(u'Download package "%s" from %s'
-                          % (module, package['url']))
-        import mimetypes#, urllib2
-        #response = urllib2.urlopen(package['url'])
-        response = http.request(pywikibot.getSite(), package['url'],
-                                no_hostname = True, back_response = True)[0]
-        pywikibot.warning(u'Size of download: %s byte(s)'
-                          % response.headers['Content-Length'])
+        lowlevel_warning(u'Download package "%s" from %s'
+                         % (module, package['url']))
+        import mimetypes, urllib2
+        for i in range(3):
+            response = urllib2.urlopen(package['url'])
+            #response = http.request(pywikibot.getSite(), package['url'],
+            #                        no_hostname = True, back_response = True)[0]
+            if 'Content-Length' in response.headers:
+                break
+            lowlevel_warning(u'Could not retrieve data, re-trying ...')
+        lowlevel_warning(u'Size of download: %s byte(s)'
+                         % response.headers['Content-Length'])
         #mime = response.headers['Content-Type'].lower().split('/')
         mime = mimetypes.guess_type(package['url'], strict=True)[0].lower().split('/')
-        pywikibot.warning(u'MIME type: %s' % mime)
+        lowlevel_warning(u'MIME type: %s' % mime)
 
-        pywikibot.warning(u'Extract package "%s" to %s'
-                          % (module, os.path.join(path, module)))
+        lowlevel_warning(u'Extract package "%s" to %s'
+                         % (module, os.path.join(path, module)))
         if len(mime) > 1:
             if   mime[1] == 'zip':
                 import zipfile, StringIO
@@ -248,32 +289,41 @@ def download_install(package, module, path):
 
             result = 0
             if 'patch' in package:
-                pywikibot.warning(u'Install package "%s" by applying patch to %s.'
-                                  % (module, os.path.join(path, module)))
+                lowlevel_warning(u'Install package "%s" by applying patch to %s.'
+                                 % (module, os.path.join(path, module)))
                 cmd = 'patch -p0 -d %s < %s' % (path, os.path.join(path, package['patch']))
                 result = os.system(cmd)
 
-            pywikibot.warning(u'Package "%s" installed to %s.'
-                              % (module, os.path.join(path, module)))
+            lowlevel_warning(u'Package "%s" installed to %s.'
+                             % (module, os.path.join(path, module)))
             return (result == 0)
 
     return False
+
+def mercurial_repo_install(package, module, path):
+    pass
 
 
 def check_setup(m):
     path = os.path.dirname(os.path.abspath(os.path.join(os.curdir, __file__)))
     mf = os.path.join(path, m)
 
-    #__import__(mf)
-    if not os.path.exists(mf):
-        # install the missing module
-        if linux_install(modules_needed[m][0]):
-            return
-        if download_install(modules_needed[m][1], m, path):
-            return
-#        if svn_repo_install(modules_needed[m][2]):
-#            return
-        pywikibot.error(u'Package "%s" could not be found nor installed!' % m) 
+    # search missing module
+    if python_module_exists(m):
+        return
+    if os.path.exists(mf):
+        return
+
+    # install the missing module
+    if linux_install(modules_needed[m][0]):
+        return
+    # TODO: add 'windows_install()' and more ...
+    if download_install(modules_needed[m][1], m, path):
+        return
+    if mercurial_repo_install(modules_needed[m][2], m, path):
+        return
+
+    pywikibot.error(u'Package "%s" could not be found nor installed!' % m) 
 
 def check_setup_all():
     #for m in modules_needed:
