@@ -41,7 +41,7 @@ modules_needed = {
 # TODO: vvv
 #        'simplejson' has to be moved and integrated (in)to externals as well
 #          'spelling' has to be moved and integrated (in)to externals as well
-#              'i18n' has to be moved and integrated (in)to externals as well
+#  'BeautifulSoup.py' has to be moved and integrated (in)to externals as well
 # $ svn propget svn:externals pywikipedia/
 # spelling http://svn.wikimedia.org/svnroot/pywikipedia/trunk/spelling/
 # simplejson http://simplejson.googlecode.com/svn/tags/simplejson-2.1.3/simplejson/
@@ -131,11 +131,8 @@ modules_order = ['crontab', 'odf', 'openpyxl',
 
 import os, sys
 
-import wikipedia as pywikibot
+import wikipedia as pywikibot   # sets externals path
 from pywikibot.comms import http
-
-
-sys.path.append(os.path.dirname(os.path.abspath(os.path.join(os.curdir, __file__))))
 
 
 ### BEGIN of VisTrails inspired and copied code ### ### ### ### ### ### ### ###

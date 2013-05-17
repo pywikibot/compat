@@ -10,7 +10,8 @@ Please refer to delinker.txt for full documentation.
 # Distributed under the terms of the MIT license.
 #
 __version__ = '$Id$'
-import config, wikipedia, simplejson
+import config, wikipedia
+import simplejson   # after 'wikipedia' because of externals path
 import re, time
 import sys, os, signal, traceback
 

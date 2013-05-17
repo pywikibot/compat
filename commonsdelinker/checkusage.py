@@ -40,9 +40,10 @@ __version__ = '$Id$'
 
 import httplib, urlparse, socket, time
 from urllib import urlencode
-import simplejson
 
 import wikipedia, family
+
+import simplejson   # after 'wikipedia' because of externals path
 
 try:
     import MySQLdb

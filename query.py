@@ -37,7 +37,7 @@ try:
         # http://pypi.python.org/pypi/python-json
         raise ImportError
 except ImportError:
-    import simplejson as json
+    import simplejson as json   # after 'wikipedia' because of externals path
 
 @deprecate_arg("encodeTitle", None)
 def GetData(params, site=None, useAPI=True, retryCount=config.maxretries,

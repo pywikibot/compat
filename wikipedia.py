@@ -133,6 +133,8 @@ stopme(): Put this on a bot when it is not or not communicating with the Wiki
 __version__ = '$Id$'
 
 import os, sys
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             'externals'))  # allow imports from externals
 import httplib, socket, urllib, urllib2, cookielib
 import traceback, pprint
 import time, threading, Queue

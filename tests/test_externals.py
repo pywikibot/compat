@@ -13,7 +13,7 @@
 __version__ = '$Id$'
 
 import unittest
-import test_pywiki
+import test_pywiki  # imports 'wikipedia' and sets externals path
 
 import sys, os
 
