@@ -23,7 +23,7 @@ __version__ = '$Id$'
 # supports: 0. svn:externals
 #           1. package management system (yum, apt-get, ...)
 #           2. download from url (or svn, git repo)
-#          (?. checkout from mercurial repo)
+#          (?. checkout from mercurial repo 'hg clone ...')
 modules_needed = {
             'crontab': ({},
                         #{  'url': 'https://github.com/josiahcarlson/parse-crontab/archive/master.zip',
@@ -40,10 +40,17 @@ modules_needed = {
                           'path': 'ericgazoni-openpyxl-e5934500ffac/openpyxl',}),# OK
 #           'spelling': $ svn propedit svn:externals externals/.
 #                         spelling http://svn.wikimedia.org/svnroot/pywikipedia/trunk/spelling/
-#         'simplejson': $ svn propedit svn:externals externals/.
-#                         simplejson http://simplejson.googlecode.com/svn/tags/simplejson-2.1.3/simplejson/
-# TODO: vvv
-#  'BeautifulSoup.py' has to be moved and integrated (in)to externals as well
+# TODO: vvv (adopt 'wikipedia.py' in order to be able to download 'simplejson', 'BeautifulSoup.py' before importing!!!)
+##         'simplejson': $ svn propedit svn:externals externals/.
+##                         simplejson http://simplejson.googlecode.com/svn/tags/simplejson-2.1.3/simplejson/
+##         'simplejson': ({'linux-fedora': ['python-simplejson'],
+##                         'linux-ubuntu': [''],},
+#   'BeautifulSoup.py': ({'linux-fedora': ['python-BeautifulSoup'],
+#                         'linux-ubuntu': [''],},
+#                        {  'url': 'https://pypi.python.org/packages/source/B/BeautifulSoup/BeautifulSoup-3.2.0.tar.gz',
+#                          'path': 'BeautifulSoup-3.2.0/BeautifulSoup.py',
+#                         #$ diff -Nau TEST_BeautifulSoup.py BeautifulSoup.py > patch-BeautifulSoup
+#                         'patch': 'patch-BeautifulSoup',}),                # OK
           'colormath': ({'linux-fedora': [],
                          'linux-ubuntu': ['python-colormath'],},
                         {  'url': 'https://github.com/gtaylor/python-colormath/archive/master.zip',
@@ -121,7 +128,7 @@ modules_needed = {
 #                 'colormath', 'jseg', 'jseg/jpeg-6b', '_mlpy', '_music21',
 #                 '_ocropus', 'opencv', 'opencv/haarcascades', 'pydmtx',
 #                 'py_w3c', 'slic', '_zbar', '_bob', 'xbob_flandmark',]
-modules_order = ['crontab', 'odf', 'openpyxl',
+modules_order = ['crontab', 'odf', 'openpyxl', #'BeautifulSoup.py',
                  'colormath', 'jseg', 'jseg/jpeg-6b', '_mlpy', '_music21',
                  'opencv/haarcascades', 'pydmtx', 'py_w3c', '_zbar',]
 

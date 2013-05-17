@@ -28,9 +28,6 @@ def urlopen(url):
     req = urllib2.Request(url, headers = {'User-agent': 'Pywikipedia family generator 0.1 - pywikipediabot.sf.net'})
     return urllib2.urlopen(req)
 
-# parsing response data
-from BeautifulSoup import BeautifulSoup
-
 # Monkey-patching wikipediatools to prevent questions about user_config.py
 import wikipediatools
 wikipediatools.get_base_dir = lambda: '.'
@@ -42,6 +39,9 @@ config.mylang = 'en'
 # Now we can boot the framework
 import wikipedia
 import family
+
+# parsing response data
+from BeautifulSoup import BeautifulSoup
 
 try:
     import json

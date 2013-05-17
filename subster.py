@@ -67,7 +67,6 @@ __version__ = '$Id$'
 
 import re, sys, os, string, time, copy
 import difflib, traceback
-import BeautifulSoup
 import StringIO, zipfile, csv
 import mailbox, mimetypes, datetime, email.utils
 import logging
@@ -80,9 +79,11 @@ import wikipedia as pywikibot
 from pywikibot import i18n
 from pywikibot.comms import http
 import externals                     # check for and install needed 'externals'
-externals.check_setup('crontab')     # 
-externals.check_setup('odf')         # 
-externals.check_setup('openpyxl')    # 
+externals.check_setup('crontab')     #
+externals.check_setup('odf')         #
+externals.check_setup('openpyxl')    #
+#externals.check_setup('BeautifulSoup.py')#
+import BeautifulSoup
 import openpyxl.reader.excel
 import crontab
 
