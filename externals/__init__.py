@@ -20,10 +20,10 @@ __version__ = '$Id$'
 #
 
 
-# supports: 1. package management system (yum, apt-get, ...)
+# supports: 0. svn:externals
+#           1. package management system (yum, apt-get, ...)
 #           2. download from url (or svn, git repo)
-#          (?. checkout from svn/mercurial repo)
-#           3. svn:externals
+#          (?. checkout from mercurial repo)
 modules_needed = {
             'crontab': ({},
                         #{  'url': 'https://github.com/josiahcarlson/parse-crontab/archive/master.zip',
@@ -38,14 +38,12 @@ modules_needed = {
            'openpyxl': ({},
                         {  'url': 'https://bitbucket.org/ericgazoni/openpyxl/get/1.5.6.tar.gz',
                           'path': 'ericgazoni-openpyxl-e5934500ffac/openpyxl',}),# OK
+#           'spelling': $ svn propedit svn:externals externals/.
+#                         spelling http://svn.wikimedia.org/svnroot/pywikipedia/trunk/spelling/
+#         'simplejson': $ svn propedit svn:externals externals/.
+#                         simplejson http://simplejson.googlecode.com/svn/tags/simplejson-2.1.3/simplejson/
 # TODO: vvv
-#        'simplejson' has to be moved and integrated (in)to externals as well
-#          'spelling' has to be moved and integrated (in)to externals as well
 #  'BeautifulSoup.py' has to be moved and integrated (in)to externals as well
-# $ svn propget svn:externals pywikipedia/
-# spelling http://svn.wikimedia.org/svnroot/pywikipedia/trunk/spelling/
-# simplejson http://simplejson.googlecode.com/svn/tags/simplejson-2.1.3/simplejson/
-# i18n http://svn.wikimedia.org/svnroot/pywikipedia/branches/rewrite/scripts/i18n
           'colormath': ({'linux-fedora': [],
                          'linux-ubuntu': ['python-colormath'],},
                         {  'url': 'https://github.com/gtaylor/python-colormath/archive/master.zip',
@@ -71,10 +69,9 @@ modules_needed = {
 #           '_ocropus': ({},
 #                        {}),                                               # OPEN
 # TODO: vvv (further clean-up and unlink - check with 'svn list')
-#             'opencv': $ svn propedit svn:externals .
+#             'opencv': $ svn propedit svn:externals externals/.
 #                         opencv https://svn.toolserver.org/svnroot/drtrigon/externals/opencv
-#                         (in directory 'externals', not 'externals/opencv')
-#                       $ svn propedit svn:externals haarcascades/haartraining/
+#                       $ svn propedit svn:externals externals/opencv/haarcascades/haartraining/
 #                         HaarTraining https://svn.toolserver.org/svnroot/drtrigon/externals/haartraining/HaarTraining
 #                         HaarTraining.tar.gz https://svn.toolserver.org/svnroot/drtrigon/externals/haartraining/HaarTraining.tar.gz
 #                         convert_cascade.c https://svn.toolserver.org/svnroot/drtrigon/externals/haartraining/convert_cascade.c
@@ -85,7 +82,7 @@ modules_needed = {
                         {  'url': 'https://svn.toolserver.org/svnroot/drtrigon/externals/haarcascades-full.tar.gz',
                           'path': 'haarcascades',}),                       # OK
 #          'pdfminer' is not used anymore/at the moment...
-#       'pycolorname': $ svn propset svn:externals 'pycolorname https://svn.toolserver.org/svnroot/drtrigon/externals/pycolorname' .
+#       'pycolorname': $ svn propset svn:externals 'pycolorname https://svn.toolserver.org/svnroot/drtrigon/externals/pycolorname' externals/.
              'pydmtx': ({'linux-fedora': ['python-libdmtx'],
                          'linux-ubuntu': ['libdmtx-dev'],},
                         {  'url': 'https://github.com/dmtx/dmtx-wrappers/archive/master.zip',

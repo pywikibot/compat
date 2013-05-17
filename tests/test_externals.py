@@ -32,7 +32,7 @@ class PyWikiExternalImporterTestCase(test_pywiki.PyWikiTestCase):
         self.assertTrue( "simplejson" in sys.modules )
 
     def test_spelling(self):
-        self.assertTrue(os.path.exists(os.path.join(scriptdir, '../spelling')))
+        self.assertTrue(os.path.exists(os.path.join(scriptdir, '../externals/spelling')))
 
     def test_i18n(self):
         import i18n

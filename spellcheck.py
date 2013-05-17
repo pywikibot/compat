@@ -459,7 +459,7 @@ try:
     mysite = pywikibot.getSite()
     if not checklang:
         checklang = mysite.language()
-    filename = pywikibot.config.datafilepath('spelling',
+    filename = pywikibot.config.datafilepath('externals/spelling',
                                       'spelling-' + checklang + '.txt')
     print "Getting wordlist"
     try:
@@ -520,7 +520,7 @@ try:
             title = pywikibot.input(u"Which page to check now? (enter to stop)")
 finally:
     pywikibot.stopme()
-    filename = pywikibot.config.datafilepath('spelling',
+    filename = pywikibot.config.datafilepath('externals/spelling',
                                       'spelling-' + checklang + '.txt')
     if rebuild:
         list = knownwords.keys()
