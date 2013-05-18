@@ -22,9 +22,9 @@ class Family(family.WikimediaFamily):
             'mk', 'be', 'ga', 'nds', 'wo', 'ms', 'ang', 'ky', 'co', 'gn', 'mr',
             'csb', 'st', 'ia', 'sd', 'si', 'sh', 'tg', 'sa', 'ug', 'mn', 'kl',
             'jbo', 'an', 'ln', 'zu', 'or', 'gu', 'kw', 'rw', 'gv', 'fo', 'qu',
-            'ss', 'ie', 'mt', 'om', 'chr', 'roa-rup', 'iu', 'bn', 'pa', 'so',
-            'am', 'su', 'za', 'gd', 'mi', 'tpi', 'ne', 'yi', 'ti', 'sg', 'na',
-            'dv', 'tn', 'ha', 'ks', 'ay', 'ts',
+            'ss', 'vec', 'ie', 'mt', 'om', 'chr', 'roa-rup', 'iu', 'bn', 'pa',
+            'so', 'am', 'su', 'za', 'gd', 'mi', 'tpi', 'ne', 'yi', 'ti', 'sg',
+            'na', 'dv', 'tn', 'ha', 'ks', 'ay', 'ts',
         ]
 
         self.langs = dict([(lang, '%s.wiktionary.org' % lang)
@@ -195,6 +195,7 @@ class Family(family.WikimediaFamily):
             'uk': [u'Вікісловник', u'Wiktionary', u'ВС'],
             'ur': [u'وکی لغت', u'Wiktionary'],
             'uz': [u'Vikilug‘at', u'Wiktionary'],
+            'vec': [u'Wikisionario', u'Wiktionary'],
             'vi': u'Wiktionary',
             'vo': [u'Vükivödabuk', u'Wiktionary'],
             'wa': u'Wiktionary',
@@ -354,6 +355,7 @@ class Family(family.WikimediaFamily):
             'uk': u'Обговорення Вікісловника',
             'ur': u'تبادلۂ خیال وکی لغت',
             'uz': u'Vikilug‘at munozarasi',
+            'vec': u'Discussion Wikisionario',
             'vi': u'Thảo luận Wiktionary',
             'vo': [u'Bespik dö Vükivödabuk', u'Wiktionary talk'],
             'wa': u'Wiktionary copene',
