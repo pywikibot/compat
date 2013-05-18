@@ -3410,7 +3410,7 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
 #        self._detect_AudioFeatures_YAAFE()
 
         # midi audio feature extraction
-#        self._detect_AudioFeatures_MUSIC21()
+        self._detect_AudioFeatures_MUSIC21()
 
     def _existInformation(self, info, ignore = ['Properties', 'ColorAverage']):
         result = []

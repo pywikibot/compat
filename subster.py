@@ -82,7 +82,6 @@ import externals                     # check for and install needed 'externals'
 externals.check_setup('crontab')     #
 externals.check_setup('odf')         #
 externals.check_setup('openpyxl')    #
-#externals.check_setup('BeautifulSoup.py')#
 import BeautifulSoup
 import openpyxl.reader.excel
 import crontab

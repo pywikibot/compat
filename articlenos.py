@@ -14,11 +14,14 @@ http://python-irclib.sourceforge.net/
 # License : LGPL
 __version__ = '$Id$'
 
+import re
+
+import wikipedia as pywikibot
+import externals
+externals.check_setup('irclib')
 from ircbot import SingleServerIRCBot
 from irclib import nm_to_n, nm_to_h, irc_lower, ip_numstr_to_quad
 from irclib import ip_quad_to_numstr
-import wikipedia as pywikibot
-import re
 
 class ArtNoDisp(SingleServerIRCBot):
     def __init__(self, site, channel, nickname, server, port=6667):

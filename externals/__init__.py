@@ -23,7 +23,7 @@ __version__ = '$Id$'
 # supports: 0. svn:externals
 #           1. package management system (yum, apt-get, ...)
 #           2. download from url (or svn, git repo)
-#           3. checkout from mercurial repo ('hg clone ...' since not url available)
+#           3. checkout from mercurial repo ('hg clone ...' since url not available)
 # dependencies: (svn, python)
 #               yum, apt-get or whatever your system uses
 #               mercurial (hg)
@@ -65,6 +65,10 @@ modules_needed = {
                           'path': 'BeautifulSoup-3.2.0/BeautifulSoup.py',
                          #$ diff -Nau TEST_BeautifulSoup.py BeautifulSoup.py > patch-BeautifulSoup
                          'patch': 'patch-BeautifulSoup',},
+                        {}),                                               # OK
+             'irclib': ({'linux-fedora': ['python-irclib'],
+                         'linux-ubuntu': [''],},
+                        {}, # http://python-irclib.sourceforge.net/
                         {}),                                               # OK
           'colormath': ({'linux-fedora': [],
                          'linux-ubuntu': ['python-colormath'],},
@@ -125,11 +129,11 @@ modules_needed = {
                         {}),                                               # OK
 # TODO: vvv (include)
 #               'TEST_slic': ({},
-#                        {  'url': 'https://github.com/amueller/slic-python/archive/master.zip',
-#                          'path': 'slic-python-master',}),                 # OPEN
-#               'TEST_slic': ({},
 #                        {  'url': 'http://ivrg.epfl.ch/files/content/sites/ivrg/files/supplementary_material/RK_SLICsuperpixels/SLICSuperpixelsAndSupervoxelsCode.zip',
 #                          'path': 'SLICSuperpixelsAndSupervoxelsCode/SLICSuperpixels',}),# OPEN
+#               'TEST_slic': ({},
+#                        {  'url': 'https://github.com/amueller/slic-python/archive/master.zip',
+#                          'path': 'slic-python-master',}),                 # OPEN
 # (2 download sources to same dir, compilation) + patch (at least for '__init__.py') needed
               '_zbar': ({'linux-fedora': ['zbar'],
                          'linux-ubuntu': ['python-zbar'],},
@@ -149,7 +153,7 @@ modules_needed = {
 # (complex compilation, dependent on '_bob') + patch (at least for '__init__.py') needed
 }
 
-modules_order = ['crontab', 'odf', 'openpyxl', 'BeautifulSoup.py',
+modules_order = ['crontab', 'odf', 'openpyxl', 'BeautifulSoup.py', 'irclib',
                  'colormath', 'jseg', 'jseg/jpeg-6b', '_mlpy', '_music21',
                  '_ocropus', 'opencv/haarcascades', 'pydmtx', 'py_w3c',
                  '_zbar',]
