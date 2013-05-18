@@ -12,7 +12,7 @@ class Family(family.WikimediaFamily):
         self.name = 'wikivoyage'
         self.languages_by_size = [
             'en', 'de', 'pt', 'nl', 'fr', 'it', 'pl', 'ru', 'sv', 'es', 'ro',
-            'uk', 'he',
+            'uk', 'he', 'el',
         ]
 
         self.langs = dict([(lang, '%s.wikivoyage.org' % lang)
@@ -35,6 +35,7 @@ class Family(family.WikimediaFamily):
         # You only need to enter translations that differ from _default.
         self.namespaces[4] = {
             'de': u'Wikivoyage',
+            'el': u'Βικιταξίδια',
             'en': u'Wikivoyage',
             'es': u'Wikiviajes',
             'fr': u'Wikivoyage',
@@ -51,6 +52,7 @@ class Family(family.WikimediaFamily):
 
         self.namespaces[5] = {
             'de': u'Wikivoyage Diskussion',
+            'el': u'Συζήτηση Βικιταξίδια',
             'en': u'Wikivoyage talk',
             'es': u'Wikiviajes discusión',
             'fr': u'Discussion Wikivoyage',
