@@ -54,6 +54,8 @@ class Family(family.WikimediaFamily):
         self.namespaces[13]['de'] = [u'Hilfe Diskussion', u'HD']
         self.namespaces[2]['hi'] = [u'सदस्य', u'U', u'स']
         self.namespaces[3]['hi'] = [u'सदस्य वार्ता', u'UT', u'सवा']
+        self.namespaces[8]['hi'] = [u'मीडियाविकि', u'मी'],
+        self.namespaces[9]['hi'] = [u'मीडियाविकि वार्ता', u'मीवा'],
         self.namespaces[10]['hi'] = [u'साँचा', u'सा', u'T']
         self.namespaces[11]['hi'] = [u'साँचा वार्ता', u'सावा']
         self.namespaces[14]['hi'] = [u'श्रेणी', u'श्र', u'C']
@@ -328,10 +330,10 @@ class Family(family.WikimediaFamily):
             'tum': u'Wikipedia',
             'tw': u'Wikipedia',
             'ty': u'Wikipedia',
-            'udm': u'Wikipedia',
+            'udm': u'Википедия',
             'ug': u'Wikipedia',
             'uk': [u'Вікіпедія', u'ВП'],
-            'ur': u'منصوبہ',
+            'ur': u'ویکیپیڈیا',
             'uz': [u'Vikipediya', u'VP'],
             've': u'Wikipedia',
             'vec': [u'Wikipedia', u'WP'],
@@ -443,7 +445,7 @@ class Family(family.WikimediaFamily):
             'gl': u'Conversa Wikipedia',
             'glk': u'بحث Wikipedia',
             'gn': u'Vikipetã myangekõi',
-            'got': u'𐌸𐌹𐍃 Wikipedia 𐌲𐌰𐍅𐌰𐌿𐍂𐌳𐌾𐌰',
+            'got': u'??? Wikipedia ?????????',
             'gu': u'વિકિપીડિયા ચર્ચા',
             'gv': u'Resooney Wikipedia',
             'ha': u'Wikipedia talk',
@@ -610,7 +612,7 @@ class Family(family.WikimediaFamily):
             'udm': [u'Википедия сярысь вераськон', u'Wikipedia сярысь вераськон'],
             'ug': u'مۇنازىرىسىWikipedia',
             'uk': u'Обговорення Вікіпедії',
-            'ur': u'تبادلۂ خیال منصوبہ',
+            'ur': u'تبادلۂ خیال ویکیپیڈیا',
             'uz': [u'Vikipediya munozarasi', u'VM'],
             've': u'Wikipedia talk',
             'vec': u'Discussion Wikipedia',
@@ -1003,10 +1005,12 @@ class Family(family.WikimediaFamily):
 
         self.namespaces[446] = {
             'en': u'Education Program',
+            'mk': u'Education Program',
         }
 
         self.namespaces[447] = {
             'en': u'Education Program talk',
+            'mk': u'Education Program talk',
         }
 
         self.namespaces[710] = {
