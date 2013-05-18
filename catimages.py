@@ -107,6 +107,8 @@ from colormath.color_objects import RGBColor
 from py_w3c.validators.html.validator import HTMLValidator, ValidationFault
 #from pdfminer import pdfparser, pdfinterp, pdfdevice, converter, cmapdb, layout
 
+#externals.check_setup('_ocropus')
+
 locale.setlocale(locale.LC_ALL, '')
 
 

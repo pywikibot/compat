@@ -30,9 +30,6 @@ generate_user_files.py : Creates user-config.py or user-fixes.py.
 ===  Library routines ===
 
 apispec.py             : Library to handle special pages through API
-BeautifulSoup.py       : is a Python HTML/XML parser designed for quick
-                         turnaround projects like screen-scraping. See
-                         more: http://www.crummy.com/software/BeautifulSoup
 botlist.py             : Allows access to the site's bot user list.
 catlib.py              : Library routines written especially to handle
                          category pages and recurse over category contents.
@@ -259,6 +256,16 @@ copyright              : Contains information retrieved by copyright.py
 deadlinks              : Contains information retrieved by weblinkchecker.py
 disambiguations        : If you run solve_disambiguation.py with the -primary
                          argument, the bot will save information here
+externals              : Contains all external software that might be used by
+                         by PyWikipediaBot scripts and libraries. The most
+                         important among them are:
+                         * simplejson; used by query.py and needed for python
+                                       release prev. 2.6
+                         * spelling; dictionaries for spellcheck.py
+                         * BeautifulSoup.py; http://www.crummy.com/software/BeautifulSoup
+                         (and more)
+                         Missing packages are installed or downloaded automa-
+                         tically by externals/__init__.py.
 families               : Contains wiki-specific information like URLs,
                          languages, encodings etc.
 i18n                   : Contains i18n translations for bot edit summaries
@@ -271,9 +278,6 @@ login-data             : login.py stores your cookies here (Your password won't
 logs                   : Contains logfiles.
 maintenance            : contains maintenance scripts for the developing team
 pywikibot              : Contains some libraries and control files
-simplejson             : A simple, fast, extensible JSON encoder and decoder
-                         used by query.py. Needed for python release prev. 2.6
-spelling               : Contains dictionaries for spellcheck.py.
 test                   : Some test stuff for the developing team
 userinterfaces         : Contains Tkinter, WxPython, terminal and
                          transliteration interfaces user choose in
@@ -295,6 +299,11 @@ are not installed by default on some Linux distributions:
   * python-xml (required to parse XML via SaX2)
   * python-celementtree (recommended if you use XML dumps)
   * python-tkinter (optional, used by some experimental GUI stuff)
+
+All other (more exotic) external software is installed automatically by the
+externals module, if missing. This is done by using several methods in following
+order; (svn:externals), OS package management system, download and extract from
+URL, clone of mercurial repository.
 
 More precise information, and a list of the options that are available for
 the various programs, can be retrieved by running the bot with the -help

@@ -23,21 +23,36 @@ __version__ = '$Id$'
 # supports: 0. svn:externals
 #           1. package management system (yum, apt-get, ...)
 #           2. download from url (or svn, git repo)
-#           3. checkout from mercurial repo ('hg clone ...')
+#           3. checkout from mercurial repo ('hg clone ...' since not url available)
+# dependencies: (svn, python)
+#               yum, apt-get or whatever your system uses
+#               mercurial (hg)
+#               patch
 modules_needed = {
+# TODO: vvv how to apply patches under windows, e.g. and other OS... ? (needed for BeautifulSoup.py and else)
+#           'patch.py': ({},
+#                        {  'url': 'https://python-patch.googlecode.com/files/patch-1.12.11.py',
+#                          'path': '',}),                                   # OK
+#                        {  'url': 'http://google-diff-match-patch.googlecode.com/files/diff_match_patch_20121119.zip',
+#                          'path': 'diff_match_patch_20121119/python2',}),  # OK
+#                        {  'url': 'http://downloads.sourceforge.net/project/unxutils/unxutils/current/UnxUtils.zip',
+#                          'path': '?',}),                                  # OK
             'crontab': ({},
                         #{  'url': 'https://github.com/josiahcarlson/parse-crontab/archive/master.zip',
                         #  'path': 'parse-crontab-master/crontab',}),       # OK
                         {  'url': 'https://github.com/josiahcarlson/parse-crontab/archive/1ec538ff67df6a207993a6c5b6988f4f628c5776.zip',
-                          'path': 'parse-crontab-1ec538ff67df6a207993a6c5b6988f4f628c5776/crontab',}),# OK
+                          'path': 'parse-crontab-1ec538ff67df6a207993a6c5b6988f4f628c5776/crontab',},
+                        {}),                                               # OK
                 'odf': ({},
                         #{  'url': 'https://pypi.python.org/packages/source/o/odfpy/odfpy-0.9.6.tar.gz',
                         #  'path': 'odfpy-0.9.6/odf',}),                    # OK
                         {  'url': 'https://pypi.python.org/packages/source/o/odfpy/odfpy-0.9.4.tar.gz',
-                          'path': 'odfpy-0.9.4/odf',}),                    # OK
+                          'path': 'odfpy-0.9.4/odf',},
+                        {}),                                               # OK
            'openpyxl': ({},
                         {  'url': 'https://bitbucket.org/ericgazoni/openpyxl/get/1.5.6.tar.gz',
-                          'path': 'ericgazoni-openpyxl-e5934500ffac/openpyxl',}),# OK
+                          'path': 'ericgazoni-openpyxl-e5934500ffac/openpyxl',},
+                        {}),                                               # OK
 #           'spelling': $ svn propedit svn:externals externals/.
 #                         spelling http://svn.wikimedia.org/svnroot/pywikipedia/trunk/spelling/
 #         'simplejson': $ svn propedit svn:externals externals/.
@@ -49,32 +64,38 @@ modules_needed = {
                         {  'url': 'https://pypi.python.org/packages/source/B/BeautifulSoup/BeautifulSoup-3.2.0.tar.gz',
                           'path': 'BeautifulSoup-3.2.0/BeautifulSoup.py',
                          #$ diff -Nau TEST_BeautifulSoup.py BeautifulSoup.py > patch-BeautifulSoup
-                         'patch': 'patch-BeautifulSoup',}),                # OK
-# TODO: ^^^ how to apply patches under windows, e.g. ... ? (afterwards remove the file from repo!)
+                         'patch': 'patch-BeautifulSoup',},
+                        {}),                                               # OK
           'colormath': ({'linux-fedora': [],
                          'linux-ubuntu': ['python-colormath'],},
                         {  'url': 'https://github.com/gtaylor/python-colormath/archive/master.zip',
-                          'path': 'python-colormath-master/colormath',}),  # OK
+                          'path': 'python-colormath-master/colormath',},
+                        {}),                                               # OK
                'jseg': ({},
                         {  'url': 'http://vision.ece.ucsb.edu/segmentation/jseg/software/jseg.zip',
                           'path': 'jseg',
                          #$ diff -Nau --exclude="*.o" --exclude="*.pyc" --exclude="segdist_cpp*" TEST_jseg/ jseg/ > patch-jseg
-                         'patch': 'patch-jseg',}),                         # OK
+                         'patch': 'patch-jseg',},
+                        {}),                                               # OK
        'jseg/jpeg-6b': ({},
                         {  'url': 'http://vision.ece.ucsb.edu/segmentation/jseg/software/jpeg-6b.zip',
-                          'path': 'jpeg-6b',}),                            # OK
+                          'path': 'jpeg-6b',},
+                        {}),                                               # OK
               '_mlpy': ({},
                         {  'url': 'http://downloads.sourceforge.net/project/mlpy/mlpy%203.5.0/mlpy-3.5.0.tar.gz',
-                          'path': 'mlpy-3.5.0/mlpy',}),                    # OK
+                          'path': 'mlpy-3.5.0/mlpy',},
+                        {}),                                               # OK
            '_music21': ({},
                         {  'url': 'http://music21.googlecode.com/files/music21-1.4.0.tar.gz',
                           'path': 'music21-1.4.0',
                          #$ diff -Naur --exclude="*.pyc" TEST__music21/ _music21/ > patch-music21
-                         'patch': 'patch-music21',}),                      # OK
-# TODO: vvv (future; enable for and use in 'catimages.py')
-# mercurial: $ hg clone -r ocropus-0.6pre3 https://code.google.com/p/ocropus
-#           '_ocropus': ({},
-#                        {}),                                               # OPEN
+                         'patch': 'patch-music21',},
+                        {}),                                               # OK
+# TODO: vvv (future; enable for and use in 'catimages.py', patch needed)
+           '_ocropus': ({},
+                        {},
+                        {  'url': 'https://code.google.com/p/ocropus',
+                           'rev': 'ocropus-0.6',}),                        # OK
 # TODO: vvv (further clean-up and unlink - check with 'svn list')
 #             'opencv': $ svn propedit svn:externals externals/.
 #                         opencv https://svn.toolserver.org/svnroot/drtrigon/externals/opencv
@@ -87,7 +108,8 @@ modules_needed = {
 #                         createtrainsamples.pl https://svn.toolserver.org/svnroot/drtrigon/externals/haartraining/createtrainsamples.pl
 'opencv/haarcascades': ({},
                         {  'url': 'https://svn.toolserver.org/svnroot/drtrigon/externals/haarcascades-full.tar.gz',
-                          'path': 'haarcascades',}),                       # OK
+                          'path': 'haarcascades',},
+                        {}),                                               # OK
 #          'pdfminer' is not used anymore/at the moment...
 #       'pycolorname': $ svn propset svn:externals 'pycolorname https://svn.toolserver.org/svnroot/drtrigon/externals/pycolorname' externals/.
              'pydmtx': ({'linux-fedora': ['python-libdmtx'],
@@ -95,10 +117,12 @@ modules_needed = {
                         {  'url': 'https://github.com/dmtx/dmtx-wrappers/archive/master.zip',
                           'path': 'dmtx-wrappers-master/python',
                          #$ diff -Nau --exclude="*.pyc" TEST_pydmtx/ pydmtx/ > patch-pydmtx
-                         'patch': 'patch-pydmtx',}),                       # OK
+                         'patch': 'patch-pydmtx',},
+                        {}),                                               # OK
              'py_w3c': ({},
                         {  'url': 'https://bitbucket.org/nmb10/py_w3c/downloads/py_w3c-v0.1.0.tar.gz',
-                          'path': 'py_w3c-0.1.0/py_w3c',}),                # OK
+                          'path': 'py_w3c-0.1.0/py_w3c',},
+                        {}),                                               # OK
 # TODO: vvv (include)
 #               'TEST_slic': ({},
 #                        {  'url': 'https://github.com/amueller/slic-python/archive/master.zip',
@@ -106,13 +130,14 @@ modules_needed = {
 #               'TEST_slic': ({},
 #                        {  'url': 'http://ivrg.epfl.ch/files/content/sites/ivrg/files/supplementary_material/RK_SLICsuperpixels/SLICSuperpixelsAndSupervoxelsCode.zip',
 #                          'path': 'SLICSuperpixelsAndSupervoxelsCode/SLICSuperpixels',}),# OPEN
-# (2 download sources to same dir) + patch (at least for '__init__.py') needed
+# (2 download sources to same dir, compilation) + patch (at least for '__init__.py') needed
               '_zbar': ({'linux-fedora': ['zbar'],
                          'linux-ubuntu': ['python-zbar'],},
                         {  'url': 'https://pypi.python.org/packages/source/z/zbar/zbar-0.10.tar.bz2',
                           'path': 'zbar-0.10',
                          #$ diff -Nau --exclude="*.pyc" TEST__zbar/ _zbar/ > patch-zbar
-                         'patch': 'patch-zbar',}),                         # OK
+                         'patch': 'patch-zbar',},
+                        {}),                                               # OK
 # TODO: vvv (include)
 #               'TEST__bob': ({},
 #                        { 'url': 'https://www.idiap.ch/software/bob/packages/bob-1.1.2.zip',
@@ -124,13 +149,11 @@ modules_needed = {
 # (complex compilation, dependent on '_bob') + patch (at least for '__init__.py') needed
 }
 
-#modules_order = ['crontab', 'odf', 'openpyxl',
-#                 'colormath', 'jseg', 'jseg/jpeg-6b', '_mlpy', '_music21',
-#                 '_ocropus', 'opencv', 'opencv/haarcascades', 'pydmtx',
-#                 'py_w3c', 'slic', '_zbar', '_bob', 'xbob_flandmark',]
 modules_order = ['crontab', 'odf', 'openpyxl', 'BeautifulSoup.py',
                  'colormath', 'jseg', 'jseg/jpeg-6b', '_mlpy', '_music21',
-                 'opencv/haarcascades', 'pydmtx', 'py_w3c', '_zbar',]
+                 '_ocropus', 'opencv/haarcascades', 'pydmtx', 'py_w3c',
+                 '_zbar',]
+# OPEN: 'patch.py', 'opencv', 'slic', '_bob', 'xbob_flandmark',
 
 
 import os, sys
@@ -250,6 +273,10 @@ about which system it runs on."""
         else:
             return False
 
+# TODO: work this out...
+def windows_install(dependency_dictionary):
+    return False
+
 ### END of VisTrails inspired and copied code   ### ### ### ### ### ### ### ###
 
 
@@ -292,6 +319,8 @@ def download_install(package, module, path):
                 lowlevel_warning(u'Install package "%s" by applying patch to %s.'
                                  % (module, os.path.join(path, module)))
                 cmd = 'patch -p0 -d %s < %s' % (path, os.path.join(path, package['patch']))
+                #os.chdir(path)
+                #cmd = 'python patch.py -p0 -- < %s' % os.path.join(path, package['patch'])
                 result = os.system(cmd)
 
             lowlevel_warning(u'Package "%s" installed to %s.'
@@ -301,7 +330,19 @@ def download_install(package, module, path):
     return False
 
 def mercurial_repo_install(package, module, path):
-    pass
+    if package:
+        cmd = 'hg clone'
+    
+        lowlevel_warning(u'Mercurial clone "%s" from %s'
+                         % (module, package['url']))
+        cmd += " -r %s %s %s" % (package['rev'], package['url'],
+                                 os.path.join(path, module))
+    
+        result = os.system(cmd)
+    
+        return (result == 0)
+
+    return False
 
 
 def check_setup(m):
@@ -315,9 +356,9 @@ def check_setup(m):
         return
 
     # install the missing module
-    if linux_install(modules_needed[m][0]):
+    dist = guess_system().split(u'-')
+    if globals()[dist[0] + '_install'](modules_needed[m][0]):
         return
-    # TODO: add 'windows_install()' and more ...
     if download_install(modules_needed[m][1], m, path):
         return
     if mercurial_repo_install(modules_needed[m][2], m, path):
@@ -332,3 +373,4 @@ def check_setup_all():
 
 
 #check_setup_all()
+#check_setup('patch.py')
