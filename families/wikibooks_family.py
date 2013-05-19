@@ -25,16 +25,16 @@ class Family(family.WikimediaFamily):
                            for lang in self.languages_by_size])
 
         # Override defaults
-        self.namespaces[14]['bn'] = [u'বিষয়শ্রেণী']
         self.namespaces[15]['bn'] = [u'বিষয়শ্রেণী আলোচনা']
-        self.namespaces[2]['cs'] = [u'Uživatel', u'Uživatelka']
+        self.namespaces[14]['bn'] = [u'বিষয়শ্রেণী']
+        self.namespaces[3]['ca'] = [u'Usuari Discussió']
+        self.namespaces[2]['ca'] = [u'Usuari']
         self.namespaces[3]['cs'] = [u'Diskuse s uživatelem', u'Uživatel diskuse', u'Uživatelka diskuse', u'Diskuse s uživatelkou']
+        self.namespaces[2]['cs'] = [u'Uživatel', u'Uživatelka']
+        self.namespaces[9]['da'] = [u'MediaWiki diskussion', u'MediaWiki-diskussion']
         self.namespaces[14]['en'] = [u'Category', u'CAT']
         self.namespaces[2]['fr'] = [u'Utilisateur']
         self.namespaces[3]['fr'] = [u'Discussion utilisateur', u'Discussion Utilisateur']
-        self.namespaces[2]['ca'] = [u'Usuari']
-        self.namespaces[3]['ca'] = [u'Usuari Discussió']
-        self.namespaces[9]['da'] = [u'MediaWiki diskussion', u'MediaWiki-diskussion']
         self.namespaces[13]['da'] = [u'Hjælp diskussion', u'Hjælp-diskussion']
         self.namespaces[3]['pl'] = [u'Dyskusja wikipedysty', u'Dyskusja wikipedystki', u'Dyskusja użytkownika', u'Dyskusja użytkowniczki']
         self.namespaces[2]['pl'] = [u'Wikipedysta', u'Wikipedystka', u'Użytkownik', u'Użytkowniczka']
@@ -93,7 +93,7 @@ class Family(family.WikimediaFamily):
             'kk': [u'Уикикітап', u'Wikibooks'],
             'km': u'Wikibooks',
             'ko': [u'위키책', u'Wikibooks'],
-            'ku': u'Wikibooks',
+            'ku': [u'Wîkîpirtûk', u'Wikibooks'],
             'ky': u'Wikibooks',
             'la': [u'Vicilibri', u'Wikibooks'],
             'li': [u'Wikibeuk', u'Wikibooks'],
@@ -190,7 +190,7 @@ class Family(family.WikimediaFamily):
             'km': [u'ការពិភាក្សាអំពីWikibooks', u'Wikibooks ពិភាក្ស'],
             'kn': u'Wikibooks ಚರ್ಚೆ',
             'ko': u'위키책토론',
-            'ku': [u'Gotûbêja Wîkîpirtûkê', u'Wikibooks nîqaş'],
+            'ku': [u'Gotûbêja Wîkîpirtûkê', u'Wîkîpirtûk nîqaş'],
             'ky': u'Wikibooks баарлашуу',
             'la': u'Disputatio Vicilibrorum',
             'lb': u'Wikibooks Diskussioun',
