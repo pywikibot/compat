@@ -302,6 +302,7 @@ former_name = {
     'es': (CAT, u"Wikipedia:Artículos anteriormente destacados"),
     'fa': (CAT, u"مقاله‌های برگزیده پیشین"),
     'hu': (CAT, u"Korábbi kiemelt cikkek"),
+    'pl': (CAT, u"Byłe artykuły na medal"),
     'pt': (CAT, u"!Ex-Artigos_destacados"),
     'ru': (CAT, u"Википедия:Устаревшие избранные статьи"),
     'th': (CAT, u"บทความคัดสรรในอดีต"),
