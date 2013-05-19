@@ -149,6 +149,12 @@ class Family(family.WikimediaFamily):
             'fr': u'Discussion Transwiki',
             'ja': u'Transwiki‐ノート',
         }
+        self.namespaces[446] = {
+            'de': u'Education Program',
+        }
+        self.namespaces[447] = {
+            'de': u'Education Program talk',
+        }
 
         # Global bot allowed languages on http://meta.wikimedia.org/wiki/Bot_policy/Implementation#Current_implementation
         self.cross_allowed = ['ja',]
