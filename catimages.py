@@ -57,7 +57,7 @@ scriptdir = os.path.dirname(sys.argv[0])
 if not os.path.isabs(scriptdir):
     scriptdir = os.path.abspath(os.path.join(os.curdir, scriptdir))
 
-# additional python packages (more exotic and problematic ones)
+# additional python packages (non-default but common)
 try:
     import numpy as np
     from scipy import ndimage, fftpack, linalg#, signal
@@ -78,6 +78,14 @@ try:
 except:
     # either raise the ImportError later or skip it
     pass
+
+# pywikipedia framework python packages
+import wikipedia as pywikibot
+import pagegenerators, catlib
+import checkimages
+import externals                    # allow import from externals
+
+# additional python packages (more exotic and problematic ones)
 # modules needing compilation are imported later on request:
 # (see https://jira.toolserver.org/browse/TS-1452)
 # e.g. opencv, jseg, slic, pydmtx, zbar, (pyml or equivalent)
@@ -86,14 +94,8 @@ except:
 # TODO:
 #   (pdfminer not used anymore/at the moment...)
 #   python-djvulibre or python-djvu for djvu support
-
-# pywikipedia framework python packages
-import wikipedia as pywikibot
-import pagegenerators, catlib
-import checkimages
-import externals                             # check for and install needed
-externals.check_setup('colormath')           # 'externals' modules
-externals.check_setup('jseg')                #
+externals.check_setup('colormath')           # check for and install needed
+externals.check_setup('jseg')                # 'externals' modules
 externals.check_setup('jseg/jpeg-6b')        #
 #externals.check_setup('_mlpy')               #
 externals.check_setup('_music21')            #
@@ -106,7 +108,6 @@ import pycolorname
 from colormath.color_objects import RGBColor
 from py_w3c.validators.html.validator import HTMLValidator, ValidationFault
 #from pdfminer import pdfparser, pdfinterp, pdfdevice, converter, cmapdb, layout
-
 #externals.check_setup('_ocropus')
 
 locale.setlocale(locale.LC_ALL, '')
@@ -3410,6 +3411,7 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
 #        self._detect_AudioFeatures_YAAFE()
 
         # midi audio feature extraction
+# TODO: improve midi/audio stuff ...
         self._detect_AudioFeatures_MUSIC21()
 
     def _existInformation(self, info, ignore = ['Properties', 'ColorAverage']):

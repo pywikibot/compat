@@ -12,8 +12,6 @@ __version__ = '$Id$'
 # Author: Balasyum
 # http://hu.wikipedia.org/wiki/User:Balasyum
 
-from ircbot import SingleServerIRCBot
-from irclib import nm_to_n
 import random
 import thread
 import threading
@@ -21,6 +19,10 @@ import time
 import rciw
 import censure
 import wikipedia as pywikibot
+import externals
+externals.check_setup('irclib')
+from ircbot import SingleServerIRCBot
+from irclib import nm_to_n
 
 ver = 1
 

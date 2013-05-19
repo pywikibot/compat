@@ -13,6 +13,8 @@ __version__ = '$Id$'
 # Author: Balasyum
 # http://hu.wikipedia.org/wiki/User:Balasyum
 
+import externals
+externals.check_setup('irclib')
 from ircbot import SingleServerIRCBot
 from irclib import nm_to_n
 import threading
