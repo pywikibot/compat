@@ -88,7 +88,7 @@ class Family(family.WikimediaFamily):
             'kk': u'Уикидәйек',
             'kn': u'Wikiquote',
             'ko': [u'위키인용집', u'인', u'Wikiquote'],
-            'ku': u'Wikiquote',
+            'ku': [u'Wîkîgotin', u'Wikiquote'],
             'ky': u'Wikiquote',
             'la': [u'Vicicitatio', u'Wikiquote'],
             'lb': u'Wikiquote',

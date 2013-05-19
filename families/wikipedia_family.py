@@ -54,8 +54,6 @@ class Family(family.WikimediaFamily):
         self.namespaces[13]['de'] = [u'Hilfe Diskussion', u'HD']
         self.namespaces[2]['hi'] = [u'सदस्य', u'U', u'स']
         self.namespaces[3]['hi'] = [u'सदस्य वार्ता', u'UT', u'सवा']
-        self.namespaces[8]['hi'] = [u'मीडियाविकि', u'मी'],
-        self.namespaces[9]['hi'] = [u'मीडियाविकि वार्ता', u'मीवा'],
         self.namespaces[10]['hi'] = [u'साँचा', u'सा', u'T']
         self.namespaces[11]['hi'] = [u'साँचा वार्ता', u'सावा']
         self.namespaces[14]['hi'] = [u'श्रेणी', u'श्र', u'C']
