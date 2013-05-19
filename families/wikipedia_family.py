@@ -1138,7 +1138,7 @@ class Family(family.WikimediaFamily):
             'cbk-zam': u'Desambiguo',
             'cs':  u'Rozcestníky',
             'cy':  u'Gwahaniaethu',
-            'da':  u'Flertdig',
+            'da':  u'Flertydig',
             'de':  u'Begriffsklärung',
             'el':  u'Αποσαφήνιση',
             'en':  u'All disambiguation pages',
