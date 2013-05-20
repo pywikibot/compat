@@ -36,11 +36,8 @@ Lists all the category pages that transclude {{cfd}} and {{cfdu}}.
 #
 __version__ = '$Id$'
 
-import re, sys, string
 import datetime
 import wikipedia as pywikibot
-import config
-import replace
 import pagegenerators as pg
 
 templates = ['ref', 'note', 'ref label', 'note label', 'reflist']
@@ -89,16 +86,13 @@ class TemplateCountRobot:
     @staticmethod
     def listTemplates(templates, namespaces):
         mysite = pywikibot.getSite()
-        count = 0
+        total = 0
         # The names of the templates are the keys, and lists of pages
         # transcluding templates are the values.
         templateDict = {}
-        finalText = [u'', u'List of pages transcluding templates:']
-        for template in templates:
-            finalText.append(u'* %s' % template)
-        finalText.append(u'-' * 36)
+        getall = templates
         mytpl = mysite.getNamespaceIndex(mysite.template_namespace())
-        for template in templates:
+        for template in getall:
             transcludingArray = []
             gen = pg.ReferringPageGenerator(
                 pywikibot.Page(mysite, template, defaultNamespace=mytpl),
@@ -106,13 +100,18 @@ class TemplateCountRobot:
             if namespaces:
                 gen = pg.NamespaceFilterPageGenerator(gen, namespaces)
             for page in gen:
-                finalText.append(u'%s' % page.title())
-                count += 1
+                total += 1
                 transcludingArray.append(page)
             templateDict[template] = transcludingArray;
-        finalText.append(u'Total page count: %d' % count)
-        for line in finalText:
-            pywikibot.output(line, toStdout=True)
+        pywikibot.output(u'\nList of pages transcluding templates:',
+                         toStdout=True)
+        for key in in templateDict:
+            pywikibot.output(u'* %s' % key)
+        pywikibot.output(u'-' * 36, toStdout=True)
+        for key in in templateDict:
+            for page in templateDict[key]:
+                pywikibot.output(page.title(), toStdout=True)
+        pywikibot.output(u'Total page count: %d' % total)
         pywikibot.output(u'Report generated on %s'
                          % datetime.datetime.utcnow().isoformat(),
                          toStdout=True)
