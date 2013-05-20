@@ -14,7 +14,7 @@ These parameters are supported to specify which pages titles to print:
 &params;
 """
 #
-# (C) Pywikipedia bot team, 2005-2010
+# (C) Pywikipedia bot team, 2005-2013
 #
 # Distributed under the terms of the MIT license.
 #
@@ -661,8 +661,8 @@ def TextfilePageGenerator(filename=None, site=None):
     """Iterate pages from a list in a text file.
 
     The file must contain page links between double-square-brackets or, in
-    alternative, separated by newlines, and return them as a list of Page
-    objects. The generator will yield each corresponding Page object.
+    alternative, separated by newlines. The generator will yield each
+    corresponding Page object.
 
     @param filename: the name of the file that should be read. If no name is
                      given, the generator prompts the user.
@@ -677,8 +677,8 @@ def TextfilePageGenerator(filename=None, site=None):
     R = re.compile(ur'\[\[(.+?)(?:\]\]|\|)') # title ends either before | or before ]]
     pageTitle = None
     for pageTitle in R.findall(f.read()):
-        # If the link doesn't refer to this site, the Page constructor
-        # will automatically choose the correct site.
+        # If the link is in interwiki format, the Page object may reside
+        # on a different Site than the default.
         # This makes it possible to work on different wikis using a single
         # text file, but also could be dangerous because you might
         # inadvertently change pages on another wiki!
@@ -1268,19 +1268,19 @@ class PreloadingGenerator(object):
 def main(*args):
     try:
         genFactory = GeneratorFactory()
-        for arg in pywikibot.handleArgs():
+        for arg in pywikibot.handleArgs(*args):
             if not genFactory.handleArg(arg):
-                pywikibot.showHelp('pagegenerators')
+                pywikibot.showHelp()
                 break
         else:
             gen = genFactory.getCombinedGenerator()
             if gen:
                 i = 0
                 for page in gen:
-                    i+=1
+                    i += 1
                     pywikibot.output("%4d: %s" % (i, page.title()), toStdout = True)
             else:
-                pywikibot.showHelp('pagegenerators')
+                pywikibot.showHelp()
     finally:
         pywikibot.stopme()
 
