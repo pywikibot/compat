@@ -30,7 +30,8 @@ Lists all the category pages that transclude {{cfd}} and {{cfdu}}.
 
 """
 #
-# (C) Pywikipedia bot team, 2006-2013
+# (c) Pywikipedia bot team, 2006-2012
+# (c) xqt, 2009-2013
 #
 # Distributed under the terms of the MIT license.
 #
@@ -47,8 +48,7 @@ class TemplateCountRobot:
 
     @staticmethod
     def countTemplates(templates, namespaces):
-        templateDict = TemplateCountRobot.generate_template_dict(templates,
-                                                                 namespaces)
+        templateDict = TemplateCountRobot.template_dict(templates, namespaces)
         pywikibot.output(u'\nNumber of transclusions per template',
                          toStdout=True)
         pywikibot.output(u'-' * 36, toStdout=True)
