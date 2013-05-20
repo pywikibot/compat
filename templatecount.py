@@ -65,11 +65,10 @@ class TemplateCountRobot:
 
     @staticmethod
     def listTemplates(templates, namespaces):
-        templateDict = TemplateCountRobot.generate_template_dict(templates,
-                                                                 namespaces)
+        templateDict = TemplateCountRobot.template_dict(templates, namespaces)
         pywikibot.output(u'\nList of pages transcluding templates:',
                          toStdout=True)
-        for key in templateDict:
+        for key in templates:
             pywikibot.output(u'* %s' % key)
         pywikibot.output(u'-' * 36, toStdout=True)
         total = 0
@@ -83,11 +82,18 @@ class TemplateCountRobot:
                          toStdout=True)
 
     @staticmethod
-    def generate_template_dict(templates, namespaces):
+    def template_dict(templates, namespaces):
+        gen = TemplateCountRobot.template_dict_generator(templates, namespaces)
+        templateDict = {}
+        for template, transcludingArray in gen:
+            templateDict[template] = transcludingArray;
+        return templateDict
+
+    @staticmethod
+    def template_dict_generator(templates, namespaces):
         mysite = pywikibot.getSite()
         # The names of the templates are the keys, and lists of pages
         # transcluding templates are the values.
-        templateDict = {}
         mytpl = mysite.getNamespaceIndex(mysite.template_namespace())
         for template in templates:
             transcludingArray = []
@@ -98,8 +104,7 @@ class TemplateCountRobot:
                 gen = pg.NamespaceFilterPageGenerator(gen, namespaces)
             for page in gen:
                 transcludingArray.append(page)
-            templateDict[template] = transcludingArray;
-        return templateDict
+            yield template, transcludingArray
 
 
 def main():
