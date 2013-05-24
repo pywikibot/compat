@@ -4050,7 +4050,9 @@ class DataPage(Page):
         self._siteTitle=self._originSite.dbName().split('_')[0].replace("-","_")
         if not (self._originSite == source):
             self._title = None
-
+    def getID(self):
+        items=self.get()
+        return int(self.title()[1:])
     def setitem(self, summary=None, watchArticle=False, minorEdit=True,
                 newPage=False, token=None, newToken=False, sysop=False,
                 captcha=None, botflag=True, maxTries=-1, items={}):
