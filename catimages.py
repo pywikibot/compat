@@ -1305,7 +1305,7 @@ class FileData(object):
             img    = cv2.imread( self.image_path_JPEG, cv.CV_LOAD_IMAGE_COLOR )
             if (img == None) or (self.image_size[0] is None):
                 raise IOError
-            
+
             # !!! the 'scale' here IS RELEVANT FOR THE DETECTION RATE;
             # how small and how many features are detected
             scale  = max([1., np.average(np.array(img.shape)[0:2]/maxdim)])
@@ -1527,7 +1527,10 @@ class FileData(object):
             # Read a Data Matrix barcode
             dm_read = DataMatrix()
             img = Image.open(self.image_path_JPEG)
-            
+            #if (img == None) or (self.image_size[0] is None):
+            if (self.image_size[0] is None):
+                raise IOError
+
             # http://libdmtx.wikidot.com/libdmtx-python-wrapper
             if img.mode != 'RGB':
                img = img.convert('RGB')
@@ -1536,7 +1539,7 @@ class FileData(object):
         except IOError:
             pywikibot.warning(u'unknown file type [_recognize_OpticalCodes_dmtxNzbar]')
             return
-        
+
         smallImg = img.resize( (int(img.size[0]/scale), int(img.size[1]/scale)) )
         img = smallImg
 

@@ -302,7 +302,7 @@ def download_install(package, module, path):
         mime = mimetypes.guess_type(package['url'], strict=True)[0].lower().split('/')
         lowlevel_warning(u'MIME type: %s' % mime)
 
-        lowlevel_warning(u'Extract package "%s" to %s'
+        lowlevel_warning(u'Extract package "%s" to %s.'
                          % (module, os.path.join(path, module)))
         if len(mime) > 1:
             if   mime[1] == 'zip':
