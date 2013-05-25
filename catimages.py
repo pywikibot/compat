@@ -60,7 +60,7 @@ if not os.path.isabs(scriptdir):
 # additional python packages (non-default but common)
 try:
     import numpy as np
-    from scipy import ndimage, fftpack, linalg#, signal
+    from scipy import ndimage, fftpack#, signal
     import cv
     # TS: nonofficial cv2.so backport of the testing-version of
     # python-opencv because of missing build-host, done by DaB
@@ -707,31 +707,28 @@ class FileData(object):
         ##Image.fromarray(fftpack.ifftn(fft).real).show()
         ##Image.fromarray(fftpack.ifftn(fftpack.ifftshift(fft)).real).show()
         ##Image.fromarray(fftpack.ifftn(fftpack.ifftshift(fft.real)).real).show()
-        try:
-            U, S, Vh = linalg.svd(np.matrix(fft))
-            ma    = 0.01*max(S)
-            count = sum([int(c > ma) for c in S])
+        #U, S, Vh = scipy.linalg.svd(np.matrix(fft)) # unstable, crashes with C core dump
+        U, S, Vh = np.linalg.svd(np.matrix(fft))
+        ma    = 0.01*max(S)
+        count = sum([int(c > ma) for c in S])
 
-            #SS = np.zeros(s)
-            #ss = min(s)
-            #for i in range(0, len(S)-1, max( int(len(S)/100.), 1 )):   # (len(S)==ss) -> else; problem!
-            #    #SS = np.zeros(s)
-            #    #SS[:(ss-i),:(ss-i)] = np.diag(S[:(ss-i)])
-            #    SS[:(i+1),:(i+1)] = np.diag(S[:(i+1)])
-            #    #Image.fromarray((np.dot(np.dot(U, SS), Vh) - fft).real).show()
-            #    #Image.fromarray(fftpack.ifftn(fftpack.ifftshift(np.dot(np.dot(U, SS), Vh))).real - gray).show()
-            #    print i, ((np.dot(np.dot(U, SS), Vh) - fft).real).max()
-            #    print i, (fftpack.ifftn(fftpack.ifftshift(np.dot(np.dot(U, SS), Vh))).real - gray).max()
-            #    #if ((np.dot(np.dot(U, SS), Vh) - fft).max() < (255/4.)):
-            #    #    break
-            #data['SVD_Comp'] = float(i)/ss
-            #data['SVD_Min']  = S[:(i+1)].min()
+        #SS = np.zeros(s)
+        #ss = min(s)
+        #for i in range(0, len(S)-1, max( int(len(S)/100.), 1 )):   # (len(S)==ss) -> else; problem!
+        #    #SS = np.zeros(s)
+        #    #SS[:(ss-i),:(ss-i)] = np.diag(S[:(ss-i)])
+        #    SS[:(i+1),:(i+1)] = np.diag(S[:(i+1)])
+        #    #Image.fromarray((np.dot(np.dot(U, SS), Vh) - fft).real).show()
+        #    #Image.fromarray(fftpack.ifftn(fftpack.ifftshift(np.dot(np.dot(U, SS), Vh))).real - gray).show()
+        #    print i, ((np.dot(np.dot(U, SS), Vh) - fft).real).max()
+        #    print i, (fftpack.ifftn(fftpack.ifftshift(np.dot(np.dot(U, SS), Vh))).real - gray).max()
+        #    #if ((np.dot(np.dot(U, SS), Vh) - fft).max() < (255/4.)):
+        #    #    break
+        #data['SVD_Comp'] = float(i)/ss
+        #data['SVD_Min']  = S[:(i+1)].min()
 
-            data['FFT_Peaks'] = float(count)/len(S)
-            #pywikibot.output( u'FFT_Peaks: %s' % data['FFT_Peaks'] )
-        except linalg.LinAlgError:
-            # SVD did not converge; in fact this should NEVER happen...(?!?)
-            pass
+        data['FFT_Peaks'] = float(count)/len(S)
+        #pywikibot.output( u'FFT_Peaks: %s' % data['FFT_Peaks'] )
         # use wavelet transformation (FWT) from e.g. pywt, scipy signal or mlpy
         # (may be other) in addition to FFT and compare the spectra with FFT...
         # confer; "A Practical Guide to Wavelet Analysis" (http://journals.ametsoc.org/doi/pdf/10.1175/1520-0477%281998%29079%3C0061%3AAPGTWA%3E2.0.CO%3B2)
@@ -1759,6 +1756,7 @@ class FileData(object):
             #rvec, tvec = cv2.solvePnP(objectPoints, corners, cameraMatrix, None)
             # http://www.opencv.org.cn/opencvdoc/2.3.2/html/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
             # -> what about using POSIT ??? (see docs on enwiki)
+            # http://opencv.willowgarage.com/wiki/Posit
             #(cv2.findFundamentalMat, cv2.findHomography or from 'pose', cv2.estimateAffine3D)
 
             # (todo) draw the rotated 3D object (projected down to 2D)
@@ -1784,7 +1782,7 @@ class FileData(object):
             rot = rvec
             mat, perp = self._util_getD2coords_calc(np.eye(3), cameraMatrix, rvec, tvec)
             ortho = mat[:2,2]
-            ortho = ortho/linalg.norm(ortho)
+            ortho = ortho/np.linalg.norm(ortho)
             #self._util_drawAxes(mat, 250, 350, im)
             #self._util_drawAxes(mat, 50, 50, im)
 
@@ -1816,7 +1814,7 @@ class FileData(object):
 #            D2norm[0] *= sign   # usual 2D coords <-> pixel/picture coords
 #            D2norm    *= sign   # invert all
 #            mat[:,i]     = D2norm
-#            matnorm[:,i] = linalg.norm(D2norm)
+#            matnorm[:,i] = np.linalg.norm(D2norm)
 #        mat = mat/max(matnorm[0])
 #        return (mat, D3coords)
 
@@ -1837,13 +1835,13 @@ class FileData(object):
         #rmat[:,0:3] = np.eye(3)
         rmat[:,3]   = tvec[:,0]
         origin   = np.dot(rmat, cv2.convertPointsToHomogeneous(np.zeros((3,3)).astype('float32')).transpose()[:,0,:])
-        origin2D = np.dot((cm), origin)   # linalg.inv(cm)
+        origin2D = np.dot((cm), origin)   # np.linalg.inv(cm)
         #coords   = np.dot(cv2.Rodrigues(rvec)[0], D3coords)
         coords   = np.dot(rmat, cv2.convertPointsToHomogeneous(D3coords.astype('float32')).transpose()[:,0,:])
         coords2D = np.dot((cm), coords)
         perp = coords - origin
         mat  = coords2D - origin2D
-        mat  = mat/max([linalg.norm(mat[:,i]) for i in range(3)])
+        mat  = mat/max([np.linalg.norm(mat[:,i]) for i in range(3)])
         return (mat, perp)
 
 #    def _util_drawAxes(self, mat, x, y, im):
