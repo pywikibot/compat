@@ -24,6 +24,7 @@ __version__ = '$Id$'
 #           1. package management system (yum, apt-get, ...)
 #           2. download from url (or svn, git repo)
 #           3. checkout from mercurial repo ('hg clone ...' since url not available)
+#           (what about python eggs?!)
 # dependencies: (svn, python)
 #               yum, apt-get or whatever your system uses
 #               mercurial (hg)
@@ -144,12 +145,17 @@ modules_needed = {
                         {}),                                               # OK
 # TODO: vvv (include)
 #               'TEST__bob': ({},
-#                        { 'url': 'https://www.idiap.ch/software/bob/packages/bob-1.1.2.zip',
-#                         'path': 'bob-1.1.2',}),                           # OPEN
+#                        {  'url': 'https://www.idiap.ch/software/bob/packages/bob-1.1.2.zip',
+#                          'path': 'bob-1.1.2',
+#                         #$ diff -Nau --exclude="*.pyc" TEST__bob/ _bob/ > patch-bob
+#                         'patch': 'patch-bob',},
+#                        {}),                                               # OPEN
 # (complex compilation) + patch (at least for '__init__.py') needed
 #     'TEST_xbob_flandmark': ({},
-#                        { 'url': 'https://pypi.python.org/packages/source/x/xbob.flandmark/xbob.flandmark-1.0.9.zip',
-#                         'path': 'xbob.flandmark-1.0.9',}),                # OPEN
+#                        {  'url': 'https://pypi.python.org/packages/source/x/xbob.flandmark/xbob.flandmark-1.0.9.zip',
+#                          'path': 'xbob.flandmark-1.0.9',},
+#                         #'patch': '',},
+#                        {}),                                               # OPEN
 # (complex compilation, dependent on '_bob') + patch (at least for '__init__.py') needed
 }
 

@@ -1614,15 +1614,17 @@ class FileData(object):
 
         scale = 1.
         try:
-            #cv.NamedWindow("win")
-            #im = cv.LoadImage(self.image_path_JPEG, cv.CV_LOAD_IMAGE_GRAYSCALE)
-            ##im3 = cv.LoadImage(self.image_path_JPEG, cv.CV_LOAD_IMAGE_COLOR)
+            #im = cv.LoadImage(self.image_path_JPEG, cv.CV_LOAD_IMAGE_COLOR)
             im = cv2.imread( self.image_path_JPEG, cv2.CV_LOAD_IMAGE_GRAYSCALE )
+            #im = cv2.imread( 'Mutilated_checkerboard_3_1.jpg', cv2.CV_LOAD_IMAGE_GRAYSCALE )
+            #im = cv2.imread( 'Jogo_de_Damas_-_Acatabul.JPG', cv2.CV_LOAD_IMAGE_GRAYSCALE )
             chessboard_dim = ( 7, 7 )
             if im == None:
                 raise IOError
 
             scale  = max([1., np.average(np.array(im.shape)[0:2]/1000.)])
+            #scale  = max([1., np.average(np.array(im.shape)[0:2]/500.)])
+            #scale  = max([1., np.average(np.array(im.shape)[0:2]/450.)])
         except IOError:
             pywikibot.warning(u'unknown file type [_detect_Chessboard_CV]')
             return
@@ -1652,7 +1654,15 @@ class FileData(object):
             self._info['Chessboard'] = [{ 'Corners': [tuple(item[0]) 
                                                       for item in corners], }]
 
-# TODO: improve chessboard detection
+# TODO: improve chessboard detection (make it more tolerant)
+#        ## http://stackoverflow.com/questions/7624765/converting-an-opencv-image-to-black-and-white
+#        #im_gray = im
+#        #im_gray_mat = cv.fromarray(im_gray)
+#        #im_bw = cv.CreateImage(cv.GetSize(im_gray_mat), cv.IPL_DEPTH_8U, 1)
+#        #im_bw_mat = cv.GetMat(im_bw)
+#        #cv.Threshold(im_gray_mat, im_bw_mat, 0, 255, cv.CV_THRESH_BINARY | cv.CV_THRESH_OTSU)
+#        #im = np.asarray(im_bw_mat)
+#
 #        # chess board recognition (more tolerant)
 #        # http://codebazaar.blogspot.ch/2011/08/chess-board-recognition-project-part-1.html
 #        # https://code.ros.org/trac/opencv/browser/trunk/opencv/samples/python/houghlines.py?rev=2770
@@ -1701,8 +1711,6 @@ class FileData(object):
 #        cv2.imshow("win", color_dst)
 #        cv2.waitKey()
 
-# TODO: improve pose estimation/detection
-# TODO: then apply it to faces (eyes, mouth, ... or landmark) also
         if found_all:
             # pose detection
             # http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
@@ -1750,102 +1758,101 @@ class FileData(object):
             rvec, tvec = cv2.solvePnP(objectPoints, corners, cameraMatrix, distCoeffs)
             #rvec, tvec = cv2.solvePnP(objectPoints, corners, cameraMatrix, None)
             # http://www.opencv.org.cn/opencvdoc/2.3.2/html/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
-            # http://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
-            #print cv2.Rodrigues(rvec)[0], linalg.norm(rvec), rvec
-            #print tvec
-            #cv2.composeRT
+            # -> what about using POSIT ??? (see docs on enwiki)
             #(cv2.findFundamentalMat, cv2.findHomography or from 'pose', cv2.estimateAffine3D)
 
+            # (todo) draw the rotated 3D object (projected down to 2D)
+
             im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
-            ## draw the rotated 3D object
-            #imagePoints, jacobian = cv2.projectPoints(objectPoints, rvec, tvec, cameraMatrix, distCoeffs)
-            #for i in range(len(imagePoints)-1):
-            #    cv2.line(im, tuple(imagePoints[i][0].astype(int)), tuple(imagePoints[i+1][0].astype(int)), (125.,125.,125.), 3)
-
-            mat = np.eye(3)
-            color = [(0., 0., 255.), (0., 255., 0.), (255., 0., 0.)]
-            label = ['x', 'y', 'z']
-            # axis-cross
-            matD2raw, matD2norm, matnorm = self._util_getD2coords( mat, cameraMatrix, distCoeffs, sign=-1 )
-            for i in range(3):
-                imagePoints, D2norm, norm = matD2raw[:,:,:,i], 40*matD2norm[:,i], matnorm[:,i]
-                #cv2.line(im, tuple(imagePoints[0][0].astype(int)), tuple(imagePoints[1][0].astype(int)), color[i], 1)
-                #cv2.putText(im, label[i], tuple(imagePoints[1][0].astype(int)), cv2.FONT_HERSHEY_PLAIN, 1.5, color[i])
-                cv2.line(im, (50,50), (50+D2norm[0].astype(int),50+D2norm[1].astype(int)), color[i], 1)
-                cv2.putText(im, label[i], (50+D2norm[0].astype(int),50+D2norm[1].astype(int)), cv2.FONT_HERSHEY_PLAIN, 1., color[i])
-            # rotated axis-cross
-            matD2raw, matD2norm, matnorm = self._util_getD2coords( mat, cameraMatrix, distCoeffs, rvec=rvec, tvec=tvec )
-            for i in range(3):
-                imagePoints, D2norm, norm = matD2raw[:,:,:,i], 40*matD2norm[:,i], matnorm[:,i]
-                cv2.line(im, tuple(imagePoints[0][0].astype(int)), tuple(imagePoints[1][0].astype(int)), color[i], 3)
-                cv2.putText(im, label[i], tuple(imagePoints[1][0].astype(int)), cv2.FONT_HERSHEY_PLAIN, 1.5, color[i])
-                cv2.line(im, (50,100), (50+D2norm[0].astype(int),100+D2norm[1].astype(int)), color[i], 1)
-                cv2.putText(im, label[i], (50+D2norm[0].astype(int),100+D2norm[1].astype(int)), cv2.FONT_HERSHEY_PLAIN, 1., color[i])
-                ortho = imagePoints[1][0]-imagePoints[0][0]     # z-axis is orthogonal to object surface
-            ortho = ortho/linalg.norm(ortho)
-# self-calculated rotated axis-cross
-            rmat = np.zeros((3,4))
-            rmat[:,0:3] = cv2.Rodrigues(rvec)[0]
-            #rmat[:,3]   = tvec[:,0]
-            mat = np.dot(rmat, cv2.convertPointsToHomogeneous(np.eye(3).astype('float32')).transpose()[:,0,:])
-            ## rotation between z-axis (direction of view) and translation point tvec
-            #vec = np.array([0.,0.,1.])
-            #angle = np.arccos( np.dot(tvec[:,0], vec)/(linalg.norm(tvec[:,0])*linalg.norm(vec)) )
-            #axis  = np.cross(tvec[:,0], vec)
-            #rvec2 = axis/linalg.norm(axis) * -angle
-            #rmat2 = cv2.Rodrigues(rvec2)[0]
-            ##mat = np.dot(rmat2, mat)
-            ##rot = cv2.Rodrigues(np.dot(rmat2, rmat[:,0:3]))[0]
+            ## debug: axis-cross(es) - gives strange/wrong results
+            #for k in range(3):          # row
+            #    for j in range(5):      # column
+            #        rmat = cv2.Rodrigues(2*3.14/5.*j*np.array(np.eye(3)[:,k]))[0]
+            #        mat, perp = self._util_getD2coords_proj( np.dot(rmat, np.eye(3)), cameraMatrix, None, None, distCoeffs=distCoeffs, sign=-1 )
+            #        self._util_drawAxes(mat, 50+100*j, k*100+50, im)
+            ## debug: rotated axis-cross
+            #mat, perp = self._util_getD2coords_proj( np.eye(3), cameraMatrix, rvec, tvec, distCoeffs=distCoeffs )
+            #self._util_drawAxes(mat, 50, 350, im)
+            ## debug: self-calculated rotated axis-cross - gives strange/wrong results
+            #mat = np.dot((cameraMatrix), np.dot(cv2.Rodrigues(rvec)[0], np.eye(3)))
+            ##mat, perp = self._util_getD2coords_proj( mat, np.eye(3), None, None, distCoeffs=distCoeffs, sign=-1 )
+            #mat, perp = self._util_getD2coords_proj( mat, np.eye(3), None, None, distCoeffs=np.zeros((5,1)) )
+            #self._util_drawAxes(mat, 150, 350, im)
+            # debug: self-calculated rotated axis-cross - results looks good: OK
+            # (and can be calculated in order to give numerical results)
+            #rvec = np.zeros(3)
             rot = rvec
-            perp = mat
-            # what follows SHOULD be invartiant of the choice of 'cameraMatrix' and 'distCoeffs' ... ! is it ?
-            #cameraMatrix = np.eye(3)
-            #distCoeffs = np.zeros((5,1))
-            mat = np.dot((cameraMatrix), mat)       # linalg.inv(cameraMatrix)
-            #_cameraMatrix, rotMatrix, transVect, rotMatrixX, rotMatrixY, rotMatrixZ, eulerAngles = cv2.decomposeProjectionMatrix(rmat)
-            #mat = np.dot(rotMatrix, np.eye(3))
-            #matD2raw, matD2norm, matnorm = self._util_getD2coords( mat, cameraMatrix, distCoeffs )
-            matD2raw, matD2norm, matnorm = self._util_getD2coords( mat, np.eye(3), distCoeffs )
-            for i in range(3):
-                imagePoints, D2norm, norm = matD2raw[:,:,:,i], 40*matD2norm[:,i], matnorm[:,i]
-                D2norm = D2norm/linalg.norm(D2norm)*40
-                cv2.line(im, (50,200), (50+D2norm[0].astype(int),200+D2norm[1].astype(int)), color[i], 1)
-                cv2.putText(im, label[i], (50+D2norm[0].astype(int),200+D2norm[1].astype(int)), cv2.FONT_HERSHEY_PLAIN, 1., color[i])
-                #ortho = imagePoints[1][0]-imagePoints[0][0]     # z-axis is orthogonal to object surface
+            mat, perp = self._util_getD2coords_calc(np.eye(3), cameraMatrix, rvec, tvec)
+            ortho = mat[:2,2]
+            ortho = ortho/linalg.norm(ortho)
+            #self._util_drawAxes(mat, 250, 350, im)
+            #self._util_drawAxes(mat, 50, 50, im)
 
-            #cv2.imshow("win", im)
-            #cv2.waitKey()
             pywikibot.output(u'result for calibrated camera:\n  rot=%s\n  perp=%s\n  perp2D=%s' % (rot.transpose()[0], perp[:,2], ortho))
             pywikibot.output(u'nice would be to do the same for uncalibrated/default cam settings')
 
-            # still in testing phase; some of the values might have big errors
-            self._info['Chessboard'][0]['Rotation']    = tuple(rot.transpose()[0])
-            self._info['Chessboard'][0]['Perp_Dir']    = tuple(perp[:,2])
-            self._info['Chessboard'][0]['Perp_Dir_2D'] = tuple(ortho)
+            self._info['Chessboard'][0].update({
+                                     'Rotation':    tuple(rot.transpose()[0]),
+                                     'Perp_Dir' :   tuple(perp[:,2]),
+                                     'Perp_Dir_2D': tuple(ortho), })
+
+        #cv2.imshow("win", im)
+        #cv2.waitKey()
 
         return
 
-    def _util_getD2coords(self, D3coords, cameraMatrix, distCoeffs, rvec=None, tvec=None, sign=1):
-        if rvec is None:
-            rvec = np.zeros((3,1))
-        if tvec is None:
-            tvec = np.zeros((3,1))
-        matD2raw  = np.zeros((2,1,2,D3coords.shape[0]))
-        matD2norm = np.zeros((2,D3coords.shape[0]))
-        matnorm   = np.zeros((1,D3coords.shape[0]))
-        for i in range(D3coords.shape[0]):
-#            D2raw, jacobian = cv2.projectPoints(np.array([[0.,0.,0.],D3coords[:,i]]), rvec, tvec, cameraMatrix, distCoeffs)
-            D2raw, jacobian = cv2.projectPoints(np.array([[0.,0.,-1.],[D3coords[0,i],D3coords[1,i],D3coords[2,i]-1.]]), rvec, tvec, cameraMatrix, distCoeffs)
-            D2norm = (D2raw[1][0]-D2raw[0][0])
-            norm   = linalg.norm(D2norm)
-#            D2norm[1] *= sign   # usual 2D coords <-> pixel/picture coords
-            D2norm[0] *= sign   # usual 2D coords <-> pixel/picture coords
-            D2norm    *= sign   # invert all
-            matD2raw[:,:,:,i] = D2raw
-            matD2norm[:,i]    = D2norm
-            matnorm[:,i]      = norm
-        matD2norm = matD2norm/max(matnorm[0])
-        return (matD2raw, matD2norm, matnorm)
+#    def _util_getD2coords_proj(self, D3coords, cameraMatrix, distCoeffs, rvec=None, tvec=None, sign=1):
+#        """Project 3D points down to 2D by using OpenCV functions."""
+#        if rvec is None:
+#            rvec = np.zeros((3,1))
+#        if tvec is None:
+#            tvec = np.zeros((3,1))
+#        mat     = np.zeros((2,D3coords.shape[0]))
+#        matnorm = np.zeros((1,D3coords.shape[0]))
+#        for i in range(D3coords.shape[0]):
+#            D2raw, jacobian = cv2.projectPoints(np.array([[0.,0.,5.],[D3coords[0,i],D3coords[1,i],D3coords[2,i]+5.]]), rvec, tvec, cameraMatrix, distCoeffs)
+#            D2norm = (D2raw[1][0]-D2raw[0][0])
+#            #D2norm[1] *= sign   # usual 2D coords <-> pixel/picture coords
+#            D2norm[0] *= sign   # usual 2D coords <-> pixel/picture coords
+#            D2norm    *= sign   # invert all
+#            mat[:,i]     = D2norm
+#            matnorm[:,i] = linalg.norm(D2norm)
+#        mat = mat/max(matnorm[0])
+#        return (mat, D3coords)
+
+    def _util_getD2coords_calc(self, D3coords, cameraMatrix, rvec, tvec):
+        """Calculate s m' = A [R|t] M' in order to project 3D points down to 2D.
+
+        m' = (u, v, 1)^T, M' = (X, Y, Z, 1)^T, A: camera m. and [R|t]: rotation-
+        translation matrix.
+
+        @see http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
+        """
+        # cv2.decomposeProjectionMatrix(...), cv2.composeRT(...)
+        cm = cameraMatrix.copy()
+        cm[0:2,2] = [0., 0.]
+        rmat = np.zeros((3,4))
+        # http://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+        rmat[:,0:3] = cv2.Rodrigues(rvec)[0]
+        #rmat[:,0:3] = np.eye(3)
+        rmat[:,3]   = tvec[:,0]
+        origin   = np.dot(rmat, cv2.convertPointsToHomogeneous(np.zeros((3,3)).astype('float32')).transpose()[:,0,:])
+        origin2D = np.dot((cm), origin)   # linalg.inv(cm)
+        #coords   = np.dot(cv2.Rodrigues(rvec)[0], D3coords)
+        coords   = np.dot(rmat, cv2.convertPointsToHomogeneous(D3coords.astype('float32')).transpose()[:,0,:])
+        coords2D = np.dot((cm), coords)
+        perp = coords - origin
+        mat  = coords2D - origin2D
+        mat  = mat/max([linalg.norm(mat[:,i]) for i in range(3)])
+        return (mat, perp)
+
+#    def _util_drawAxes(self, mat, x, y, im):
+#        color = [(0., 0., 255.), (0., 255., 0.), (255., 0., 0.)]
+#        label = ['x', 'y', 'z']
+#        for i in range(3):
+#            D2norm = 40*mat[:,i]
+#            cv2.line(im, (x,y), (x+D2norm[0].astype(int),y+D2norm[1].astype(int)), color[i], 1)
+#            cv2.putText(im, label[i], (x+D2norm[0].astype(int),y+D2norm[1].astype(int)), cv2.FONT_HERSHEY_PLAIN, 1., color[i])
 
     def _util_get_DataTags_EXIF(self):
         # http://tilloy.net/dev/pyexiv2/tutorial.html
@@ -3396,6 +3403,7 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         self._recognize_OpticalCodes_dmtxNzbar()
 
         # Chessboard (opencv reference detector)
+# TODO: apply pose estimation/detection to faces (eyes, mouth, ... or landmark) also
         self._detect_Chessboard_CV()
 
         # general (self-trained) detection WITH classification
