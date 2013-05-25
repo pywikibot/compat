@@ -438,6 +438,18 @@ copyright_show_length = True
 # number of results.
 copyright_economize_query = True
 
+############## REPLICATION BOT ################
+# You can add replicate_replace to your user_config.py, which has the following format:
+#
+# replicate_replace = {
+#            'wikipedia:li': {'Hoofdpagina': 'Veurblaad'}
+# }
+#
+# to replace all occurences of 'Hoofdpagina' with 'Veurblaad' when writing to liwiki. Note that this does
+# not take the origin wiki into account.
+replicate_replace = {}
+
+
 ############## HTTP SETTINGS ##############
 # Default socket timeout. Set to None to disable timeouts.
 socket_timeout = 120  # set a pretty long timeout just in case...
