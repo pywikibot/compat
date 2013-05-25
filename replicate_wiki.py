@@ -1,12 +1,5 @@
 #!/usr/bin/env python
-#
 # -*- coding: utf-8  -*-
-#
-# (C) Kasper Souren 2012-2013
-#
-# Distributed under the terms of the MIT license.
-#
-
 '''
 This bot replicates all pages (from specific namespaces) in a wiki to a second wiki within one family.
 
@@ -25,6 +18,14 @@ replicate_replace = {
 to replace all occurences of 'Hoofdpagina' with 'Veurblaad' when writing to liwiki. Note that this does
 not take the origin wiki into account.
 '''
+#
+# (C) Kasper Souren 2012-2013
+# (C) 2013 Pywikipediabot team
+#
+# Distributed under the terms of the MIT license.
+#
+__version__ = '$Id$'
+#
 
 import sys
 import re
