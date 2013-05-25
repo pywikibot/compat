@@ -1,11 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2013 Multichill, Amir
-Copyright (C) 2013 Pywikipediabot team
-
-Distributed under the MIT License
-
 Usage:
 
 python harvest_template.py -lang:nl -template:"Taxobox straalvinnige" orde P70 familie P71 geslacht P74 
@@ -17,6 +12,15 @@ You can use any typical pagegenerator to provide with a list of pages
 python harvest_template.py -lang:nl -cat:Sisoridae -template:"Taxobox straalvinnige" -namespace:0 orde P70 familie P71 geslacht P74
 
 """
+#
+# (C) 2013 Multichill, Amir
+# (C) 2013 Pywikipediabot team
+#
+# Distributed under the terms of MIT License.
+#
+__version__ = '$Id$'
+#
+
 import re
 import wikipedia as pywikibot
 import pagegenerators
