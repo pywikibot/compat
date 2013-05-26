@@ -353,7 +353,8 @@ class FileData(object):
                      'Eyes':     [],
                      'Mouth':    (),
                      'Nose':     (),
-                     'Ears':     [], }
+                     'Ears':     [],
+                     'Pose':     (), }
             data['Coverage'] = float(data['Position'][2]*data['Position'][3])/(self.image_size[0]*self.image_size[1])
             #if (c >= confidence):
             #    eyes = nestedObjects
@@ -389,6 +390,47 @@ class FileData(object):
                 radius = cv.Round((nrwidth + nrheight)*0.25*scale)
                 #cv2.circle( img, (cx, cy), radius, color, 3, 8, 0 )
                 data['Ears'].append( (cx-radius, cy-radius, 2*radius, 2*radius) )
+            if data['Mouth'] and data['Nose'] and data['Eyes'] and (len(data['Eyes']) == 2):
+                # head model "little girl" for use in "MeshLab":
+                # http://www.turbosquid.com/FullPreview/Index.cfm/ID/302581
+                # http://meshlab.sourceforge.net/
+                D3points = [[ 70.0602, 109.898,  20.8234],  # left eye
+                            [ 2.37427, 110.322,  21.7776],  # right eye
+                            [ 36.8301, 78.3185,  52.0345],  # nose
+                            [ 36.6391, 51.1675,  38.5903],] # mouth
+                            #[ 119.268, 91.3111, -69.6397],  # left ear
+                            #[-49.1328, 91.3111, -67.2481],] # right ear
+                D2points = [np.array(data['Eyes'][0]), np.array(data['Eyes'][1]),
+                            np.array(data['Nose']), np.array(data['Mouth']),]
+                D2points = [ item[:2] + item[2:]/2. for item in D2points ]
+                neutral  = np.array([[np.pi],[0.],[0.]])
+                # calculate pose
+                rvec, tvec, cm, err = self._util_get_Pose(D3points, D2points, self.image_size)
+                #data['Pose'] = tuple(rvec[:,0])
+                check = not (err[:,0,:].max() > 0.5)
+                if not check:
+                    rvec = neutral                      # reset to neutral pose
+                    tvec = np.array([[0.],[0.],[100.]]) # reset to neutral position (same order as max of D3points)
+                    pywikibot.warning(u'Could not calculate pose of face, too big errors. '
+                                      u'(looks like neutral pose/position is somehow singular)')
+                ## debug: draw pose
+                ##rvec *= 0
+                #mat, perp = self._util_getD2coords_calc(np.eye(3), cm, rvec, tvec, hacky=False)
+                ## from '_util_drawAxes(...)'
+                #for i, item in enumerate(mat.transpose()):
+                #    p = tuple((50+10*item).astype(int))[:2]
+                #    cv2.line(img, (50, 50), p, (0., 0., 255.), 1)
+                #    cv2.putText(img, str(i), p, cv2.FONT_HERSHEY_PLAIN, 1., (0., 0., 255.))
+                #cv2.imshow("win", img)
+                #cv2.waitKey()
+                # calculate delta to neutral pose
+                drv  = -cv2.composeRT(-rvec, np.zeros((3,1)),
+                                      neutral, np.zeros((3,1)))[0]
+                rvec = cv2.Rodrigues(cv2.Rodrigues(rvec)[0])[0] # NOT unique!!!
+                nrv  = cv2.composeRT(neutral, np.zeros((3,1)),
+                                     drv, np.zeros((3,1)))[0]
+                #print (rvec - nrv < 1E-12)  # compare
+                data['Pose'] = map(float, tuple(drv[:,0]))
             result.append( data )
 
         ## see '_drawRect'
@@ -400,6 +442,40 @@ class FileData(object):
         #return faces.tolist()
         self._info['Faces'] += result
         return
+
+    def _util_get_Pose(self, D3points, D2points, shape):
+        #shape = (img.shape[1], img.shape[0])
+        """ Calculate pose from head model "little girl" w/o camera or other
+            calibrations needed.
+
+            D2points: left eye, right eye, nose, mouth
+        """
+        # howto (credits to "Roy"):
+        # http://www.youtube.com/watch?v=ZDNH4BT5Do4
+        # http://www.morethantechnical.com/2010/03/19/quick-and-easy-head-pose-estimation-with-opencv-w-code/
+        # http://www.morethantechnical.com/2012/10/17/head-pose-estimation-with-opencv-opengl-revisited-w-code/
+        # e.g. with head model "little girl" for use in "MeshLab":
+        # http://www.turbosquid.com/FullPreview/Index.cfm/ID/302581
+        # http://meshlab.sourceforge.net/
+
+        # set-up camera matrix (no calibration needed!)
+        max_d = max(shape)
+        cameraMatrix = [[max_d,     0, shape[0]/2.0],
+                        [    0, max_d, shape[1]/2.0],
+                        [    0,     0,          1.0],]
+
+        # calculate pose
+        rvec, tvec = cv2.solvePnP(np.array(D3points).astype('float32'), np.array(D2points).astype('float32'), np.array(cameraMatrix).astype('float32'), None)
+
+        # compare to 2D points
+        err = []
+        for i, vec in enumerate(np.array(D3points)):
+            nvec = np.dot(cameraMatrix, (np.dot(cv2.Rodrigues(rvec)[0], vec) + tvec[:,0]))
+            err.append(((D2points[i] - nvec[:2]/nvec[2]), D2points[i], nvec[:2]/nvec[2]))
+
+        pywikibot.output(u'result for UN-calibrated camera:\n  rot=%s' % rvec.transpose()[0])
+
+        return rvec, tvec, np.array(cameraMatrix), (np.array(err)/max_d)
 
     # https://pypi.python.org/pypi/xbob.flandmark
     # http://cmp.felk.cvut.cz/~uricamic/flandmark/
@@ -1601,6 +1677,8 @@ class FileData(object):
 
     def _detect_Chessboard_CV(self):
         # Chessboard (opencv reference detector)
+        # http://www.c-plusplus.de/forum/273920-full
+        # http://www.youtube.com/watch?v=bV-jAnQ-tvw
         # http://nullege.com/codes/show/src%40o%40p%40opencvpython-HEAD%40samples%40chessboard.py/12/cv.FindChessboardCorners/python
 
         self._info['Chessboard'] = []
@@ -1818,7 +1896,7 @@ class FileData(object):
 #        mat = mat/max(matnorm[0])
 #        return (mat, D3coords)
 
-    def _util_getD2coords_calc(self, D3coords, cameraMatrix, rvec, tvec):
+    def _util_getD2coords_calc(self, D3coords, cameraMatrix, rvec, tvec, hacky=True):
         """Calculate s m' = A [R|t] M' in order to project 3D points down to 2D.
 
         m' = (u, v, 1)^T, M' = (X, Y, Z, 1)^T, A: camera m. and [R|t]: rotation-
@@ -1826,7 +1904,7 @@ class FileData(object):
 
         @see http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
         """
-        # cv2.decomposeProjectionMatrix(...), cv2.composeRT(...)
+        # cv2.decomposeProjectionMatrix(...)
         cm = cameraMatrix.copy()
         cm[0:2,2] = [0., 0.]
         rmat = np.zeros((3,4))
@@ -1840,8 +1918,22 @@ class FileData(object):
         coords   = np.dot(rmat, cv2.convertPointsToHomogeneous(D3coords.astype('float32')).transpose()[:,0,:])
         coords2D = np.dot((cm), coords)
         perp = coords - origin
-        mat  = coords2D - origin2D
-        mat  = mat/max([np.linalg.norm(mat[:,i]) for i in range(3)])
+        if hacky:
+            # for '_detect_Chessboard_CV' but looks a bit strange ... may be wrong?!
+            mat  = coords2D - origin2D
+            mat  = mat/max([np.linalg.norm(mat[:,i]) for i in range(3)])
+        else:
+            for i in range(3):  # rescale with s
+                coords2D[:,i] /= coords2D[2,i]
+                origin2D[:,i] /= origin2D[2,i]
+            mat  = coords2D - origin2D
+            # simple'n'fast solution, if just 2D results are needed
+            #mat, jacobian = cv2.projectPoints(np.append(np.zeros((1,3)), 
+            #                                            D3coords, 
+            #                                            axis=0),
+            #                                  rvec, tvec, cm, np.zeros((5,1)))
+            #mat = mat[:,0,:]
+            #mat = (mat[1:,:] - mat[0,:]).transpose()
         return (mat, perp)
 
 #    def _util_drawAxes(self, mat, x, y, im):
