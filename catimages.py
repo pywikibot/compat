@@ -444,7 +444,6 @@ class FileData(object):
         return
 
     def _util_get_Pose(self, D3points, D2points, shape):
-        #shape = (img.shape[1], img.shape[0])
         """ Calculate pose from head model "little girl" w/o camera or other
             calibrations needed.
 
@@ -783,8 +782,11 @@ class FileData(object):
         ##Image.fromarray(fftpack.ifftn(fft).real).show()
         ##Image.fromarray(fftpack.ifftn(fftpack.ifftshift(fft)).real).show()
         ##Image.fromarray(fftpack.ifftn(fftpack.ifftshift(fft.real)).real).show()
-        #U, S, Vh = scipy.linalg.svd(np.matrix(fft)) # unstable, crashes with C core dump
-        U, S, Vh = np.linalg.svd(np.matrix(fft))
+        # (scipy svd has more options...)
+        #U, S, Vh = linalg.svd(np.matrix(fft))    # scipy; unstable, crashes with C core dump
+        #U, S, Vh = np.linalg.svd(np.matrix(fft)) # numpy (full matrix); unstable, ----"-----
+        #U, S, Vh = np.linalg.svd(np.matrix(fft), full_matrices=False) # less memory; more stable
+        S = np.linalg.svd(np.matrix(fft), compute_uv=False)           # less memory, faster; more stable
         ma    = 0.01*max(S)
         count = sum([int(c > ma) for c in S])
 
@@ -1877,7 +1879,7 @@ class FileData(object):
 
         return
 
-#    def _util_getD2coords_proj(self, D3coords, cameraMatrix, distCoeffs, rvec=None, tvec=None, sign=1):
+#    def _util_getD2coords_proj(self, D3coords, cameraMatrix, rvec=None, tvec=None, distCoeffs=np.zeros((5,1)), sign=1):
 #        """Project 3D points down to 2D by using OpenCV functions."""
 #        if rvec is None:
 #            rvec = np.zeros((3,1))
