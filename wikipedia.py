@@ -4493,10 +4493,9 @@ class DataPage(Page):
             pass
         claims = self.get()['claims']
         theclaim = []
-        if value:
-            for claim in claims:
-                if claim['m'][1] == propertyID and (int(claim['m'][3][u'numeric-id'])==value or (not value)):
-                    theclaim.append(claim['g'])
+        for claim in claims:
+            if claim['m'][1] == propertyID and (int(claim['m'][3][u'numeric-id'])==value or (not value)):
+                theclaim.append(claim['g'])
         if not theclaim:
             raise RuntimeError("The claim %s hasn't been used in the item" % propertyID)
         params = {
