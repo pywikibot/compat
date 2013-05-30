@@ -4279,7 +4279,7 @@ class DataPage(Page):
                     return 302, response.msg, data['success']
             return response.code, response.msg, data
 
-    def editclaim(self, WDproperty, value,raw_value=False, refs=None,
+    def editclaim(self, WDproperty, value, data_type=None, raw_value=False, refs=None,
                   comment=None, token=None, sysop=False, botflag=True):
         if isinstance(WDproperty, int):
             propertyID = WDproperty
@@ -4300,7 +4300,7 @@ class DataPage(Page):
                 pass
         else:
             raise RuntimeError("Unknown property type: %s" % WDproperty)
-        if not raw_value:
+        if not raw_value and not data_type=="time":
             if isinstance(value, int):  # for 'quantity' entity-type
                 value = "{\"entity-type\":\"item\",\"numeric-id\":%s}" % value
             elif isinstance(value, unicode):  # for 'string' entity-type
@@ -4323,6 +4323,9 @@ class DataPage(Page):
             else:
                 raise RuntimeError("Unknown property type: %s" % value)
                 value = "{\"entity-type\":\"item\",\"numeric-id\":%s}" % value
+        elif data_type=="time":
+            value="{\"time\":\"%s\",\"timezone\":0,\"before\":0,\"after\":0,\"precision\":11,\"calendarmodel\":\"http://www.wikidata.org/entity/Q1985727\"}" % value
+            #about calendarmodel see https://bugzilla.wikimedia.org/show_bug.cgi?id=48965
         else:
             pass
         claims = self.get()['claims']
