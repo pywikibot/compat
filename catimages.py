@@ -1216,7 +1216,8 @@ class FileData(object):
         import jseg
         # e.g. "segdist -i test3.jpg -t 6 -r9 test3.map.gif"
         enable_recovery()   # enable recovery from hard crash
-        jseg.segdist_cpp.main( ("segdist -i %s -t 6 -r9 %s"%(tmpjpg, tmpgif)).split(" ") )
+        jseg.segdist_cpp.main( [ item.encode('utf-8') for item in 
+                                 ("segdist -i %s -t 6 -r9 %s"%(tmpjpg, tmpgif)).split(" ") ] )
         disable_recovery()  # disable since everything worked out fine
         #out = open((tmpgif + ".stdout"), "r").read()    # reading stdout
         #print out
