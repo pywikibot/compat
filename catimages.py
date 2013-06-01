@@ -427,10 +427,21 @@ class FileData(object):
                 drv  = -cv2.composeRT(-rvec, np.zeros((3,1)),
                                       neutral, np.zeros((3,1)))[0]
                 rvec = cv2.Rodrigues(cv2.Rodrigues(rvec)[0])[0] # NOT unique!!!
-                nrv  = cv2.composeRT(neutral, np.zeros((3,1)),
-                                     drv, np.zeros((3,1)))[0]
+                #nrv  = cv2.composeRT(neutral, np.zeros((3,1)),
+                #                     drv, np.zeros((3,1)))[0]
                 #print (rvec - nrv < 1E-12)  # compare
                 data['Pose'] = map(float, tuple(drv[:,0]))
+# TODO: POSIT has to be tested and compared to solvePnP; which one is better??
+                if False:
+                    pywikibot.output("solvePnP:")
+                    pywikibot.output(str(rvec[:,0]))
+                    pywikibot.output(str(tvec[:,0]))
+                    import opencv
+                    #opencv.unit_test()
+                    (rmat, tvec, mdl) = opencv.posit(D3points, D2points, (100, 1.0e-4))
+                    pywikibot.output("POSIT:")
+                    pywikibot.output(str(cv2.Rodrigues(rmat)[0][:,0]))
+                    pywikibot.output(str(tvec))
             result.append( data )
 
         ## see '_drawRect'
@@ -559,7 +570,7 @@ class FileData(object):
         # http://opencv.itseez.com/modules/gpu/doc/object_detection.html
         # http://opencv.willowgarage.com/documentation/cpp/basic_structures.html
         # http://www.pygtk.org/docs/pygtk/class-gdkrectangle.html
-        
+
         self._info['People'] = []
         scale = 1.
         try:
@@ -849,8 +860,8 @@ class FileData(object):
         #   BoWclassify /data/toolserver/pywikipedia/dtbext/opencv/VOC2007 /data/toolserver/pywikipedia/dtbext/opencv/data FAST SURF BruteForce | tee run.log
         #   BoWclassify /data/toolserver/pywikipedia/dtbext/opencv/VOC2007 /data/toolserver/pywikipedia/dtbext/opencv/data HARRIS SIFT BruteForce | tee run.log
         # http://experienceopencv.blogspot.com/2011/02/object-recognition-bag-of-keypoints.html
-        sys.path.append(os.path.join(scriptdir, 'dtbext'))
         import opencv
+        #opencv.unit_test()
 
         if os.path.exists(bowDescPath):
             os.remove(bowDescPath)
@@ -858,13 +869,13 @@ class FileData(object):
         stdout = sys.stdout
         sys.stdout = StringIO.StringIO()
         #result = opencv.BoWclassify.main(0, '', '', '', '', '')
-        result = opencv.BoWclassify.main(6, 
-                                         os.path.join(scriptdir, 'dtbext/opencv/VOC2007'), 
-                                         os.path.join(scriptdir, 'dtbext/opencv/data'), 
-                                         'HARRIS',      # not important; given by training
-                                         'SIFT',        # not important; given by training
-                                         'BruteForce',  # not important; given by training
-                                         [str(os.path.abspath(self.image_path).encode('latin-1'))])
+        result = opencv.BoWclassify(6, 
+                                    os.path.join(scriptdir, 'dtbext/opencv/VOC2007'), 
+                                    os.path.join(scriptdir, 'dtbext/opencv/data'), 
+                                    'HARRIS',      # not important; given by training
+                                    'SIFT',        # not important; given by training
+                                    'BruteForce',  # not important; given by training
+                                    [str(os.path.abspath(self.image_path).encode('latin-1'))])
         #out = sys.stdout.getvalue()
         sys.stdout = stdout
         #print out
