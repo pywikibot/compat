@@ -28,24 +28,28 @@ class Family(family.WikimediaFamily):
             '_default': u'Creator talk',
         }
         self.namespaces[102] = {
-            '_default': [u'TimedText'],
+            '_default': u'TimedText',
         }
         self.namespaces[103] = {
-            '_default': [u'TimedText talk'],
+            '_default': u'TimedText talk',
         }
         self.namespaces[104] = {
-            '_default': [u'Sequence'],
+            '_default': u'Sequence',
         }
         self.namespaces[105] = {
-            '_default': [u'Sequence talk'],
+            '_default': u'Sequence talk',
         }
         self.namespaces[106] = {
-            '_default': [u'Institution'],
-            'commons': [u'Institution', u'Museum'],
+            '_default': [u'Institution', u'Museum'],
         }
         self.namespaces[107] = {
-            '_default': [u'Institution talk'],
-            'commons': [u'Institution talk', u'Museum talk'],
+            '_default': [u'Institution talk', u'Museum talk'],
+        }
+        self.namespaces[1198] = {
+            '_default': u'Translations',
+        }
+        self.namespaces[1199] = {
+            '_default': u'Translations talk',
         }
 
         self.interwiki_forward = 'wikipedia'
