@@ -539,7 +539,7 @@ class User(object):
     def _getBlockID(self):
         pywikibot.output(u"Getting block id for [[User:%s]]..." % self.name())
         if self.isAnonymous():
-            usertype = ip"
+            usertype = "ip"
         else:
             usertype = "users"
         if not self.site().has_api() or self.site().versionnumber() < 12:
