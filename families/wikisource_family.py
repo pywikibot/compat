@@ -24,15 +24,17 @@ class Family(family.WikimediaFamily):
         self.langs['-'] = 'wikisource.org'
 
         # Override defaults
+        self.namespaces[14]['as'] = [u'শ্ৰেণী', u'श्रेणी', u'শ্রেণী']
         self.namespaces[14]['bn'] = [u'বিষয়শ্রেণী']
         self.namespaces[15]['bn'] = [u'বিষয়শ্রেণী আলোচনা']
-        self.namespaces[14]['as'] = [u'শ্ৰেণী', u'श्रेणी', u'শ্রেণী']
         self.namespaces[2]['ca'] = [u'Usuari']
         self.namespaces[3]['ca'] = [u'Usuari Discussió']
-        self.namespaces[3]['cs'] = [u'Diskuse s uživatelem', u'Uživatel diskuse', u'Uživatelka diskuse', u'Diskuse s uživatelkou']
         self.namespaces[2]['cs'] = [u'Uživatel', u'Uživatelka']
+        self.namespaces[3]['cs'] = [u'Diskuse s uživatelem', u'Uživatel diskuse', u'Uživatelka diskuse', u'Diskuse s uživatelkou']
         self.namespaces[9]['da'] = [u'MediaWiki diskussion', u'MediaWiki-diskussion']
         self.namespaces[13]['da'] = [u'Hjælp diskussion', u'Hjælp-diskussion']
+        self.namespaces[2]['eo'] = [u'Uzanto', u'Vikipediisto', u'Uzulo', u'Uzantino']
+        self.namespaces[3]['eo'] = [u'Uzanto-Diskuto', u'Vikipediista diskuto', u'Uzula diskuto', u'Uzanta diskuto', u'Uzantino-Diskuto']
         self.namespaces[2]['fr'] = [u'Utilisateur']
         self.namespaces[3]['fr'] = [u'Discussion utilisateur', u'Discussion Utilisateur']
         self.namespaces[12]['ml'] = [u'സഹായം', u'H', u'സ']
@@ -45,6 +47,7 @@ class Family(family.WikimediaFamily):
         self.namespaces[10]['zh'] = [u'Template', u'模板', u'样板', u'樣板']
         self.namespaces[12]['zh'] = [u'Help', u'帮助', u'幫助']
         self.namespaces[14]['zh'] = [u'Category', u'分类', u'分類']
+        self.namespaces[828]['zh'] = [u'模块']
 
         # Most namespaces are inherited from family.Family.
         # Translation used on all wikis for the different namespaces.
@@ -112,7 +115,7 @@ class Family(family.WikimediaFamily):
             'te': [u'వికీసోర్స్', u'Wikisource'],
             'th': [u'วิกิซอร์ซ', u'Wikisource'],
             'tr': [u'Vikikaynak', u'VikiKaynak', u'Wikisource'],
-            'uk': [u'Wikisource', u'ВД'],
+            'uk': [u'Вікіджерела', u'ВД', u'Wikisource'],
             'vec': u'Wikisource',
             'vi': u'Wikisource',
             'yi': [u'װיקיביבליאָטעק', u'וויקיביבליאטעק', u'Wikisource'],
@@ -181,7 +184,7 @@ class Family(family.WikimediaFamily):
             'te': u'వికీసోర్స్ చర్చ',
             'th': u'คุยเรื่องวิกิซอร์ซ',
             'tr': [u'Vikikaynak tartışma', u'Oluşturuluyor VikiKaynak tartışma'],
-            'uk': u'Обговорення Wikisource',
+            'uk': [u'Обговорення Вікіджерел', u'Обговорення Wikisource'],
             'vec': u'Discussion Wikisource',
             'vi': u'Thảo luận Wikisource',
             'yi': [u'װיקיביבליאָטעק רעדן', u'וויקיביבליאטעק רעדן'],
@@ -303,6 +306,7 @@ class Family(family.WikimediaFamily):
             'ro': u'Autor',
             'sr': u'Додатак',
             'te': u'రచయిత',
+            'uk': u'Автор',
             'vec': u'Pagina',
             'vi': u'Tác gia',
             'zh': u'Author',
@@ -342,6 +346,7 @@ class Family(family.WikimediaFamily):
             'ro': u'Discuție Autor',
             'sr': u'Разговор о додатку',
             'te': u'రచయిత చర్చ',
+            'uk': u'Обговорення автора',
             'vec': u'Discussion pagina',
             'vi': u'Thảo luận Tác gia',
             'zh': u'Author talk',
@@ -565,9 +570,9 @@ class Family(family.WikimediaFamily):
             'sk': u'Page',
             'sr': u'Page',
             'ta': u'Page',
-            'th': u'Page',
+            'th': u'หน้า',
             'tr': u'Page',
-            'uk': u'Page',
+            'uk': u'Сторінка',
             'yi': u'Page',
             'zh-min-nan': u'Page',
         }
@@ -590,9 +595,9 @@ class Family(family.WikimediaFamily):
             'sk': u'Page talk',
             'sr': u'Page talk',
             'ta': u'Page talk',
-            'th': u'Page talk',
+            'th': u'คุยเรื่องหน้า',
             'tr': u'Page talk',
-            'uk': u'Page talk',
+            'uk': u'Обговорення сторінки',
             'yi': u'Page talk',
             'zh-min-nan': u'Page talk',
         }
@@ -615,9 +620,9 @@ class Family(family.WikimediaFamily):
             'sk': u'Index',
             'sr': u'Index',
             'ta': u'Index',
-            'th': u'Index',
+            'th': u'ดัชนี',
             'tr': u'Index',
-            'uk': u'Index',
+            'uk': u'Індекс',
             'yi': u'Index',
             'zh-min-nan': u'Index',
         }
@@ -640,9 +645,9 @@ class Family(family.WikimediaFamily):
             'sk': u'Index talk',
             'sr': u'Index talk',
             'ta': u'Index talk',
-            'th': u'Index talk',
+            'th': u'คุยเรื่องดัชนี',
             'tr': u'Index talk',
-            'uk': u'Index talk',
+            'uk': u'Обговорення індексу',
             'yi': u'Index talk',
             'zh-min-nan': u'Index talk',
         }
