@@ -14,7 +14,7 @@ are taken into account.
 """
 
 #
-# (C) Pywikipedia team, 2008-2012
+# (C) Pywikipedia team, 2008-2013
 #
 __version__ = '$Id$'
 #
@@ -24,12 +24,14 @@ __version__ = '$Id$'
 import cPickle
 import math
 import re
-import sys, traceback
+import sys
 import time
+import traceback
 from datetime import datetime, timedelta
 import wikipedia as pywikibot
 import pagegenerators
-import catlib, query
+import catlib
+import query
 from pywikibot import i18n
 
 
@@ -46,17 +48,16 @@ class APIError(Exception):
 
 class CategoryRedirectBot(object):
     def __init__(self):
-        self.cooldown = 7 # days
+        self.cooldown = 7  # days
         self.site = pywikibot.getSite()
         self.catprefix = self.site.namespace(14)+":"
         self.log_text = []
         self.edit_requests = []
         self.log_page = pywikibot.Page(self.site,
-                        u"User:%(user)s/category redirect log" %
-                            {'user': self.site.loggedInAs()})
+                                       u"User:%(user)s/category redirect log"
+                                       % {'user': self.site.loggedInAs()})
 
         # Localization:
-
         # Category that contains all redirected category pages
         self.cat_redirect_cat = {
             'wikipedia': {
@@ -86,12 +87,9 @@ class CategoryRedirectBot(object):
         self.dbl_redir_comment = 'category_redirect-fix-double'
         self.maint_comment = 'category_redirect-comment'
         self.edit_request_text = i18n.twtranslate(
-                                     self.site.lang,
-                                     'category_redirect-edit-request') + \
-                                     u'\n~~~~'
+            self.site.lang, 'category_redirect-edit-request') + u'\n~~~~'
         self.edit_request_item = i18n.twtranslate(
-                                     self.site.lang,
-                                     'category_redirect-edit-request-item')
+            self.site.lang, 'category_redirect-edit-request-item')
 
     def change_category(self, article, oldCat, newCat, comment=None,
                         sortKey=None):
@@ -132,11 +130,11 @@ class CategoryRedirectBot(object):
         except pywikibot.SpamfilterError, error:
             pywikibot.output(
                 u'Changing page %s blocked by spam filter (URL=%s)'
-                             % (article.title(asLink=True), error.url))
+                % (article.title(asLink=True), error.url))
         except pywikibot.NoUsername:
             pywikibot.output(
                 u"Page %s not saved; sysop privileges required."
-                             % article.title(asLink=True))
+                % article.title(asLink=True))
             self.edit_requests.append({
                 'title': article.title(asLink=True, textlink=True),
                 'oldcat': oldCat.title(asLink=True, textlink=True),
@@ -169,7 +167,8 @@ class CategoryRedirectBot(object):
                         article = pywikibot.Page(self.site, item['title'])
                         changed = self.change_category(article, oldCat, newCat,
                                                        comment=comment)
-                        if changed: moved += 1
+                        if changed:
+                            moved += 1
 
                 # pass 2: look for template doc pages
                 for result in self.query_results(list="categorymembers",
@@ -185,7 +184,8 @@ class CategoryRedirectBot(object):
                             continue
                         changed = self.change_category(doc, oldCat, newCat,
                                                        comment=comment)
-                        if changed: moved += 1
+                        if changed:
+                            moved += 1
 
                 if found:
                     pywikibot.output(u"%s: %s found, %s moved"
@@ -202,7 +202,7 @@ class CategoryRedirectBot(object):
 
     def readyToEdit(self, cat):
         """Return True if cat not edited during cooldown period, else False."""
-        dateformat ="%Y%m%d%H%M%S"
+        dateformat = "%Y%m%d%H%M%S"
         today = datetime.now()
         deadline = today + timedelta(days=-self.cooldown)
         if cat.editTime() is None:
@@ -216,8 +216,7 @@ class CategoryRedirectBot(object):
         querydata = query.CombineParams(querydata, data)
         if not "action" in querydata or not querydata['action'] == 'query':
             raise ValueError(
-                "query_results: 'action' set to value other than 'query'"
-                )
+                "query_results: 'action' set to value other than 'query'")
         waited = 0
         while True:
             try:
@@ -244,8 +243,7 @@ class CategoryRedirectBot(object):
                     waited += 5
                     if waited % 30 == 0:
                         pywikibot.output(
-                            u"(Waited %i seconds due to server lag.)"
-                             % waited)
+                            u"(Waited %i seconds due to server lag.)" % waited)
                     continue
                 else:
                     raise APIError(result['error'])
@@ -263,6 +261,11 @@ class CategoryRedirectBot(object):
                 assert len(result['query-continue'].keys()) == 1, \
                        "More than one query-continue key returned: %s" \
                        % result['query-continue'].keys()
+                query_type = result['query-continue'].keys()[0]
+                assert (query_type in querydata.keys()
+                        or query_type in querydata.values()), \
+                       "Site returned unknown query-continue type '%s'" \
+                       % query_type
                 querydata.update(result['query-continue'][query_type])
             else:
                 return
@@ -295,9 +298,9 @@ class CategoryRedirectBot(object):
             # get the id of the newest log being archived
             rotate_revid = history[-1][0]
             # append permalink
-            log_text = log_text + (
-                "\n\n'''[%s Older logs]'''"
-                    % self.log_page.permalink(oldid=rotate_revid))
+            log_text = log_text + \
+                       "\n\n'''[%s Older logs]'''" \
+                       % self.log_page.permalink(oldid=rotate_revid)
         except IndexError:
             # don't die if getVersionHistory fails (again)
             return all_log_text
@@ -314,10 +317,12 @@ class CategoryRedirectBot(object):
 
         l = time.localtime()
         today = "%04d-%02d-%02d" % l[:3]
-        edit_request_page = pywikibot.Page(self.site,
-                            u"User:%(user)s/category edit requests" % locals())
-        datafile = pywikibot.config.datafilepath(
-                   "%s-catmovebot-data" % self.site.dbName())
+        edit_request_page = pywikibot.Page(
+            self.site,
+            u"User:%(user)s/category edit requests"
+            % locals())
+        datafile = pywikibot.config.datafilepath("%s-catmovebot-data"
+                                                 % self.site.dbName())
         try:
             inp = open(datafile, "rb")
             record = cPickle.load(inp)
@@ -328,10 +333,11 @@ class CategoryRedirectBot(object):
             cPickle.dump(record, open(datafile + ".bak", "wb"))
 
         try:
-            template_list = self.site.family.category_redirect_templates[self.site.lang]
+            template_list = self.site.family.category_redirect_templates[
+                self.site.lang]
         except KeyError:
             pywikibot.output(u"No redirect templates defined for %s"
-                              % self.site.sitename())
+                             % self.site.sitename())
             return
         # regex to match soft category redirects
         #  note that any templates containing optional "category:" are
@@ -346,13 +352,13 @@ class CategoryRedirectBot(object):
                      'template': "|".join(item.replace(" ", "[ _]+")
                                           for item in template_list),
                      'catns': self.site.namespace(14)},
-            re.I|re.X)
+            re.I | re.X)
 
         # check for hard-redirected categories that are not already marked
         # with an appropriate template
         comment = i18n.twtranslate(self.site.lang, self.redir_comment)
         for result in self.query_results(list='allpages',
-                                         apnamespace='14', # Category:
+                                         apnamespace='14',  # Category:
                                          apfrom='!',
                                          apfilterredir='redirects',
                                          aplimit='max'):
@@ -372,20 +378,19 @@ class CategoryRedirectBot(object):
                     try:
                         page.put(newtext, comment, minorEdit=True)
                         self.log_text.append(u"* Added {{tl|%s}} to %s"
-                                         % (template_list[0],
-                                            page.title(asLink=True,
-                                                       textlink=True)))
+                                             % (template_list[0],
+                                                page.title(asLink=True,
+                                                           textlink=True)))
                     except pywikibot.Error, e:
                         self.log_text.append(
                             u"* Failed to add {{tl|%s}} to %s (%s)"
-                             % (template_list[0],
-                                page.title(asLink=True, textlink=True),
-                                e))
+                            % (template_list[0],
+                               page.title(asLink=True, textlink=True), e))
                 else:
                     problems.append(
                         u"# %s is a hard redirect to %s"
-                         % (page.title(asLink=True, textlink=True),
-                            target.title(asLink=True, textlink=True)))
+                        % (page.title(asLink=True, textlink=True),
+                           target.title(asLink=True, textlink=True)))
 
         pywikibot.output("Done checking hard-redirect category pages.")
 
@@ -404,7 +409,7 @@ class CategoryRedirectBot(object):
         # get a list of all members of the category-redirect category
         for result in self.query_results(generator=u'categorymembers',
                                          gcmtitle=target,
-                                         gcmnamespace=u'14', # CATEGORY
+                                         gcmnamespace=u'14',  # CATEGORY
                                          gcmlimit=u'max',
                                          prop='info|categoryinfo'):
             for catdata in result['pages'].values():
@@ -423,17 +428,17 @@ class CategoryRedirectBot(object):
             cat_title = cat.title(withNamespace=False)
             if "category redirect" in cat_title:
                 self.log_text.append(u"* Ignoring %s"
-                                      % cat.title(asLink=True, textlink=True))
+                                     % cat.title(asLink=True, textlink=True))
                 continue
             try:
                 text = cat.get(get_redirect=True)
             except pywikibot.Error:
                 self.log_text.append(u"* Could not load %s; ignoring"
-                                      % cat.title(asLink=True, textlink=True))
+                                     % cat.title(asLink=True, textlink=True))
                 continue
             if not cat.isCategoryRedirect():
                 self.log_text.append(u"* False positive: %s"
-                                      % cat.title(asLink=True, textlink=True))
+                                     % cat.title(asLink=True, textlink=True))
                 continue
             if cat_title not in record:
                 # make sure every redirect has a record entry
@@ -486,24 +491,25 @@ class CategoryRedirectBot(object):
                     while newcat in catlist:
                         if newcat == d or newcat == dest:
                             self.log_text.append(u"* Redirect loop from %s"
-                                             % newcat.title(asLink=True,
-                                                            textlink=True))
+                                                 % newcat.title(asLink=True,
+                                                                textlink=True))
                             break
                         newcat = catlib.Category(self.site,
                                                  self.catprefix+catmap[newcat])
                     else:
                         self.log_text.append(
                             u"* Fixed double-redirect: %s -> %s -> %s"
-                                % (d.title(asLink=True, textlink=True),
-                                   dest.title(asLink=True, textlink=True),
-                                   newcat.title(asLink=True, textlink=True)))
+                            % (d.title(asLink=True, textlink=True),
+                               dest.title(asLink=True, textlink=True),
+                               newcat.title(asLink=True, textlink=True)))
                         oldtext = d.get(get_redirect=True)
                         # remove the old redirect from the old text,
                         # leaving behind any non-redirect text
                         oldtext = template_regex.sub("", oldtext)
                         newtext = (u"{{%(redirtemp)s|%(ncat)s}}"
-                                    % {'redirtemp': template_list[0],
-                                       'ncat': newcat.title(withNamespace=False)})
+                                   % {'redirtemp': template_list[0],
+                                      'ncat': newcat.title(
+                                          withNamespace=False)})
                         newtext = newtext + oldtext.strip()
                         try:
                             d.put(newtext,
@@ -526,9 +532,8 @@ class CategoryRedirectBot(object):
             cat_title = cat.title(withNamespace=False)
             if not self.readyToEdit(cat):
                 counts[cat_title] = None
-                self.log_text.append(
-                    u"* Skipping %s; in cooldown period."
-                     % cat.title(asLink=True, textlink=True))
+                self.log_text.append(u"* Skipping %s; in cooldown period."
+                                     % cat.title(asLink=True, textlink=True))
                 continue
             found, moved = self.move_contents(cat_title, catmap[cat],
                                               editSummary=comment)
@@ -549,17 +554,18 @@ class CategoryRedirectBot(object):
                                              self.maint_comment))
         self.log_text.sort()
         problems.sort()
-        self.log_page.put(u"\n==%i-%02i-%02iT%02i:%02i:%02iZ==\n"
-                            % time.gmtime()[:6]
+        self.log_page.put(u"\n== %i-%02i-%02iT%02i:%02i:%02iZ ==\n"
+                          % time.gmtime()[:6]
                           + u"\n".join(self.log_text)
                           + u"\n" + u"\n".join(problems)
                           + u"\n" + self.get_log_text())
         if self.edit_requests:
             edit_request_page.put(self.edit_request_text
-                                 % {'itemlist':
-                                    u"\n" + u"\n".join(
-                                        (self.edit_request_item % item)
-                                        for item in self.edit_requests)})
+                                  % {'itemlist':
+                                     u"\n" + u"\n".join(
+                                         (self.edit_request_item % item)
+                                         for item in self.edit_requests)})
+
 
 def main(*args):
     global bot
