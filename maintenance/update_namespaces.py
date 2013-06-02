@@ -17,14 +17,14 @@ options:
 __version__ = '$Id$'
 #
 
+import re
 import sys
-sys.path.insert(1, '..')
+from operator import itemgetter
 
+sys.path.insert(1, '..')
 import wikipedia
 from wikipedia import output
-
 import family_check
-import re
 
 r_namespace_section_main = r'(?s)self\.namespaces\s*\=\s*\{.*\s+%s\s*:\s*\{(.*?)\}'
 r_namespace_section_sub = r'(?s)self\.namespaces\[%s\]\s*\=\s*\{(.*?)\}'
@@ -55,8 +55,9 @@ def update_family(family, changes, upmain):
     namespace_defs = {}
     oncedefs = {}
     oncetext = ''
-    for lang, namespaces in changes.iteritems():
-        for namespace_id, namespace_list, predefined_namespace in namespaces:
+    for lang, namespaces in sorted(changes.iteritems()):
+        for namespace_id, namespace_list, predefined_namespace in \
+                sorted(namespaces, key=itemgetter(0)):
             if namespace_id in skip_namespace:
                 continue
             msg = u'Setting namespace[%s] for %s to ' \
@@ -71,6 +72,11 @@ def update_family(family, changes, upmain):
 ##                                              % (namespace_id, lang),
 ##                                              family_text)
             else:
+                if not family:
+                    if upmain and namespace_id in (828, 829):
+                        r_namespace_section = r_namespace_section_sub
+                    else:
+                        r_namespace_section = r_namespace_section_main
                 namespace_section = re.search(r_namespace_section
                                               % namespace_id, family_text)
                 if not namespace_section:
