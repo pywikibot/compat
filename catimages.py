@@ -432,6 +432,7 @@ class FileData(object):
                 #print (rvec - nrv < 1E-12)  # compare
                 data['Pose'] = map(float, tuple(drv[:,0]))
 # TODO: POSIT has to be tested and compared to solvePnP; which one is better??
+                # POSIT: http://www.cfar.umd.edu/~daniel/daniel_papersfordownload/Pose25Lines.pdf
                 if False:
                     pywikibot.output("solvePnP:")
                     pywikibot.output(str(rvec[:,0]))
@@ -3474,6 +3475,7 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         self._detect_Faces_EXIF()
         # Faces and eyes (opencv pre-trained haar)
         self._detect_Faces_CV()
+# TODO: test and use or switch off
         # Face via Landmark(s)
 #        self._detect_FaceLandmark_xBOB()
         # exclude duplicates (CV and EXIF)
@@ -3507,7 +3509,6 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         self._recognize_OpticalCodes_dmtxNzbar()
 
         # Chessboard (opencv reference detector)
-# TODO: apply pose estimation/detection to faces (eyes, mouth, ... or landmark) also
         self._detect_Chessboard_CV()
 
         # general (self-trained) detection WITH classification
@@ -3846,13 +3847,26 @@ def main():
     if outresult:
         outpage = pywikibot.Page(site, u"User:DrTrigon/User:DrTrigonBot/logging")
         #outresult = [ outpage.get() ] + outresult   # append to page
-        outpage.put( u"\n".join(outresult), comment="bot writing log for last run" )
+        outresult = u"\n".join(outresult)
+        pywikibot.output(u"Size of log page data: %s byte(s)" % len(outresult))
+        # write pages mutliple times if content is too large in order to circumvent:
+        # "HTTPError: 504 Gateway Time-out" leading finally to "MaxTriesExceededError"
+        # (why is that...?!?? FIX THIS!)
+        tmp = outresult
+        while tmp:
+            i = np.array([m.start() for m in re.finditer(u"\n\n==", tmp)]
+                       + [len(tmp)])
+            #pos = i[ np.where((i - 2048*1024) <= 0)[0][-1] ] # $wgMaxArticleSize
+            pos = i[ np.where((i - 500*1024) <= 0)[0][-1] ]
+            pywikibot.output(u"Size of bunch to write: %s byte(s)" % len(tmp[:pos]))
+            outpage.put( tmp[:pos], comment="bot writing log for last run" )
+            tmp = tmp[pos:]
         if pywikibot.simulate:
             #print u"--- " * 20
             #print u"--- " * 20
-            #print u"\n".join(outresult)
+            #print outresult
             posfile = open(os.path.join(scriptdir, 'cache/catimages.log'), "a")
-            posfile.write( u"\n".join(outresult) )
+            posfile.write( outresult )
             posfile.close()
 
 # http://scipy-lectures.github.com/advanced/scikit-learn/index.html
