@@ -405,7 +405,7 @@ class FileData(object):
                 D2points = [ item[:2] + item[2:]/2. for item in D2points ]
                 neutral  = np.array([[np.pi],[0.],[0.]])
                 # calculate pose
-                rvec, tvec, cm, err = self._util_get_Pose(D3points, D2points, self.image_size)
+                rvec, tvec, cm, err = self._util_get_Pose_solvePnP(D3points, D2points, self.image_size)
                 #data['Pose'] = tuple(rvec[:,0])
                 check = not (err[:,0,:].max() > 0.5)
                 if not check:
@@ -431,18 +431,18 @@ class FileData(object):
                 #                     drv, np.zeros((3,1)))[0]
                 #print (rvec - nrv < 1E-12)  # compare
                 data['Pose'] = map(float, tuple(drv[:,0]))
-# TODO: POSIT has to be tested and compared to solvePnP; which one is better??
+# TODO: POSIT has to be tested and compared; draw both results!
                 # POSIT: http://www.cfar.umd.edu/~daniel/daniel_papersfordownload/Pose25Lines.pdf
                 if False:
                     pywikibot.output("solvePnP:")
                     pywikibot.output(str(rvec[:,0]))
                     pywikibot.output(str(tvec[:,0]))
-                    import opencv
-                    #opencv.unit_test()
-                    (rmat, tvec, mdl) = opencv.posit(D3points, D2points, (100, 1.0e-4))
+                    pywikibot.output(str(err[:,0,:]))
+                    rvec, tvec, cm, err = self._util_get_Pose_POSIT(D3points, D2points)
                     pywikibot.output("POSIT:")
-                    pywikibot.output(str(cv2.Rodrigues(rmat)[0][:,0]))
+                    pywikibot.output(str(rvec[:,0]))
                     pywikibot.output(str(tvec))
+                    pywikibot.output(str(np.array(err)[:,0,:]/max(self.image_size)))
             result.append( data )
 
         ## see '_drawRect'
@@ -455,7 +455,7 @@ class FileData(object):
         self._info['Faces'] += result
         return
 
-    def _util_get_Pose(self, D3points, D2points, shape):
+    def _util_get_Pose_solvePnP(self, D3points, D2points, shape):
         """ Calculate pose from head model "little girl" w/o camera or other
             calibrations needed.
 
@@ -487,6 +487,41 @@ class FileData(object):
         pywikibot.output(u'result for UN-calibrated camera:\n  rot=%s' % rvec.transpose()[0])
 
         return rvec, tvec, np.array(cameraMatrix), (np.array(err)/max_d)
+
+    #def _util_get_Pose_POSIT(self, D3points, D2points, shape):
+    def _util_get_Pose_POSIT(self, D3points, D2points):
+        """ Calculate pose from head model "little girl" w/o camera or other
+            calibrations needed.
+
+            Method similar to '_util_get_Pose_solvePnP', please compare.
+
+            D2points: left eye, right eye, nose, mouth
+        """
+        # calculate pose
+        import opencv
+        #opencv.unit_test()
+        (rmat, tvec, mdl) = opencv.posit(D3points, D2points, (100, 1.0e-4))
+        rvec = cv2.Rodrigues(rmat)[0]
+
+        # Project the model points with the estimated pose
+        # http://opencv.willowgarage.com/documentation/cpp/camera_calibration_and_3d_reconstruction.html
+        # intrinsic: camera matrix
+        # extrinsic: rotation-translation matrix [R|t]
+        # CV_32F, principal point in the centre of the image is (0, 0) instead of (self.image_size[0]*0.5)
+        FOCAL_LENGTH = 760.0    # hard-coded in posit_python.cpp, should be changed...
+        cameraMatrix = [[FOCAL_LENGTH,          0.0, 0.0],#shape[0]*0.0],
+                        [         0.0, FOCAL_LENGTH, 0.0],#shape[1]*0.0],
+                        [         0.0,          0.0, 1.0],]
+
+        # compare to 2D points
+        err = []
+        for i, vec in enumerate(np.array(mdl)):
+            nvec = np.dot(cameraMatrix, (np.dot(rmat, vec) + tvec))
+            err.append(((D2points[i] - nvec[:2]/nvec[2]), D2points[i], nvec[:2]/nvec[2]))
+
+        #pywikibot.output(u'result for UN-calibrated camera:\n  rot=%s' % rvec.transpose()[0])
+
+        return rvec, tvec, np.array(cameraMatrix), (np.array(err)/1.0)
 
     # https://pypi.python.org/pypi/xbob.flandmark
     # http://cmp.felk.cvut.cz/~uricamic/flandmark/
@@ -3849,9 +3884,9 @@ def main():
         #outresult = [ outpage.get() ] + outresult   # append to page
         outresult = u"\n".join(outresult)
         pywikibot.output(u"Size of log page data: %s byte(s)" % len(outresult))
-        # write pages mutliple times if content is too large in order to circumvent:
+        # work-a-round: write pages mutliple times if content is too large in order to circumvent
         # "HTTPError: 504 Gateway Time-out" leading finally to "MaxTriesExceededError"
-        # (why is that...?!?? FIX THIS!)
+        # (why is that...?!?? FIX THIS in the framework core e.g. 'postForm'!)
         tmp = outresult
         while tmp:
             i = np.array([m.start() for m in re.finditer(u"\n\n==", tmp)]
