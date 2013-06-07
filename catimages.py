@@ -144,9 +144,10 @@ useGuesses = True        # Use guesses which are less reliable than true searche
 
 # all detection and recognition methods - bindings to other classes, modules and libs
 
-class UnknownFile(object):
-    def __init__(self, filename, *args, **kwargs):
-        self.filename   = filename
+class _UnknownFile(object):
+    def __init__(self, file_name, file_mime, *args, **kwargs):
+        self.file_name = file_name
+        self.file_mime = file_mime
         self.image_size = (None, None)
 
         # available file properties and metadata
@@ -183,12 +184,157 @@ class UnknownFile(object):
         return self._properties
 
     def getFeatures(self):
-        pywikibot.warning(u"File format '%s/%s' not supported (yet)!" % tuple(self.image_mime[:2]))
+        pywikibot.warning(u"File format '%s/%s' not supported (yet)!" % tuple(self.file_mime[:2]))
         return self._features
 
     def _detect_HeaderAndMetadata(self):
         # check/look into the file by midnight commander (mc)
         # https://pypi.python.org/pypi/hachoir-metadata
+
+#### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+#try:
+#    from hachoir_core.error import error, HachoirError
+#    from hachoir_core.cmd_line import unicodeFilename
+#    from hachoir_core.i18n import getTerminalCharset, _
+#    from hachoir_core.benchmark import Benchmark
+#    from hachoir_core.stream import InputStreamError
+#    from hachoir_core.tools import makePrintable
+#    from hachoir_parser import createParser, ParserList
+#    import hachoir_core.config as hachoir_config
+#    from hachoir_metadata import config
+#except ImportError, err:
+#    raise
+#    print >>sys.stderr, "Unable to import an Hachoir module: %s" % err
+#    sys.exit(1)
+#from optparse import OptionGroup, OptionParser
+#from hachoir_metadata import extractMetadata
+#from hachoir_metadata.metadata import extractors as metadata_extractors
+#
+#
+#def parseOptions():
+#    parser = OptionParser(usage="%prog [options] files")
+#    parser.add_option("--type", help=_("Only display file type (description)"),
+#        action="store_true", default=False)
+#    parser.add_option("--mime", help=_("Only display MIME type"),
+#        action="store_true", default=False)
+#    parser.add_option("--level",
+#        help=_("Quantity of information to display from 1 to 9 (9 is the maximum)"),
+#        action="store", default="9", type="choice",
+#        choices=[ str(choice) for choice in xrange(1,9+1) ])
+#    parser.add_option("--raw", help=_("Raw output"),
+#        action="store_true", default=False)
+#    parser.add_option("--bench", help=_("Run benchmark"),
+#        action="store_true", default=False)
+#    parser.add_option("--force-parser",help=_("List all parsers then exit"),
+#        type="str")
+#    parser.add_option("--profiler", help=_("Run profiler"),
+#        action="store_true", default=False)
+#    parser.add_option("--quality", help=_("Information quality (0.0=fastest, 1.0=best, and default is 0.5)"),
+#        action="store", type="float", default="0.5")
+#    parser.add_option("--maxlen", help=_("Maximum string length in characters, 0 means unlimited (default: %s)" % config.MAX_STR_LENGTH),
+#        type="int", default=config.MAX_STR_LENGTH)
+#    parser.add_option("--verbose", help=_("Verbose mode"),
+#        default=False, action="store_true")
+#    parser.add_option("--debug", help=_("Debug mode"),
+#        default=False, action="store_true")
+#
+#    values, filename = parser.parse_args()
+#    if len(filename) == 0:
+#        parser.print_help()
+#        sys.exit(1)
+#
+#    # Update limits
+#    config.MAX_STR_LENGTH = values.maxlen
+#    if values.raw:
+#        config.RAW_OUTPUT = True
+#
+#    return values, filename
+#
+#def processFile(values, filename,
+#display_filename=False, priority=None, human=True, display=True):
+#    charset = getTerminalCharset()
+#    filename, real_filename = unicodeFilename(filename, charset), filename
+#
+#    # Create parser
+#    try:
+#        if values.force_parser:
+#            tags = [ ("id", values.force_parser), None ]
+#        else:
+#            tags = None
+#        parser = createParser(filename, real_filename=real_filename, tags=tags)
+#        help(parser)
+#        print parser.getParserTags()
+#        print parser.PARSER_TAGS
+#        for i, item in enumerate(parser.createFields()):
+#            print item
+#            if i > 5:
+#                break
+#    except InputStreamError, err:
+#        error(unicode(err))
+#        return False
+#    if not parser:
+#        error(_("Unable to parse file: %s") % filename)
+#        return False
+#
+#    # Extract metadata
+#    extract_metadata = not(values.mime or values.type)
+#    if extract_metadata:
+#        try:
+#            metadata = extractMetadata(parser, values.quality)
+#        except HachoirError, err:
+#            error(unicode(err))
+#            metadata = None
+#        if not metadata:
+#            parser.error(_("Hachoir can't extract metadata, but is able to parse: %s")
+#                % filename)
+#            return False
+#
+#    if display:
+#        # Display metadatas on stdout
+#        if extract_metadata:
+#            text = metadata.exportPlaintext(priority=priority, human=human)
+#            if not text:
+#                text = [_("(no metadata, priority may be too small)")]
+#            if display_filename:
+#                for line in text:
+#                    line = "%s: %s" % (filename, line)
+#                    print makePrintable(line, charset)
+#            else:
+#                for line in text:
+#                    print makePrintable(line, charset)
+#        else:
+#            if values.type:
+#                text = parser.description
+#            else:
+#                text = parser.mime_type
+#            if display_filename:
+#                text = "%s: %s" % (filename, text)
+#            print text
+#    return True
+#
+#### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+#
+#        def processFiles(values, filenames, display=True):
+#            human = not(values.raw)
+#            ok = True
+#            priority = int(values.level)*100 + 99
+#            display_filename = (1 < len(filenames))
+#            for filename in filenames:
+#                ok &= processFile(values, filename, display_filename, priority, human, display)
+#            return ok
+#
+#        try:
+#            # Parser options and initialize Hachoir
+#            values, filenames = parseOptions()
+#
+#            ok = processFiles(values, filenames)
+#        except KeyboardInterrupt:
+#            print _("Program interrupted (CTRL+C).")
+#            ok = False
+#        sys.exit(int(not ok))
+#
+#### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
         pass
 
     def _detect_Properties(self):
@@ -196,8 +342,8 @@ class UnknownFile(object):
         pass
 
 
-class JpegFile(UnknownFile):
-    # for '_detect_Trained_CV'
+class _JpegFile(_UnknownFile):
+    # for '_detect_Trained'
     cascade_files = [(u'Legs', 'haarcascade_lowerbody.xml'),
                      (u'Torsos', 'haarcascade_upperbody.xml'),
                      (u'Ears', 'haarcascade_mcs_leftear.xml'),
@@ -212,12 +358,11 @@ class JpegFile(UnknownFile):
                      # ('Hands' does not behave very well, in fact it detects any kind of skin and other things...)
                      #(u'Aeroplanes', 'haarcascade_aeroplane.xml'),]      # e.g. for 'Category:Unidentified aircraft'
 
-    def __init__(self, filename, *args, **kwargs):
-        UnknownFile.__init__(self, filename)
+    def __init__(self, file_name, file_mime, *args, **kwargs):
+        _UnknownFile.__init__(self, file_name, file_mime)
 
-        self.image_filename  = os.path.split(self.filename)[-1]
-        self.image_fileext   = os.path.splitext(self.image_filename)[1]
-        self.image_path      = self.filename
+        self.image_filename  = os.path.split(self.file_name)[-1]
+        self.image_path      = self.file_name
         self.image_path_JPEG = self.image_path + '.jpg'
 
         self._convert()
@@ -235,7 +380,7 @@ class JpegFile(UnknownFile):
         # Faces (extract EXIF data)
         self._detect_Faces_EXIF()
         # Faces and eyes (opencv pre-trained haar)
-        self._detect_Faces_CV()
+        self._detect_Faces()
 # TODO: test and use or switch off
         # Face via Landmark(s)
 #        self._detect_FaceLandmark_xBOB()
@@ -245,36 +390,36 @@ class JpegFile(UnknownFile):
             del self._features['Faces'][i]
 
         # Segments and colors
-        self._detect_SegmentColors_JSEGnPIL()
+        self._detect_SegmentColors()
         # Average color
-        self._detect_AverageColor_PILnCV()
+        self._detect_AverageColor()
 
         # People/Pedestrian (opencv pre-trained hog and haarcascade)
-        self._detect_People_CV()
+        self._detect_People()
 
         # Geometric object (opencv hough line, circle, edges, corner, ...)
-        self._detect_Geometry_CV()
+        self._detect_Geometry()
 
         # general (opencv pre-trained, third-party and self-trained haar
         # and cascade) classification
         # http://www.computer-vision-software.com/blog/2009/11/faq-opencv-haartraining/
         for cf in self.cascade_files:
-            self._detect_Trained_CV(*cf)
+            self._detect_Trained(*cf)
 
         # barcode and Data Matrix recognition (libdmtx/pydmtx, zbar, gocr?)
-        self._recognize_OpticalCodes_dmtxNzbar()
+        self._recognize_OpticalCodes()
 
         # Chessboard (opencv reference detector)
-        self._detect_Chessboard_CV()
+        self._detect_Chessboard()
 
         # general (self-trained) detection WITH classification
         # BoW: uses feature detection (SIFT, SURF, ...) AND classification (SVM, ...)
-#        self._detectclassify_ObjectAll_CV()
+#        self._detectclassify_ObjectAll()
         # Wavelet: uses wavelet transformation AND classification (machine learning)
 #        self._detectclassify_ObjectAll_PYWT()
 
         # general file EXIF history information
-        self._detect_History_EXIF()
+        self._detect_History()
         
         return self._features
 
@@ -320,7 +465,7 @@ class JpegFile(UnknownFile):
         try:
             i = Image.open(self.image_path)
         except IOError:
-            pywikibot.warning(u'unknown file type [JpegFile]')
+            pywikibot.warning(u'unknown file type [_JpegFile]')
             return
 
         # http://mail.python.org/pipermail/image-sig/1999-May/000740.html
@@ -351,8 +496,8 @@ class JpegFile(UnknownFile):
                         'Palette':    str(len(i.palette.palette)) if i.palette else u'-',
                         'Pages':      pc,
                         'Dimensions': self.image_size,
-                        'Filesize':   os.path.getsize(self.filename),
-                        'MIME':       u'%s/%s' % tuple(self.image_mime[:2]), })
+                        'Filesize':   os.path.getsize(self.file_name),
+                        'MIME':       u'%s/%s' % tuple(self.file_mime[:2]), })
 
         #self._properties['Properties'] = [result]
         self._properties['Properties'][0].update(result)
@@ -360,7 +505,7 @@ class JpegFile(UnknownFile):
 
     # .../opencv/samples/c/facedetect.cpp
     # http://opencv.willowgarage.com/documentation/python/genindex.html
-    def _detect_Faces_CV(self):
+    def _detect_Faces(self):
         """Converts an image to grayscale and prints the locations of any
            faces found"""
         # http://python.pastebin.com/m76db1d6b
@@ -429,10 +574,10 @@ class JpegFile(UnknownFile):
             # how small and how many features are detected as faces (or eyes)
             scale  = max([1., np.average(np.array(img.shape)[0:2]/500.)])
         except IOError:
-            pywikibot.warning(u'unknown file type [_detect_Faces_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Faces]')
             return
         except AttributeError:
-            pywikibot.warning(u'unknown file type [_detect_Faces_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Faces]')
             return
 
         #detectAndDraw( image, cascade, nestedCascade, scale );
@@ -808,7 +953,7 @@ class JpegFile(UnknownFile):
 
     # .../opencv/samples/cpp/peopledetect.cpp
     # + Haar/Cascade detection
-    def _detect_People_CV(self):
+    def _detect_People(self):
         # http://stackoverflow.com/questions/10231380/graphic-recognition-of-people
         # https://code.ros.org/trac/opencv/ticket/1298
         # http://opencv.itseez.com/modules/gpu/doc/object_detection.html
@@ -829,10 +974,10 @@ class JpegFile(UnknownFile):
             scale  = max([1., np.average(np.array(img.shape)[0:2]/400.)])
             #scale  = max([1., np.average(np.array(img.shape)[0:2]/300.)])
         except IOError:
-            pywikibot.warning(u'unknown file type [_detect_People_CV]')
+            pywikibot.warning(u'unknown file type [_detect_People]')
             return
         except AttributeError:
-            pywikibot.warning(u'unknown file type [_detect_People_CV]')
+            pywikibot.warning(u'unknown file type [_detect_People]')
             return
 
         # similar to face detection
@@ -902,7 +1047,7 @@ class JpegFile(UnknownFile):
         self._features['People'] = result
         return
 
-    def _detect_Geometry_CV(self):
+    def _detect_Geometry(self):
         result = self._util_get_Geometry_CVnSCIPY()
 
         self._features['Geometry'] = [{'Lines': result['Lines'],
@@ -934,10 +1079,10 @@ class JpegFile(UnknownFile):
             # how small and how many features are detected
             scale  = max([1., np.average(np.array(img.shape)[0:2]/500.)])
         except IOError:
-            pywikibot.warning(u'unknown file type [_detect_Geometry_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Geometry]')
             return self._buffer_Geometry
         except AttributeError:
-            pywikibot.warning(u'unknown file type [_detect_Geometry_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Geometry]')
             return self._buffer_Geometry
 
         # similar to face or people detection
@@ -1065,7 +1210,7 @@ class JpegFile(UnknownFile):
         return self._buffer_Geometry
 
     # .../opencv/samples/cpp/bagofwords_classification.cpp
-    def _detectclassify_ObjectAll_CV(self):
+    def _detectclassify_ObjectAll(self):
         """Uses the 'The Bag of Words model' for detection and classification"""
 
         # CAN ALSO BE USED FOR: TEXT, ...
@@ -1165,7 +1310,7 @@ class JpegFile(UnknownFile):
     # http://library.wolfram.com/infocenter/Demos/5725/#downloads
     # http://code.google.com/p/pymeanshift/wiki/Examples
     # (http://pythonvision.org/basic-tutorial, http://luispedro.org/software/mahotas, http://packages.python.org/pymorph/)
-    def _detect_SegmentColors_JSEGnPIL(self):    # may be SLIC other other too...
+    def _detect_SegmentColors(self):    # may be SLIC other other too...
         try:
             #im = Image.open(self.image_path).convert(mode = 'RGB')
             im = Image.open(self.image_path_JPEG)
@@ -1179,7 +1324,7 @@ class JpegFile(UnknownFile):
             (l, t) = (0, 0)
             i = im
         except IOError:
-            pywikibot.warning(u'unknown file type [_detect_SegmentColors_JSEGnPIL]')
+            pywikibot.warning(u'unknown file type [_detect_SegmentColors]')
             return
 
         result = []
@@ -1193,7 +1338,7 @@ class JpegFile(UnknownFile):
             ##(pic, scale) = self._util_detect_ColorSegments_JSEG(pic)    # (final split)
             #hist = self._util_get_ColorSegmentsHist_PIL(i, pic, scale)  #
         except TypeError:
-            pywikibot.warning(u'unknown file type [_detect_SegmentColors_JSEGnPIL]')
+            pywikibot.warning(u'unknown file type [_detect_SegmentColors]')
             return
         i = 0
         # (may be do an additional region merge according to same color names...)
@@ -1221,14 +1366,14 @@ class JpegFile(UnknownFile):
     # http://code.google.com/p/python-colormath/
     # http://en.wikipedia.org/wiki/Color_difference
     # http://www.farb-tabelle.de/en/table-of-color.htm
-    def _detect_AverageColor_PILnCV(self):
+    def _detect_AverageColor(self):
         try:
             # we need to have 3 channels (but e.g. grayscale 'P' has only 1)
             #i = Image.open(self.image_path).convert(mode = 'RGB')
             i = Image.open(self.image_path_JPEG)
             h = i.histogram()
         except IOError:
-            pywikibot.warning(u'unknown file type [_detect_AverageColor_PILnCV]')
+            pywikibot.warning(u'unknown file type [_detect_AverageColor]')
             return
 
         result              = self._util_average_Color_colormath(h)
@@ -1321,7 +1466,7 @@ class JpegFile(UnknownFile):
         tmpjpg = os.path.join(scriptdir, "cache/jseg_buf.jpg")
         tmpgif = os.path.join(scriptdir, "cache/jseg_buf.gif")
 
-        # same scale func as in '_detect_Faces_CV'
+        # same scale func as in '_detect_Faces'
         scale  = max([1., np.average(np.array(im.size)[0:2]/200.)])
         #print np.array(im.size)/scale, scale
         try:
@@ -1482,7 +1627,7 @@ class JpegFile(UnknownFile):
         return im
 
     # Category:...      (several; look at self.gatherFeatures for more hints)
-    def _detect_Trained_CV(self, info_desc, cascade_file, maxdim=500.):
+    def _detect_Trained(self, info_desc, cascade_file, maxdim=500.):
         # general (self trained) classification (e.g. people, ...)
         # http://www.computer-vision-software.com/blog/2009/11/faq-opencv-haartraining/
 
@@ -1511,10 +1656,10 @@ class JpegFile(UnknownFile):
             # how small and how many features are detected
             scale  = max([1., np.average(np.array(img.shape)[0:2]/maxdim)])
         except IOError:
-            pywikibot.warning(u'unknown file type [_detect_Trained_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Trained]')
             return
         except AttributeError:
-            pywikibot.warning(u'unknown file type [_detect_Trained_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Trained]')
             return
 
         # similar to face detection
@@ -1541,7 +1686,7 @@ class JpegFile(UnknownFile):
         self._features[info_desc] = result
         return
 
-    def _recognize_OpticalCodes_dmtxNzbar(self):
+    def _recognize_OpticalCodes(self):
         # barcode and Data Matrix recognition (libdmtx/pydmtx, zbar, gocr?)
         # http://libdmtx.wikidot.com/libdmtx-python-wrapper
         # http://blog.globalstomp.com/2011/09/decoding-qr-code-code-128-code-39.html
@@ -1571,7 +1716,7 @@ class JpegFile(UnknownFile):
 
             scale  = max([1., np.average(np.array(img.size)/200.)])
         except IOError:
-            pywikibot.warning(u'unknown file type [_recognize_OpticalCodes_dmtxNzbar]')
+            pywikibot.warning(u'unknown file type [_recognize_OpticalCodes]')
             return
 
         smallImg = img.resize( (int(img.size[0]/scale), int(img.size[1]/scale)) )
@@ -1608,7 +1753,7 @@ class JpegFile(UnknownFile):
             img = Image.open(self.image_path_JPEG).convert('L')
             width, height = img.size
         except IOError:
-            pywikibot.warning(u'unknown file type [_recognize_OpticalCodes_dmtxNzbar]')
+            pywikibot.warning(u'unknown file type [_recognize_OpticalCodes]')
             return
         
         scanner = zbar.ImageScanner()
@@ -1636,7 +1781,7 @@ class JpegFile(UnknownFile):
         self._features['OpticalCodes'] = result
         return
 
-    def _detect_Chessboard_CV(self):
+    def _detect_Chessboard(self):
         # Chessboard (opencv reference detector)
         # http://www.c-plusplus.de/forum/273920-full
         # http://www.youtube.com/watch?v=bV-jAnQ-tvw
@@ -1656,10 +1801,10 @@ class JpegFile(UnknownFile):
             #scale  = max([1., np.average(np.array(im.shape)[0:2]/500.)])
             #scale  = max([1., np.average(np.array(im.shape)[0:2]/450.)])
         except IOError:
-            pywikibot.warning(u'unknown file type [_detect_Chessboard_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Chessboard]')
             return
         except AttributeError:
-            pywikibot.warning(u'unknown file type [_detect_Chessboard_CV]')
+            pywikibot.warning(u'unknown file type [_detect_Chessboard]')
             return
 
         smallImg = np.empty( (cv.Round(im.shape[1]/scale), cv.Round(im.shape[0]/scale)), dtype=np.uint8 )
@@ -1875,7 +2020,7 @@ class JpegFile(UnknownFile):
         coords2D = np.dot((cm), coords)
         perp = coords - origin
         if hacky:
-            # for '_detect_Chessboard_CV' but looks a bit strange ... may be wrong?!
+            # for '_detect_Chessboard' but looks a bit strange ... may be wrong?!
             mat  = coords2D - origin2D
             mat  = mat/max([np.linalg.norm(mat[:,i]) for i in range(3)])
         else:
@@ -2138,7 +2283,7 @@ class JpegFile(UnknownFile):
         self._features['Faces'] += data
         return
     
-    def _detect_History_EXIF(self):
+    def _detect_History(self):
         res = self._util_get_DataTags_EXIF()
 
         #a = []
@@ -2224,7 +2369,7 @@ class JpegFile(UnknownFile):
                         drop.append( i1 )
                     elif (ar2 >= thsr) and (i1 not in drop):
                         drop.append( i2 )
-                # from '_detect_Faces_CV()'
+                # from '_detect_Faces()'
                 if overlap:
                     if (r2[0] <= c1[0] <= (r2[0] + r2[2])) and \
                        (r2[1] <= c1[1] <= (r2[1] + r2[3])) and (i2 not in drop):
@@ -2243,17 +2388,17 @@ class JpegFile(UnknownFile):
         return (regs, drop)
 
 
-class PngFile(JpegFile):
+class _PngFile(_JpegFile):
     pass
 
-class GifFile(JpegFile):
+class _GifFile(_JpegFile):
     pass
 
-class TiffFile(JpegFile):
+class _TiffFile(_JpegFile):
     pass
 
 
-class XcfFile(JpegFile):
+class _XcfFile(_JpegFile):
     def _convert(self):
         # Very few programs other than GIMP read XCF files. This is by design
         # from the GIMP developers, the format is not really documented or
@@ -2282,19 +2427,19 @@ class XcfFile(JpegFile):
            as commons does in order to compare if those libraries (ImageMagick,
            ...) are buggy (thus explicitely use other software for independence)"""
 
-        result =      { 'Format':     u'%s' % self.image_mime[1].upper(),
+        result =      { 'Format':     u'%s' % self.file_mime[1].upper(),
         # DO NOT use ImageMagick (identify) instead of PIL to get these info !!
                         'Pages':      0,
                         'Dimensions': self.image_size,
-                        'Filesize':   os.path.getsize(self.filename),
-                        'MIME':       u'%s/%s' % tuple(self.image_mime[:2]), }
+                        'Filesize':   os.path.getsize(self.file_name),
+                        'MIME':       u'%s/%s' % tuple(self.file_mime[:2]), }
 
         #self._properties['Properties'] = [result]
         self._properties['Properties'][0].update(result)
         return
 
 
-class SvgFile(JpegFile):
+class _SvgFile(_JpegFile):
     def _convert(self):
         # SVG: rasterize the SVG to bitmap (MAY BE GET FROM WIKI BY DOWNLOAD?...)
         # (Mediawiki uses librsvg too: http://commons.wikimedia.org/wiki/SVG#SVGs_in_MediaWiki)
@@ -2358,19 +2503,19 @@ class SvgFile(JpegFile):
         # may be set {{validSVG}} also or do something in bot template to
         # recognize 'Format=SVG (valid)' ...
                         'Dimensions': self.image_size,
-                        'Filesize':   os.path.getsize(self.filename),
-                        'MIME':       u'%s/%s' % tuple(self.image_mime[:2]), })
+                        'Filesize':   os.path.getsize(self.file_name),
+                        'MIME':       u'%s/%s' % tuple(self.file_mime[:2]), })
 
         #self._properties['Properties'] = [result]
         self._properties['Properties'][0].update(result)
         return
 
 
-class PdfFile(JpegFile):
+class _PdfFile(_JpegFile):
     def getFeatures(self):
         # optical and other text recognition (tesseract & ocropus, ...)
-        self._detect_EmbeddedText_poppler()
-#        self._recognize_OpticalText_ocropus()
+        self._detect_EmbeddedText()
+#        self._recognize_OpticalText()
         # (may be just classify as 'contains text', may be store text, e.g. to wikisource)
 
         return self._features
@@ -2383,7 +2528,7 @@ class PdfFile(JpegFile):
         # http://vermeulen.ca/python-pdf.html
         # http://code.activestate.com/recipes/511465-pure-python-pdf-to-text-converter/
         # http://stackoverflow.com/questions/25665/python-module-for-converting-pdf-to-text
-        if self.image_fileext == u'.pdf':
+        if os.path.splitext(self.image_filename)[1].lower() == u'.pdf':
             pass
 
     # MIME: 'application/pdf; charset=binary'
@@ -2402,8 +2547,8 @@ class PdfFile(JpegFile):
                         'Palette':    u'-',
                         'Pages':      pc,
                         'Dimensions': self.image_size,
-                        'Filesize':   os.path.getsize(self.filename),
-                        'MIME':       u'%s/%s' % tuple(self.image_mime[:2]), }
+                        'Filesize':   os.path.getsize(self.file_name),
+                        'MIME':       u'%s/%s' % tuple(self.file_mime[:2]), }
 
         #self._properties['Properties'] = [result]
         self._properties['Properties'][0].update(result)
@@ -2411,7 +2556,7 @@ class PdfFile(JpegFile):
 
     # ./run-test (ocropus/ocropy)
     # (in fact all scripts/executables used here are pure python scripts!!!)
-    def _recognize_OpticalText_ocropus(self):
+    def _recognize_OpticalText(self):
         # optical text recognition (tesseract & ocropus, ...)
         # (no full recognition but - at least - just classify as 'contains text')
         # http://www.claraocr.org/de/ocr/ocr-software/open-source-ocr.html
@@ -2475,7 +2620,7 @@ class PdfFile(JpegFile):
         #print data
         pywikibot.output(data)
  
-    def _detect_EmbeddedText_poppler(self):
+    def _detect_EmbeddedText(self):
         # may be also: http://www.reportlab.com/software/opensource/rl-toolkit/
 
         # poppler pdftotext/pdfimages
@@ -2538,10 +2683,10 @@ class PdfFile(JpegFile):
         #    pdfinterp.process_pdf(rsrcmgr, device, fp, set(), maxpages=0, password='',
         #                caching=True, check_extractable=False)
         #except AssertionError:
-        #    pywikibot.warning(u'pdfminer missed, may be corrupt [_detect_EmbeddedText_poppler]')
+        #    pywikibot.warning(u'pdfminer missed, may be corrupt [_detect_EmbeddedText]')
         #    return
         #except TypeError:
-        #    pywikibot.warning(u'pdfminer missed, may be corrupt [_detect_EmbeddedText_poppler]')
+        #    pywikibot.warning(u'pdfminer missed, may be corrupt [_detect_EmbeddedText]')
         #    return
         #fp.close()
         #device.close()
@@ -2561,17 +2706,17 @@ class PdfFile(JpegFile):
         return
 
 
-#class DjvuFile(JpegFile):
+#class DjvuFile(_JpegFile):
 #    pass
 
 
-class OggFile(JpegFile):
+class _OggFile(_JpegFile):
     def getFeatures(self):
         # general handling of all audio and video formats
-        self._detect_Streams_FFMPEG()
+        self._detect_Streams()
 
         # general audio feature extraction
-#        self._detect_AudioFeatures_YAAFE()
+#        self._detect_AudioFeatures()
 
         return self._features
 
@@ -2588,14 +2733,14 @@ class OggFile(JpegFile):
         result =      { 'Format':     u'%s' % d['format']['format_name'].upper(),
                         'Pages':      0,
                         'Dimensions': self.image_size,
-                        'Filesize':   os.path.getsize(self.filename),
-                        'MIME':       u'%s/%s' % tuple(self.image_mime[:2]), }
+                        'Filesize':   os.path.getsize(self.file_name),
+                        'MIME':       u'%s/%s' % tuple(self.file_mime[:2]), }
 
         #self._properties['Properties'] = [result]
         self._properties['Properties'][0].update(result)
         return
 
-    def _detect_Streams_FFMPEG(self):
+    def _detect_Streams(self):
         # audio and video streams files (ogv, oga, ...)
         d = self._util_get_DataStreams_FFMPEG()
         if not d:
@@ -2661,7 +2806,7 @@ class OggFile(JpegFile):
         
         return self._buffer_FFMPEG
 
-    def _detect_AudioFeatures_YAAFE(self):
+    def _detect_AudioFeatures(self):
         # http://yaafe.sourceforge.net/manual/tools.html
         # http://yaafe.sourceforge.net/manual/quickstart.html - yaafe.py
         # ( help: yaafe.py -h / features: yaafe.py -l )
@@ -2813,9 +2958,9 @@ class OggFile(JpegFile):
         return
 
 
-class MidiFile(UnknownFile):
+class _MidiFile(_UnknownFile):
     def getFeatures(self):
-        self._detect_AudioFeatures_MUSIC21()    # Audio
+        self._detect_AudioFeatures()    # Audio
         return self._features
 
     def _detect_HeaderAndMetadata(self):
@@ -2824,7 +2969,7 @@ class MidiFile(UnknownFile):
         # extract data from midi file
         # http://valentin.dasdeck.com/midi/midifile.htm
         # http://stackoverflow.com/questions/3943149/reading-and-interpreting-data-from-a-binary-file-in-python
-        ba = bytearray(open(self.filename, 'rb').read())
+        ba = bytearray(open(self.file_name, 'rb').read())
         i = -1
         for key, data in [('Text', '\x01'), ('Copyright', '\x02'), ('Lyrics', '\x05')]:
             result[key] = []
@@ -2853,7 +2998,7 @@ class MidiFile(UnknownFile):
 
         import _music21 as music21
         try:
-            s = music21.converter.parse(self.filename)
+            s = music21.converter.parse(self.file_name)
             if s.metadata:
                 pywikibot.output(unicode(s.metadata))
                 result.update(s.metadata)
@@ -2869,27 +3014,27 @@ class MidiFile(UnknownFile):
            as commons does in order to compare if those libraries (ImageMagick,
            ...) are buggy (thus explicitely use other software for independence)"""
 
-        result =      { 'Format':     u'%s' % self.image_mime[1].upper(),
+        result =      { 'Format':     u'%s' % self.file_mime[1].upper(),
                         'Pages':      0,
                         'Dimensions': self.image_size,
-                        'Filesize':   os.path.getsize(self.filename),
-                        'MIME':       u'%s/%s' % tuple(self.image_mime[:2]), }
+                        'Filesize':   os.path.getsize(self.file_name),
+                        'MIME':       u'%s/%s' % tuple(self.file_mime[:2]), }
 
         #self._properties['Properties'] = [result]
         self._properties['Properties'][0].update(result)
         return
 
     # midi audio feature extraction
-    def _detect_AudioFeatures_MUSIC21(self):
+    def _detect_AudioFeatures(self):
         import _music21 as music21
 
         #music21.features.jSymbolic.getCompletionStats()
         try:
             #audiofile = '/home/ursin/Desktop/3_Ships.mid'
-            #s = music21.midi.translate.midiFilePathToStream(self.filename)
-            s = music21.converter.parse(self.filename)
+            #s = music21.midi.translate.midiFilePathToStream(self.file_name)
+            s = music21.converter.parse(self.file_name)
         except music21.midi.base.MidiException:
-            pywikibot.warning(u'unknown file type [_detect_AudioFeatures_MUSIC21]')
+            pywikibot.warning(u'unknown file type [_detect_AudioFeatures]')
             return
 
         #fs = music21.features.jSymbolic.extractorsById
@@ -2931,19 +3076,32 @@ class MidiFile(UnknownFile):
         return
 
 
-FILETYPES = {                        '*': UnknownFile,
-             (      'image',     'jpeg'): JpegFile,
-             (      'image',      'png'): PngFile,
-             (      'image',      'gif'): GifFile,
-             (      'image',     'tiff'): TiffFile,
-             (      'image',    'x-xcf'): XcfFile,
-             (      'image',  'svg+xml'): SvgFile,
-             ('application',      'pdf'): PdfFile,
+_FILETYPES = {                        '*': _UnknownFile,
+              (      'image',     'jpeg'): _JpegFile,
+              (      'image',      'png'): _PngFile,
+              (      'image',      'gif'): _GifFile,
+              (      'image',     'tiff'): _TiffFile,
+              (      'image',    'x-xcf'): _XcfFile,
+              (      'image',  'svg+xml'): _SvgFile,
+              ('application',      'pdf'): _PdfFile,
 # djvu: python-djvulibre or python-djvu for djvu support
 # http://pypi.python.org/pypi/python-djvulibre/0.3.9
-#             (      'image', 'vnd.djvu'): DjvuFile,
-             ('application',      'ogg'): OggFile,
-             (      'audio',     'midi'): MidiFile,}
+#              (      'image', 'vnd.djvu'): DjvuFile,
+              ('application',      'ogg'): _OggFile,
+              (      'audio',     'midi'): _MidiFile,}
+
+def GenericFile(file_name):
+    # 'magic' (libmagic)
+    m = magic.open(magic.MAGIC_MIME)    # or 'magic.MAGIC_NONE'
+    m.load()
+    file_mime = re.split('[/;\s]', m.file(file_name))
+    mime = mimetypes.guess_all_extensions('%s/%s' % tuple(file_mime[0:2]))
+    if mime and (os.path.splitext(file_name)[1].lower() not in mime):
+        pywikibot.warning(u'File extension does not match MIME type! File extension should be %s.' % mime)
+
+    # split detection and extraction according to file types; _JpegFile, ...
+    GenericFile = _FILETYPES.get(tuple(file_mime[:2]), _FILETYPES['*'])
+    return GenericFile(file_name, file_mime)
 
 
 # all classification and categorization methods and definitions - default variation
@@ -2957,7 +3115,7 @@ class CatImages_Default(object):
     #_thrshld_guesses = 0.1
     _thrshld_default = 0.75
 
-    # for '_detect_Trained_CV'
+    # for '_detect_Trained'
     cascade_files = [(u'Legs', 'haarcascade_lowerbody.xml'),
                      (u'Torsos', 'haarcascade_upperbody.xml'),
                      (u'Ears', 'haarcascade_mcs_leftear.xml'),
@@ -3387,7 +3545,6 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         pywikibot.output(u'Processing media %s ...' % self.image.title(asLink=True))
 
         image_filename  = os.path.split(self.image.fileUrl())[-1]
-        image_fileext   = os.path.splitext(image_filename)[1]
         self.image_path = urllib2.quote(os.path.join(scriptdir, ('cache/' + image_filename[-128:])))
 
         self._wikidata = self.image._latestInfo # all info wikimedia got from content (mime, sha1, ...)
@@ -3410,15 +3567,6 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
             f = open(self.image_path, 'wb')
             f.write( data )
             f.close()
-
-        # 'magic' (libmagic)
-        m = magic.open(magic.MAGIC_MIME)    # or 'magic.MAGIC_NONE'
-        m.load()
-        self.image_mime = re.split('[/;\s]', m.file(self.image_path))
-        #self.image_size = (None, None)
-        mime = mimetypes.guess_all_extensions('%s/%s' % tuple(self.image_mime[0:2]))
-        if mime and (image_fileext.lower() not in mime):
-            pywikibot.warning(u'File extension does not match MIME type! File extension should be %s.' % mime)
 
     # LOOK ALSO AT: checkimages.CatImagesBot.checkStep
     # (and category scripts/bots too...)
@@ -3673,7 +3821,7 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
             return u"  | %s = %s" % (key, self._output_format(value))
 
     def _make_markerblock(self, res, size, structure=['Position'], line='solid'):
-        # same as in '_detect_Faces_CV'
+        # same as in '_detect_Faces'
         colors = [ (0,0,255),
             (0,128,255),
             (0,255,255),
@@ -3739,17 +3887,13 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
 
     # gather data from all information interfaces
     def gatherFeatures(self):
-        # split detection and extraction according to file types; JpegFile, ...
-        TypeFile = FILETYPES.get(tuple(self.image_mime[:2]), FILETYPES['*'])
-        with TypeFile(self.image_path) as tf:
-            tf.image_mime = self.image_mime
-            tf.image      = self.image
+        # split detection and extraction according to file types; _JpegFile, ...
+        with GenericFile(self.image_path) as gf:
+            gf.image = self.image           # patch for _SvgFile needing url
             for func in ['getProperties', 'getFeatures']:
-                result = getattr(tf, func)()
+                result = getattr(gf, func)()
                 self._info.update(result)
-            print self._info
-            #print tf.__dict__
-            self.image_size = tf.image_size
+            self.image_size = gf.image_size
 
     def _existInformation(self, info, ignore = ['Properties', 'Metadata', 'ColorAverage']):
         result = []
@@ -4185,7 +4329,7 @@ def trainbot(generator, Bot, image_old_namespace, image_namespace):
     linear_svm = mlpy.LibSvm(kernel_type='linear') # new linear SVM instance
     linear_svm.learn(z, y) # learn from principal components
     
-    # !!! train also BoW (bag-of-words) in '_detectclassify_ObjectAll_CV' resp. 'opencv.BoWclassify.main' !!!
+    # !!! train also BoW (bag-of-words) in '_detectclassify_ObjectAll' resp. 'opencv.BoWclassify.main' !!!
     
     xmin, xmax = z[:,0].min()-0.1, z[:,0].max()+0.1
     ymin, ymax = z[:,1].min()-0.1, z[:,1].max()+0.1
