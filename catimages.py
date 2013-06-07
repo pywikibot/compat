@@ -143,7 +143,199 @@ useGuesses = True        # Use guesses which are less reliable than true searche
 
 
 # all detection and recognition methods - bindings to other classes, modules and libs
-class FileData(object):
+
+class UnknownFile(object):
+    def __init__(self, filename, *args, **kwargs):
+        self.filename = filename
+        self._info = {}
+
+    def getProperties(self):
+        # check/look into the file by midnight commander (mc)
+        # https://pypi.python.org/pypi/hachoir-metadata
+        #self._detect_HeaderAndMetadata()
+
+        # get mime-type file-size, ...
+        pass
+
+    def getFeatures(self):
+        pass
+
+    def _detect_Properties_PIL(self):
+        """Retrieve as much file property info possible, especially the same
+           as commons does in order to compare if those libraries (ImageMagick,
+           ...) are buggy (thus explicitely use other software for independence)"""
+        #self.image_size = (None, None)
+        result = {'Format': u'-', 'Pages': 0}
+        if self.image_fileext == u'.svg':   # MIME: 'application/xml; charset=utf-8'
+            # similar to PDF page count OR use BeautifulSoup
+            svgcountpages = re.compile("<page>")
+            pc = len(svgcountpages.findall( file(self.image_path,"r").read() ))
+
+            #svg = rsvg.Handle(self.image_path)
+
+            # http://validator.w3.org/docs/api.html#libs
+            # http://pypi.python.org/pypi/py_w3c/
+            vld = HTMLValidator()
+            valid = u'SVG'
+            try:
+                vld.validate(self.image.fileUrl())
+                valid = (u'Valid SVG' if vld.result.validity == 'true' else u'Invalid SVG')
+            except urllib2.URLError:
+                pass
+            except ValidationFault:
+                pass
+            #print vld.errors, vld.warnings
+
+            #self.image_size = (svg.props.width, svg.props.height)
+
+            result = { 'Format':     valid,
+                       'Mode':       u'-',
+                       'Palette':    u'-',
+                       'Pages':      pc, }
+            # may be set {{validSVG}} also or do something in bot template to
+            # recognize 'Format=SVG (valid)' ...
+        elif self.image_mime[1] == 'pdf':   # MIME: 'application/pdf; charset=binary'
+            # http://code.activestate.com/recipes/496837-count-pdf-pages/
+            #rxcountpages = re.compile(r"$\s*/Type\s*/Page[/\s]", re.MULTILINE|re.DOTALL)
+            rxcountpages = re.compile(r"/Type\s*/Page([^s]|$)", re.MULTILINE|re.DOTALL)    # PDF v. 1.3,1.4,1.5,1.6
+            pc = len(rxcountpages.findall( file(self.image_path,"rb").read() ))
+
+            result = { 'Format':     u'PDF',
+                       'Mode':       u'-',
+                       'Palette':    u'-',
+                       'Pages':      pc, }
+        elif self.image_mime[1] == 'x-xcf': # MIME: 'image/x-xcf; charset=binary'
+            result = { 'Format': u'%s' % self.image_mime[1].upper() }
+            # DO NOT use ImageMagick (identify) instead of PIL to get these info !!
+        elif (self.image_mime[0] == 'image') and \
+             (self.image_mime[1] != 'vnd.djvu'):   # MIME: 'image/jpeg; charset=binary', ...
+            try:
+                i = Image.open(self.image_path)
+            except IOError:
+                pywikibot.warning(u'unknown (image) file type [_detect_Properties_PIL]')
+                return {'Properties': [result]}
+
+            # http://mail.python.org/pipermail/image-sig/1999-May/000740.html
+            pc=0         # count number of pages
+            while True:
+                try:
+                    i.seek(pc)
+                except EOFError:
+                    break
+                pc+=1
+            i.seek(0)    # restore default
+
+            # http://grokbase.com/t/python/image-sig/082psaxt6k/embedded-icc-profiles
+            # python-lcms (littlecms) may be freeimage library
+            #icc = i.app['APP2']     # jpeg
+            #icc = i.tag[34675]      # tiff
+            #icc = re.sub('[^%s]'%string.printable, ' ', icc)
+            ## more image formats and more post-processing needed...
+
+            #self.image_size = i.size
+
+            result = { #'bands':      i.getbands(),
+                       #'bbox':       i.getbbox(),
+                       'Format':     i.format,
+                       'Mode':       i.mode,
+                       #'info':       i.info,
+                       #'stat':       os.stat(self.image_path),
+                       'Palette':    str(len(i.palette.palette)) if i.palette else u'-',
+                       'Pages':      pc, }
+        elif self.image_mime[1] == 'ogg':   # MIME: 'application/ogg; charset=binary'
+            # 'ffprobe' (ffmpeg); audio and video streams files (ogv, oga, ...)
+            d = self._util_get_DataStreams_FFMPEG()
+            #print d
+            result['Format'] = u'%s' % d['format']['format_name'].upper()
+        elif self.image_mime[1] == 'midi': # MIME: 'audio/midi; charset=binary'
+            result['Format'] = u'%s' % self.image_mime[1].upper()
+        # djvu: python-djvulibre or python-djvu for djvu support
+        # http://pypi.python.org/pypi/python-djvulibre/0.3.9
+        else:
+            pywikibot.warning(u'unknown (generic) file type [_detect_Properties_PIL]')
+            return {'Properties': [result]}
+
+        result['Dimensions'] = self.image_size
+        result['Filesize']   = os.path.getsize(self.image_path)
+        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
+
+        #self._info['Properties'] = [result]
+        self._info['Properties'][0].update(result)
+        return {'Properties': [result]}
+
+
+class JpegFile(UnknownFile):
+    # for '_detect_Trained_CV'
+    cascade_files = [(u'Legs', 'haarcascade_lowerbody.xml'),
+                     (u'Torsos', 'haarcascade_upperbody.xml'),
+                     (u'Ears', 'haarcascade_mcs_leftear.xml'),
+                     (u'Ears', 'haarcascade_mcs_rightear.xml'),
+                     (u'Eyes', 'haarcascade_lefteye_2splits.xml'),        # (http://yushiqi.cn/research/eyedetection)
+                     (u'Eyes', 'haarcascade_righteye_2splits.xml'),       # (http://yushiqi.cn/research/eyedetection)
+                     #externals/opencv/haarcascades/haarcascade_mcs_lefteye.xml
+                     #externals/opencv/haarcascades/haarcascade_mcs_righteye.xml
+                     # (others include indifferent (left and/or right) and pair)
+                     (u'Automobiles', 'cars3.xml'),                       # http://www.youtube.com/watch?v=c4LobbqeKZc
+                     (u'Hands', '1256617233-2-haarcascade-hand.xml', 300.),]    # http://www.andol.info/
+                     # ('Hands' does not behave very well, in fact it detects any kind of skin and other things...)
+                     #(u'Aeroplanes', 'haarcascade_aeroplane.xml'),]      # e.g. for 'Category:Unidentified aircraft'
+
+    def getProperties(self):
+        pass
+
+        # Image size
+        self._detect_Properties_PIL()
+
+    def getFeatures(self):
+        # Faces (extract EXIF data)
+        self._detect_Faces_EXIF()
+        # Faces and eyes (opencv pre-trained haar)
+        self._detect_Faces_CV()
+# TODO: test and use or switch off
+        # Face via Landmark(s)
+#        self._detect_FaceLandmark_xBOB()
+        # exclude duplicates (CV and EXIF)
+        faces = [item['Position'] for item in self._info['Faces']]
+        for i in self._util_merge_Regions(faces)[1]:
+            del self._info['Faces'][i]
+
+        # Segments and colors
+        self._detect_SegmentColors_JSEGnPIL()
+        # Average color
+        self._detect_AverageColor_PILnCV()
+
+        # People/Pedestrian (opencv pre-trained hog and haarcascade)
+        self._detect_People_CV()
+
+        # Geometric object (opencv hough line, circle, edges, corner, ...)
+        self._detect_Geometry_CV()
+
+        # general (opencv pre-trained, third-party and self-trained haar
+        # and cascade) classification
+        # http://www.computer-vision-software.com/blog/2009/11/faq-opencv-haartraining/
+        for cf in self.cascade_files:
+            self._detect_Trained_CV(*cf)
+
+        # optical and other text recognition (tesseract & ocropus, ...)
+        self._detect_EmbeddedText_poppler()
+#        self._recognize_OpticalText_ocropus()
+        # (may be just classify as 'contains text', may be store text, e.g. to wikisource)
+
+        # barcode and Data Matrix recognition (libdmtx/pydmtx, zbar, gocr?)
+        self._recognize_OpticalCodes_dmtxNzbar()
+
+        # Chessboard (opencv reference detector)
+        self._detect_Chessboard_CV()
+
+        # general (self-trained) detection WITH classification
+        # BoW: uses feature detection (SIFT, SURF, ...) AND classification (SVM, ...)
+#        self._detectclassify_ObjectAll_CV()
+        # Wavelet: uses wavelet transformation AND classification (machine learning)
+#        self._detectclassify_ObjectAll_PYWT()
+
+        # general file EXIF history information
+        self._detect_History_EXIF()
+
     # .../opencv/samples/c/facedetect.cpp
     # http://opencv.willowgarage.com/documentation/python/genindex.html
     def _detect_Faces_CV(self):
@@ -157,7 +349,8 @@ class FileData(object):
         # http://www.cognotics.com/opencv/servo_2007_series/part_4/index.html
 
         # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']):
+        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
+           (self.image_mime[0] in ['audio']):
             return
 
         # https://code.ros.org/trac/opencv/browser/trunk/opencv_extra/testdata/gpu/haarcascade?rev=HEAD
@@ -699,7 +892,8 @@ class FileData(object):
         self._info['Geometry'] = []
 
         # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']):
+        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
+           (self.image_mime[0] in ['audio']):
             return
 
         result = self._util_get_Geometry_CVnSCIPY()
@@ -970,7 +1164,8 @@ class FileData(object):
         self._info['ColorRegions'] = []
 
         # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']):
+        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
+           (self.image_mime[0] in ['audio']):
             return
 
         try:
@@ -1032,7 +1227,8 @@ class FileData(object):
         self._info['ColorAverage'] = []
 
         # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']):
+        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
+           (self.image_mime[0] in ['audio']):
             return
 
         try:
@@ -1048,109 +1244,6 @@ class FileData(object):
         result['Gradient']  = self._util_get_Geometry_CVnSCIPY().get('Edge_Ratio', None) or '-'
         result['FFT_Peaks'] = self._util_get_Geometry_CVnSCIPY().get('FFT_Peaks', None) or '-'
         self._info['ColorAverage'] = [result]
-        return
-
-    def _detect_Properties_PIL(self):
-        """Retrieve as much file property info possible, especially the same
-           as commons does in order to compare if those libraries (ImageMagick,
-           ...) are buggy (thus explicitely use other software for independence)"""
-        #self.image_size = (None, None)
-        self._info['Properties'] = [{'Format': u'-', 'Pages': 0}]
-        if self.image_fileext == u'.svg':   # MIME: 'application/xml; charset=utf-8'
-            # similar to PDF page count OR use BeautifulSoup
-            svgcountpages = re.compile("<page>")
-            pc = len(svgcountpages.findall( file(self.image_path,"r").read() ))
-
-            #svg = rsvg.Handle(self.image_path)
-
-            # http://validator.w3.org/docs/api.html#libs
-            # http://pypi.python.org/pypi/py_w3c/
-            vld = HTMLValidator()
-            valid = u'SVG'
-            try:
-                vld.validate(self.image.fileUrl())
-                valid = (u'Valid SVG' if vld.result.validity == 'true' else u'Invalid SVG')
-            except urllib2.URLError:
-                pass
-            except ValidationFault:
-                pass
-            #print vld.errors, vld.warnings
-
-            #self.image_size = (svg.props.width, svg.props.height)
-
-            result = { 'Format':     valid,
-                       'Mode':       u'-',
-                       'Palette':    u'-',
-                       'Pages':      pc, }
-            # may be set {{validSVG}} also or do something in bot template to
-            # recognize 'Format=SVG (valid)' ...
-        elif self.image_mime[1] == 'pdf':   # MIME: 'application/pdf; charset=binary'
-            # http://code.activestate.com/recipes/496837-count-pdf-pages/
-            #rxcountpages = re.compile(r"$\s*/Type\s*/Page[/\s]", re.MULTILINE|re.DOTALL)
-            rxcountpages = re.compile(r"/Type\s*/Page([^s]|$)", re.MULTILINE|re.DOTALL)    # PDF v. 1.3,1.4,1.5,1.6
-            pc = len(rxcountpages.findall( file(self.image_path,"rb").read() ))
-
-            result = { 'Format':     u'PDF',
-                       'Mode':       u'-',
-                       'Palette':    u'-',
-                       'Pages':      pc, }
-        elif (self.image_mime[0] == 'image') and \
-             (self.image_mime[1] != 'vnd.djvu'):   # MIME: 'image/jpeg; charset=binary', ...
-            try:
-                i = Image.open(self.image_path)
-            except IOError:
-                pywikibot.warning(u'unknown (image) file type [_detect_Properties_PIL]')
-                return
-
-            # http://mail.python.org/pipermail/image-sig/1999-May/000740.html
-            pc=0         # count number of pages
-            while True:
-                try:
-                    i.seek(pc)
-                except EOFError:
-                    break
-                pc+=1
-            i.seek(0)    # restore default
-
-            # http://grokbase.com/t/python/image-sig/082psaxt6k/embedded-icc-profiles
-            # python-lcms (littlecms) may be freeimage library
-            #icc = i.app['APP2']     # jpeg
-            #icc = i.tag[34675]      # tiff
-            #icc = re.sub('[^%s]'%string.printable, ' ', icc)
-            ## more image formats and more post-processing needed...
-
-            #self.image_size = i.size
-
-            result = { #'bands':      i.getbands(),
-                       #'bbox':       i.getbbox(),
-                       'Format':     i.format,
-                       'Mode':       i.mode,
-                       #'info':       i.info,
-                       #'stat':       os.stat(self.image_path),
-                       'Palette':    str(len(i.palette.palette)) if i.palette else u'-',
-                       'Pages':      pc, }
-        elif self.image_mime[1] == 'ogg':   # MIME: 'application/ogg; charset=binary'
-            # 'ffprobe' (ffmpeg); audio and video streams files (ogv, oga, ...)
-            d = self._util_get_DataStreams_FFMPEG()
-            #print d
-            result = { 'Format': u'%s' % d['format']['format_name'].upper() }
-        elif self.image_mime[0] == 'audio': # MIME: 'audio/midi; charset=binary'
-            result = {}
-        # djvu: python-djvulibre or python-djvu for djvu support
-        # http://pypi.python.org/pypi/python-djvulibre/0.3.9
-        #elif self.image_fileext == u'.xcf'
-        #    result = {}
-        #    # DO NOT use ImageMagick (identify) instead of PIL to get these info !!
-        else:
-            pywikibot.warning(u'unknown (generic) file type [_detect_Properties_PIL]')
-            return
-
-        result['Dimensions'] = self.image_size
-        result['Filesize']   = os.path.getsize(self.image_path)
-        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
-
-        #self._info['Properties'] = [result]
-        self._info['Properties'][0].update(result)
         return
 
     # http://stackoverflow.com/questions/2270874/image-color-detection-using-python
@@ -1413,7 +1506,8 @@ class FileData(object):
         self._info[info_desc] = []
 
         # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']):
+        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
+           (self.image_mime[0] in ['audio']):
             return
 
         # http://tutorial-haartraining.googlecode.com/svn/trunk/data/haarcascades/
@@ -1634,7 +1728,8 @@ class FileData(object):
         self._info['OpticalCodes'] = []
 
         # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']):
+        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
+           (self.image_mime[0] in ['audio']):
             return
 
         # DataMatrix
@@ -1734,7 +1829,8 @@ class FileData(object):
         self._info['Chessboard'] = []
 
         # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']):
+        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
+           (self.image_mime[0] in ['audio']):
             return
 
         scale = 1.
@@ -2306,45 +2402,6 @@ class FileData(object):
         
         return self._buffer_FFMPEG
 
-    def _detect_Streams_FFMPEG(self):
-        self._info['Streams'] = []
-
-        # skip file formats that interfere and can cause strange results (pdf is oga?!)
-        # or file formats not supported (yet?)
-        if (self.image_mime[1] in ['pdf']) or (self.image_fileext in [u'.svg']):
-            return
-
-        # audio and video streams files (ogv, oga, ...)
-        d = self._util_get_DataStreams_FFMPEG()
-        if not d:
-            return
-
-        result = []
-        for s in d['streams']:
-            #print s
-            if   (s["codec_type"] == "video"):
-                rate = s["avg_frame_rate"]
-                dim = (int(s["width"]), int(s["height"]))
-                #asp  = s["display_aspect_ratio"]
-            elif (s["codec_type"] == "audio"):
-# switch this part off since 'ffprobe' (on toolserver) is too old
-#                rate = u'%s/%s/%s' % (s["channels"], s["sample_fmt"], s["sample_rate"])
-                rate = u'%s/%s/%s' % (s["channels"], u'-', int(float(s["sample_rate"])))
-                dim  = None
-            elif (s["codec_type"] == "data"):
-                rate = None
-                dim  = None
-
-            result.append({ 'ID':         int(s["index"]) + 1,
-                            'Format':     u'%s/%s' % (s["codec_type"], s.get("codec_name",u'?')),
-                            'Rate':       rate or u'-',
-                            'Dimensions': dim or (None, None),
-                            })
-
-        if 'image' not in d["format"]["format_name"]:
-            self._info['Streams'] = result
-        return
-
     def _util_merge_Regions(self, regs, sub=False, overlap=False, close=False):
         # sub=False, overlap=False, close=False ; level 0 ; similar regions, similar position (default)
         # sub=True,  overlap=False, close=False ; level 1 ; region contained in other, any shape/size
@@ -2410,70 +2467,74 @@ class FileData(object):
 
         return (regs, drop)
 
-    def _detect_AudioFeatures_MUSIC21(self):
-        # skip file formats not supported
-        if (self.image_mime[1] not in ['midi']):
+
+class PngFile(JpegFile):
+    pass
+
+class GifFile(JpegFile):
+    pass
+
+class TiffFile(JpegFile):
+    pass
+
+class XcfFile(JpegFile):
+    pass
+
+class SvgFile(JpegFile):
+    pass
+
+class PdfFile(JpegFile):
+    pass
+
+#class DjvuFile(JpegFile):
+#    pass
+
+
+class OggFile(JpegFile):
+    def getFeatures(self):
+        # general handling of all audio and video formats
+        self._detect_Streams_FFMPEG()
+
+        # general audio feature extraction
+#        self._detect_AudioFeatures_YAAFE()
+
+    def _detect_Streams_FFMPEG(self):
+        self._info['Streams'] = []
+
+        # skip file formats that interfere and can cause strange results (pdf is oga?!)
+        # or file formats not supported (yet?)
+        if (self.image_mime[1] in ['pdf']) or (self.image_fileext in [u'.svg']):
             return
 
-        self._info['Audio'] = []
-
-        import _music21 as music21
-
-        #audiofile = '/home/ursin/Desktop/3_Ships.mid'
-        audiofile = self.image_path
-
-        #music21.features.jSymbolic.getCompletionStats()
-        try:
-            #s = music21.converter.ConverterMidi()
-            #s.parseFile(audiofile)
-            #s = s.stream
-            s = music21.midi.translate.midiFilePathToStream(audiofile)
-        except music21.midi.base.MidiException:
-            pywikibot.warning(u'unknown file type [_detect_AudioFeatures_MUSIC21]')
+        # audio and video streams files (ogv, oga, ...)
+        d = self._util_get_DataStreams_FFMPEG()
+        if not d:
             return
 
-        #fs = music21.features.jSymbolic.extractorsById
-        #for k in fs:
-        #    for i in range(len(fs[k])):
-        #        if fs[k][i] is not None:
-        #            n = fs[k][i].__name__
-        #            if fs[k][i] not in music21.features.jSymbolic.featureExtractors:
-        #                n += " (not implemented)"
-        #                print k, i, n
-        #            else:
-        #                fe = fs[k][i](s)
-        #                print k, i, n,
-        #                try:
-        #                    f = fe.extract()
-        #                    print f.name, f.vector
-        #                except AttributeError:
-        #                    print "ERROR"
-        data = {}
-        for item in ['MostCommonPitchFeature',
-                     'ImportanceOfBassRegisterFeature',
-                     'ImportanceOfMiddleRegisterFeature',
-                     'ImportanceOfHighRegisterFeature',
-                     'AverageNoteDurationFeature',
-                     'MaximumNoteDurationFeature',
-                     #'DurationFeature',
-                     'InitialTempoFeature',
-                     'MaximumNumberOfIndependentVoicesFeature',
-                     'AverageNumberOfIndependentVoicesFeature',]:
-            fe = getattr(music21.features.jSymbolic, item)(s)
-            f = fe.extract()
-            #data[f.name] = f.vector[0]
-            data[item.replace('Feature', '')] = f.vector[0]
-        #print s.duration
-        data['Duration'] = s.highestTime
-        #print s.offsetMap
-        #print s.measureOffsetMap()
-        data['Metadata'] = s.metadata
-        data['Lyrics']   = s.lyrics()
-        #print s.seconds
-        #print s.secondsMap
+        result = []
+        for s in d['streams']:
+            #print s
+            if   (s["codec_type"] == "video"):
+                rate = s["avg_frame_rate"]
+                dim = (int(s["width"]), int(s["height"]))
+                #asp  = s["display_aspect_ratio"]
+            elif (s["codec_type"] == "audio"):
+# switch this part off since 'ffprobe' (on toolserver) is too old
+#                rate = u'%s/%s/%s' % (s["channels"], s["sample_fmt"], s["sample_rate"])
+                rate = u'%s/%s/%s' % (s["channels"], u'-', int(float(s["sample_rate"])))
+                dim  = None
+            elif (s["codec_type"] == "data"):
+                rate = None
+                dim  = None
 
-        self._info['Audio'] = [data]
-#        print self._info['Audio']
+            result.append({ 'ID':         int(s["index"]) + 1,
+                            'Format':     u'%s/%s' % (s["codec_type"], s.get("codec_name",u'?')),
+                            'Rate':       rate or u'-',
+                            'Dimensions': dim or (None, None),
+                            })
+
+        if 'image' not in d["format"]["format_name"]:
+            self._info['Streams'] = result
         return
 
     def _detect_AudioFeatures_YAAFE(self):
@@ -2634,10 +2695,125 @@ class FileData(object):
         return
 
 
+class MidiFile(UnknownFile):
+    def getProperties(self):
+        result = {}
+        result.update( self._detect_HeaderAndMetadata() )   # Metadata
+        result.update( self._detect_Properties_PIL() )      # Properties
+        return result
+
+    def getFeatures(self):
+        result = {}
+        result.update( self._detect_AudioFeatures_MUSIC21() )   # Audio
+        return result
+
+    def _detect_HeaderAndMetadata(self):
+        result = {}
+
+        # extract data from midi file
+        # http://valentin.dasdeck.com/midi/midifile.htm
+        # http://stackoverflow.com/questions/3943149/reading-and-interpreting-data-from-a-binary-file-in-python
+        ba = bytearray(open(self.filename, 'rb').read())
+        i = -1
+        for key, data in [('Text', '\x01'), ('Copyright', '\x02'), ('Lyrics', '\x05')]:
+            result[key] = []
+            while True:
+                i = ba.find('\xff%s' % data, i+1)
+                if i < 0:       # something found?
+                    break
+                e = (i+3+ba[i+2])
+                if ba[e] != 0:  # length match with string end (00)?
+                    e = ba.find('\x00', (i+3+ba[i+2]))
+                result[key].append(ba[i+3:e].decode('latin-1').strip())
+            result[key] = u'\n'.join(result[key])
+
+        import _music21 as music21
+        try:
+            s = music21.converter.parse(self.filename)
+            if s.metadata:
+                pywikibot.output(unicode(s.metadata))
+                result['Metadata'].update(s.metadata)
+        except music21.midi.base.MidiException:
+            pass
+
+        self._info['Metadata'] = [result]
+        return {'Metadata': [result]}
+
+    # midi audio feature extraction
+    def _detect_AudioFeatures_MUSIC21(self):
+        # skip file formats not supported
+        if (self.image_mime[1] not in ['midi']):
+            return
+
+        import _music21 as music21
+
+        #audiofile = '/home/ursin/Desktop/3_Ships.mid'
+        audiofile = self.image_path
+
+        #music21.features.jSymbolic.getCompletionStats()
+        try:
+            #s = music21.midi.translate.midiFilePathToStream(audiofile)
+            s = music21.converter.parse(audiofile)
+        except music21.midi.base.MidiException:
+            pywikibot.warning(u'unknown file type [_detect_AudioFeatures_MUSIC21]')
+            return
+
+        #fs = music21.features.jSymbolic.extractorsById
+        #for k in fs:
+        #    for i in range(len(fs[k])):
+        #        if fs[k][i] is not None:
+        #            n = fs[k][i].__name__
+        #            if fs[k][i] not in music21.features.jSymbolic.featureExtractors:
+        #                n += " (not implemented)"
+        #                print k, i, n
+        #            else:
+        #                fe = fs[k][i](s)
+        #                print k, i, n,
+        #                try:
+        #                    f = fe.extract()
+        #                    print f.name, f.vector
+        #                except AttributeError:
+        #                    print "ERROR"
+        data = {'RegisterImportance': (music21.features.jSymbolic.ImportanceOfBassRegisterFeature(s).extract().vector[0],
+                                       music21.features.jSymbolic.ImportanceOfMiddleRegisterFeature(s).extract().vector[0],
+                                       music21.features.jSymbolic.ImportanceOfHighRegisterFeature(s).extract().vector[0],),
+                      'NoteDuration': (music21.features.jSymbolic.AverageNoteDurationFeature(s).extract().vector[0],
+                                       music21.features.jSymbolic.MaximumNoteDurationFeature(s).extract().vector[0],),
+                 'IndependentVoices': (music21.features.jSymbolic.AverageNumberOfIndependentVoicesFeature(s).extract().vector[0],
+                                       music21.features.jSymbolic.MaximumNumberOfIndependentVoicesFeature(s).extract().vector[0],),
+                   'MostCommonPitch': music21.features.jSymbolic.MostCommonPitchFeature(s).extract().vector[0],
+                             'Tempo': music21.features.jSymbolic.InitialTempoFeature(s).extract().vector[0],
+                          'Duration': s.highestTime,
+                          #'Metadata': s.metadata if s.metadata else u'',
+                            'Lyrics': s.lyrics(recurse=True) if s.lyrics(recurse=True) else u'',}
+        #print music21.text.assembleLyrics(s)
+        #print s.duration
+        #print s.offsetMap
+        #print s.measureOffsetMap()
+        #print s.seconds
+        #print s.secondsMap
+
+        self._info['Audio'] += [data]
+        return {'Audio': [data]}
+
+
+FILETYPES = {                        '*': UnknownFile,
+             (      'image',     'jpeg'): JpegFile,
+             (      'image',      'png'): PngFile,
+             (      'image',      'gif'): GifFile,
+             (      'image',     'tiff'): TiffFile,
+             (      'image',    'x-xcf'): XcfFile,
+             (      'image',  'svg+xml'): SvgFile,
+             ('application',      'pdf'): PdfFile,
+#             (      'image', 'vnd.djvu'): DjvuFile,
+             ('application',      'ogg'): OggFile,
+             (      'audio',     'midi'): MidiFile,}
+
+
 # all classification and categorization methods and definitions - default variation
 #  use simplest classification I can think of (self-made) and do categorization
 #  mostly based on filtered/reported features
-class CatImages_Default(FileData):
+class CatImages_Default(object):
     #ignore = []
     ignore = ['color']
     
@@ -2853,6 +3029,21 @@ class CatImages_Default(FileData):
                     #(result[0]['FFT_Peaks'] < 0.2)      # has to be tested first !!!
 
         return (u'Graphics', bool(relevance))
+
+#    # Category:MIDI files created with GNU LilyPond
+#    def _cat_audio_MIDIfilescreatedwithGNULilyPond(self):
+#        # find metadata in extracted data
+#        print [item.strip() for item in re.findall('Generated .*?\n', u'\n'.join(result['Text']))]
+#        #u"Cr'eateur: GNU LilyPond 2.0.1"
+#        import dateutil.parser
+#        dates = []
+#        for line in result['Text']:
+#            # http://stackoverflow.com/questions/3276180/extracting-date-from-a-string-in-python
+#            try:
+#                dates.append(dateutil.parser.parse(line, fuzzy=True).isoformat(' ').decode('utf-8'))
+#            except ValueError:
+#                pass
+#        print dates
 
     # Category:Categorized by DrTrigonBot
     def _addcat_BOT(self):
@@ -3099,7 +3290,7 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         self.image_mime = re.split('[/;\s]', m.file(self.image_path))
         #self.image_size = (None, None)
         mime = mimetypes.guess_all_extensions('%s/%s' % tuple(self.image_mime[0:2]))
-        if self.image_fileext.lower() not in mime:
+        if mime and (self.image_fileext.lower() not in mime):
             pywikibot.warning(u'File extension does not match MIME type! File extension should be %s.' % mime)
 
         # SVG: rasterize the SVG to bitmap (MAY BE GET FROM WIKI BY DOWNLOAD?...)
@@ -3146,6 +3337,9 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
             #data = Popen("identify -verbose info: %s" % self.image_path,
             #             shell=True, stderr=PIPE).stderr.read()
             #print data
+            if not os.path.exists(self.image_path_JPEG):
+                # xcf can have more than 1 layer/page like gif, tiff, and movies...
+                self.image_path_JPEG = self.image_path_JPEG.replace('.jpg', '-0.jpg')
             self.image_size = Image.open(self.image_path_JPEG).size
         else:
             try:
@@ -3168,6 +3362,8 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
 
                         self.image_size = (img.shape[1], img.shape[0])
                     except:
+                        if os.path.exists(self.image_path_JPEG):
+                            os.remove(self.image_path_JPEG)
                         self.image_path_JPEG = self.image_path
             except:
                 self.image_path_JPEG = self.image_path
@@ -3502,68 +3698,37 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
 
     # gather data from all information interfaces
     def gatherFeatures(self):
-        # Image size
-        self._detect_Properties_PIL()
-        
+        self._info['Properties'] = [{'Format': u'-', 'Pages': 0}]
+        self._info['Metadata'] = []
+        self._info['ColorAverage'] = []
+        self._info['ColorRegions'] = []
         self._info['Faces'] = []
-        # Faces (extract EXIF data)
-        self._detect_Faces_EXIF()
-        # Faces and eyes (opencv pre-trained haar)
-        self._detect_Faces_CV()
-# TODO: test and use or switch off
-        # Face via Landmark(s)
-#        self._detect_FaceLandmark_xBOB()
-        # exclude duplicates (CV and EXIF)
-        faces = [item['Position'] for item in self._info['Faces']]
-        for i in self._util_merge_Regions(faces)[1]:
-            del self._info['Faces'][i]
+        self._info['OpticalCodes'] = []
+        self._info['People'] = []
+        self._info['Chessboard'] = []
+        self._info['Text'] = []
+        self._info['Streams'] = []
+        self._info['Audio'] = []
+        self._info['Legs'] = []
+        self._info['Hands'] = []
+        self._info['Torsos'] = []
+        self._info['Ears'] = []
+        self._info['Eyes'] = []
+        self._info['Automobiles'] = []
 
-        # Segments and colors
-        self._detect_SegmentColors_JSEGnPIL()
-        # Average color
-        self._detect_AverageColor_PILnCV()
-
-        # People/Pedestrian (opencv pre-trained hog and haarcascade)
-        self._detect_People_CV()
-
-        # Geometric object (opencv hough line, circle, edges, corner, ...)
-        self._detect_Geometry_CV()
-
-        # general (opencv pre-trained, third-party and self-trained haar
-        # and cascade) classification
-        # http://www.computer-vision-software.com/blog/2009/11/faq-opencv-haartraining/
-        for cf in self.cascade_files:
-            self._detect_Trained_CV(*cf)
-
-        # optical and other text recognition (tesseract & ocropus, ...)
-        self._detect_EmbeddedText_poppler()
-#        self._recognize_OpticalText_ocropus()
-        # (may be just classify as 'contains text', may be store text, e.g. to wikisource)
-
-        # barcode and Data Matrix recognition (libdmtx/pydmtx, zbar, gocr?)
-        self._recognize_OpticalCodes_dmtxNzbar()
-
-        # Chessboard (opencv reference detector)
-        self._detect_Chessboard_CV()
-
-        # general (self-trained) detection WITH classification
-        # BoW: uses feature detection (SIFT, SURF, ...) AND classification (SVM, ...)
-#        self._detectclassify_ObjectAll_CV()
-        # Wavelet: uses wavelet transformation AND classification (machine learning)
-#        self._detectclassify_ObjectAll_PYWT()
-
-        # general handling of all audio and video formats
-        self._detect_Streams_FFMPEG()
-
-        # general file EXIF history information
-        self._detect_History_EXIF()
-
-        # general audio feature extraction
-#        self._detect_AudioFeatures_YAAFE()
-
-        # midi audio feature extraction
-# TODO: improve midi/audio stuff ...
-        self._detect_AudioFeatures_MUSIC21()
+        # split detection and extraction according to file types; JpegFile, ...
+        TypeFile = FILETYPES.get(tuple(self.image_mime[:2]), FILETYPES['*'])
+        tf = TypeFile(self.image_path)
+        import copy
+        tf.__dict__.update(copy.deepcopy(self.__dict__))
+        for func in ['getProperties', 'getFeatures']:
+            result = getattr(tf, func)()
+            if result:
+                self._info.update(result)
+#        print self._info
+#        print tf._info
+        #print tf.__dict__
+        self._info = tf._info
 
     def _existInformation(self, info, ignore = ['Properties', 'ColorAverage']):
         result = []
@@ -3683,6 +3848,11 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         # use all, (should be reliable)
         result = self._info['Streams']
         return {'Streams': result}
+
+#    def _filter_Audio(self):
+#        # use all, (should be reliable)
+#        result = self._info['Audio']
+#        return {'Audio': result}
 
     #def _filter_Geometry(self):
     #    result = []
