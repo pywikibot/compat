@@ -149,7 +149,27 @@ class UnknownFile(object):
         self.filename   = filename
         self.image_size = (None, None)
 
-        self._info = {}
+        # available file properties and metadata
+        self._properties = { 'Properties':   [{'Format': u'-', 'Pages': 0}],
+                             'Metadata':     [], }
+        # available feature to extract
+        self._features   = { 'ColorAverage': [],
+                             'ColorRegions': [],
+                             'Faces':        [],
+                             'People':       [],
+                             'OpticalCodes': [],
+                             'Chessboard':   [],
+                             'History':      [],
+                             'Text':         [],
+                             'Streams':      [],
+                             'Audio':        [],
+                             'Legs':         [],
+                             'Hands':        [],
+                             'Torsos':       [],
+                             'Ears':         [],
+                             'Eyes':         [],
+                             'Automobiles':  [],
+                             'Classify':     [], }
 
     def __enter__(self):
         return self
@@ -158,22 +178,22 @@ class UnknownFile(object):
         pass
 
     def getProperties(self):
-        result = {}
-        result.update( self._detect_HeaderAndMetadata() )   # Metadata
-        result.update( self._detect_Properties_PIL() )      # Properties
-        return result
+        self._detect_HeaderAndMetadata()    # Metadata
+        self._detect_Properties()           # Properties
+        return self._properties
 
     def getFeatures(self):
         pywikibot.warning(u"File format '%s/%s' not supported (yet)!" % tuple(self.image_mime[:2]))
+        return self._features
 
     def _detect_HeaderAndMetadata(self):
         # check/look into the file by midnight commander (mc)
         # https://pypi.python.org/pypi/hachoir-metadata
-        return {}
+        pass
 
-    def _detect_Properties_PIL(self):
+    def _detect_Properties(self):
         # get mime-type file-size, ...
-        return {}
+        pass
 
 
 class JpegFile(UnknownFile):
@@ -197,14 +217,14 @@ class JpegFile(UnknownFile):
 
         self.image_filename  = os.path.split(self.filename)[-1]
         self.image_fileext   = os.path.splitext(self.image_filename)[1]
-        self.image_path      = os.path.join(scriptdir, ('cache/' + self.image_filename[-128:]))
+        self.image_path      = self.filename
         self.image_path_JPEG = self.image_path + '.jpg'
 
         self._convert()
 
     def __exit__(self, type, value, traceback):
-        if os.path.exists(self.image_path):
-            os.remove( self.image_path )
+        #if os.path.exists(self.image_path):
+        #    os.remove( self.image_path )
         if os.path.exists(self.image_path_JPEG):
             os.remove( self.image_path_JPEG )
         #image_path_new = self.image_path_JPEG.replace(u"cache/", u"cache/0_DETECTED_")
@@ -220,9 +240,9 @@ class JpegFile(UnknownFile):
         # Face via Landmark(s)
 #        self._detect_FaceLandmark_xBOB()
         # exclude duplicates (CV and EXIF)
-        faces = [item['Position'] for item in self._info['Faces']]
+        faces = [item['Position'] for item in self._features['Faces']]
         for i in self._util_merge_Regions(faces)[1]:
-            del self._info['Faces'][i]
+            del self._features['Faces'][i]
 
         # Segments and colors
         self._detect_SegmentColors_JSEGnPIL()
@@ -241,11 +261,6 @@ class JpegFile(UnknownFile):
         for cf in self.cascade_files:
             self._detect_Trained_CV(*cf)
 
-        # optical and other text recognition (tesseract & ocropus, ...)
-        self._detect_EmbeddedText_poppler()
-#        self._recognize_OpticalText_ocropus()
-        # (may be just classify as 'contains text', may be store text, e.g. to wikisource)
-
         # barcode and Data Matrix recognition (libdmtx/pydmtx, zbar, gocr?)
         self._recognize_OpticalCodes_dmtxNzbar()
 
@@ -260,6 +275,8 @@ class JpegFile(UnknownFile):
 
         # general file EXIF history information
         self._detect_History_EXIF()
+        
+        return self._features
 
     # supports a lot of different file types thanks to PIL
     def _convert(self):
@@ -293,18 +310,18 @@ class JpegFile(UnknownFile):
         # http://code.google.com/p/pylibtiff/
 
     # MIME: 'image/jpeg; charset=binary', ...
-    def _detect_Properties_PIL(self):
+    def _detect_Properties(self):
         """Retrieve as much file property info possible, especially the same
            as commons does in order to compare if those libraries (ImageMagick,
            ...) are buggy (thus explicitely use other software for independence)"""
-        #self.image_size = (None, None)
+
         result = {'Format': u'-', 'Pages': 0}
 
         try:
             i = Image.open(self.image_path)
         except IOError:
             pywikibot.warning(u'unknown file type [JpegFile]')
-            return {'Properties': [result]}
+            return
 
         # http://mail.python.org/pipermail/image-sig/1999-May/000740.html
         pc=0         # count number of pages
@@ -325,22 +342,21 @@ class JpegFile(UnknownFile):
 
         #self.image_size = i.size
 
-        result = { #'bands':      i.getbands(),
-                   #'bbox':       i.getbbox(),
-                   'Format':     i.format,
-                   'Mode':       i.mode,
-                   #'info':       i.info,
-                   #'stat':       os.stat(self.image_path),
-                   'Palette':    str(len(i.palette.palette)) if i.palette else u'-',
-                   'Pages':      pc, }
+        result.update({ #'bands':      i.getbands(),
+                        #'bbox':       i.getbbox(),
+                        'Format':     i.format,
+                        'Mode':       i.mode,
+                        #'info':       i.info,
+                        #'stat':       os.stat(self.image_path),
+                        'Palette':    str(len(i.palette.palette)) if i.palette else u'-',
+                        'Pages':      pc,
+                        'Dimensions': self.image_size,
+                        'Filesize':   os.path.getsize(self.filename),
+                        'MIME':       u'%s/%s' % tuple(self.image_mime[:2]), })
 
-        result['Dimensions'] = self.image_size
-        result['Filesize']   = os.path.getsize(self.image_path)
-        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
-
-        #self._info['Properties'] = [result]
-        self._info['Properties'][0].update(result)
-        return {'Properties': [result]}
+        #self._properties['Properties'] = [result]
+        self._properties['Properties'][0].update(result)
+        return
 
     # .../opencv/samples/c/facedetect.cpp
     # http://opencv.willowgarage.com/documentation/python/genindex.html
@@ -353,11 +369,6 @@ class JpegFile(UnknownFile):
         # http://opencv.willowgarage.com/wiki/FaceDetection
         # http://blog.jozilla.net/2008/06/27/fun-with-python-opencv-and-face-detection/
         # http://www.cognotics.com/opencv/servo_2007_series/part_4/index.html
-
-        # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
-           (self.image_mime[0] in ['audio']):
-            return
 
         # https://code.ros.org/trac/opencv/browser/trunk/opencv_extra/testdata/gpu/haarcascade?rev=HEAD
         xml = os.path.join(scriptdir, 'externals/opencv/haarcascades/haarcascade_eye_tree_eyeglasses.xml')
@@ -402,7 +413,6 @@ class JpegFile(UnknownFile):
             raise IOError(u"No such file: '%s'" % xml)
         cascaderightear = cv2.CascadeClassifier(xml)
 
-        #self._info['Faces'] = []
         scale = 1.
         # So, to find an object of an unknown size in the image the scan
         # procedure should be done several times at different scales.
@@ -651,7 +661,7 @@ class JpegFile(UnknownFile):
         #    cv2.imwrite( image_path_new, img )
 
         #return faces.tolist()
-        self._info['Faces'] += result
+        self._features['Faces'] += result
         return
 
     def _util_get_Pose_solvePnP(self, D3points, D2points, shape):
@@ -728,7 +738,6 @@ class JpegFile(UnknownFile):
         """Prints the locations of any face landmark(s) found, respective
            converts them to usual face position data"""
 
-        #self._info['Faces'] = []
         scale = 1.
         try:
             #video = bob.io.VideoReader(self.image_path_JPEG.encode('utf-8'))
@@ -794,7 +803,7 @@ class JpegFile(UnknownFile):
             #cv2.imshow("people detector", img)
             #cv2.waitKey()
 
-        self._info['Faces'] += result
+        self._features['Faces'] += result
         return
 
     # .../opencv/samples/cpp/peopledetect.cpp
@@ -806,7 +815,6 @@ class JpegFile(UnknownFile):
         # http://opencv.willowgarage.com/documentation/cpp/basic_structures.html
         # http://www.pygtk.org/docs/pygtk/class-gdkrectangle.html
 
-        self._info['People'] = []
         scale = 1.
         try:
             img = cv2.imread(self.image_path_JPEG, cv.CV_LOAD_IMAGE_COLOR)
@@ -891,22 +899,15 @@ class JpegFile(UnknownFile):
         #cv2.imshow("people detector", img)
         #c = cv2.waitKey(0) & 255
 
-        self._info['People'] = result
+        self._features['People'] = result
         return
 
     def _detect_Geometry_CV(self):
-        self._info['Geometry'] = []
-
-        # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
-           (self.image_mime[0] in ['audio']):
-            return
-
         result = self._util_get_Geometry_CVnSCIPY()
 
-        self._info['Geometry'] = [{'Lines': result['Lines'],
-                                   'Circles': result['Circles'],
-                                   'Corners': result['Corners'],}]
+        self._features['Geometry'] = [{'Lines': result['Lines'],
+                                       'Circles': result['Circles'],
+                                       'Corners': result['Corners'],}]
         return
 
     # https://code.ros.org/trac/opencv/browser/trunk/opencv/samples/python/houghlines.py?rev=2770
@@ -1083,8 +1084,6 @@ class JpegFile(UnknownFile):
         # parts of code here should/have to be placed into e.g. a own
         # class in 'dtbext/opencv/__init__.py' script/module
         
-        self._info['Classify'] = []
-
         trained = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus',
                    'car', 'cat', 'chair', 'cow', 'diningtable', 'dog',
                    'horse', 'motorbike', 'person', 'pottedplant', 'sheep',
@@ -1123,7 +1122,7 @@ class JpegFile(UnknownFile):
         # http://www.xrce.xerox.com/layout/set/print/content/download/18763/134049/file/2004_010.pdf
         # http://people.csail.mit.edu/torralba/shortCourseRLOC/index.html
 
-        self._info['Classify'] = [dict([ (trained[i], r) for i, r in enumerate(result) ])]
+        self._features['Classify'] = [dict([ (trained[i], r) for i, r in enumerate(result) ])]
         return
 
     def _detectclassify_ObjectAll_PYWT(self):
@@ -1167,13 +1166,6 @@ class JpegFile(UnknownFile):
     # http://code.google.com/p/pymeanshift/wiki/Examples
     # (http://pythonvision.org/basic-tutorial, http://luispedro.org/software/mahotas, http://packages.python.org/pymorph/)
     def _detect_SegmentColors_JSEGnPIL(self):    # may be SLIC other other too...
-        self._info['ColorRegions'] = []
-
-        # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
-           (self.image_mime[0] in ['audio']):
-            return
-
         try:
             #im = Image.open(self.image_path).convert(mode = 'RGB')
             im = Image.open(self.image_path_JPEG)
@@ -1220,7 +1212,7 @@ class JpegFile(UnknownFile):
             result.append( data )
             i += 1
 
-        self._info['ColorRegions'] = result
+        self._features['ColorRegions'] = result
         return
 
     # http://stackoverflow.com/questions/2270874/image-color-detection-using-python
@@ -1230,13 +1222,6 @@ class JpegFile(UnknownFile):
     # http://en.wikipedia.org/wiki/Color_difference
     # http://www.farb-tabelle.de/en/table-of-color.htm
     def _detect_AverageColor_PILnCV(self):
-        self._info['ColorAverage'] = []
-
-        # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
-           (self.image_mime[0] in ['audio']):
-            return
-
         try:
             # we need to have 3 channels (but e.g. grayscale 'P' has only 1)
             #i = Image.open(self.image_path).convert(mode = 'RGB')
@@ -1249,7 +1234,7 @@ class JpegFile(UnknownFile):
         result              = self._util_average_Color_colormath(h)
         result['Gradient']  = self._util_get_Geometry_CVnSCIPY().get('Edge_Ratio', None) or '-'
         result['FFT_Peaks'] = self._util_get_Geometry_CVnSCIPY().get('FFT_Peaks', None) or '-'
-        self._info['ColorAverage'] = [result]
+        self._features['ColorAverage'] = [result]
         return
 
     # http://stackoverflow.com/questions/2270874/image-color-detection-using-python
@@ -1509,13 +1494,6 @@ class JpegFile(UnknownFile):
 
         # analogue to face detection:
 
-        self._info[info_desc] = []
-
-        # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
-           (self.image_mime[0] in ['audio']):
-            return
-
         # http://tutorial-haartraining.googlecode.com/svn/trunk/data/haarcascades/
         # or own xml files trained onto specific file database/set
         xml = os.path.join(scriptdir, ('externals/opencv/haarcascades/' + cascade_file))
@@ -1560,168 +1538,7 @@ class JpegFile(UnknownFile):
 
         # generic detection ...
 
-        self._info[info_desc] = result
-        return
-
-    # ./run-test (ocropus/ocropy)
-    # (in fact all scripts/executables used here are pure python scripts!!!)
-    def _recognize_OpticalText_ocropus(self):
-        # optical text recognition (tesseract & ocropus, ...)
-        # (no full recognition but - at least - just classify as 'contains text')
-        # http://www.claraocr.org/de/ocr/ocr-software/open-source-ocr.html
-        # https://github.com/edsu/ocropy
-        # http://de.wikipedia.org/wiki/Benutzer:DrTrigonBot/Doku#Categorization
-        # Usage:tesseract imagename outputbase [-l lang] [configfile [[+|-]varfile]...]
-        # tesseract imagename.tif output
-
-        # (it's simpler to run the scripts/executables in own environment/interpreter...)
-
-        # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']):
-            return
-
-        path = os.path.join(scriptdir, 'dtbext/_ocropus/ocropy')
-
-        curdir = os.path.abspath(os.curdir)
-        os.chdir(path)
-
-        # binarization
-        if os.path.exists(os.path.join(path, "temp")):
-            shutil.rmtree(os.path.join(path, "temp"))
-        if os.system("ocropus-nlbin %s -o %s" % (self.image_path_JPEG, os.path.join(path, "temp"))):
-            raise ImportError("ocropus not found!")
-        
-        # page level segmentation
-        if os.system("ocropus-gpageseg --minscale 6.0 '%s'" % os.path.join(path, "temp/????.bin.png")):
-            # detection error
-            return
-        
-        # raw text line recognition
-        if os.system("ocropus-lattices --writebestpath '%s'" % os.path.join(path, "temp/????/??????.bin.png")):
-            # detection error
-            return
-        
-        # language model application
-        # (optional - improve the raw results by applying a pretrained model)
-        os.environ['OCROPUS_DATA'] = os.path.join(path, "models/")
-        if os.system("ocropus-ngraphs '%s'" % os.path.join(path, "temp/????/??????.lattice")):
-            # detection error
-            return
-        
-        # create hOCR output
-        if os.system("ocropus-hocr '%s' -o %s" % (os.path.join(path, "temp/????.bin.png"), os.path.join(path, "temp.html"))):
-            # detection error
-            return
-        
-        ## 'create HTML for debugging (use "firefox temp/index.html" to view)'
-        ## (optional - generate human readable debug output)
-        #if os.system("ocropus-visualize-results %s" % os.path.join(path, "temp")):
-        #    # detection error
-        #    return
-        
-        # "to see recognition results, type: firefox temp.html"
-        # "to see details on the recognition process, type: firefox temp/index.html"
-        tmpfile = open(os.path.join(path, "temp.html"), 'r')
-        data = tmpfile.read()
-        tmpfile.close()
-
-        shutil.rmtree(os.path.join(path, "temp"))
-        os.remove(os.path.join(path, "temp.html"))
-
-        os.chdir(curdir)
-
-        #print data
-        pywikibot.output(data)
- 
-    def _detect_EmbeddedText_poppler(self):
-        # may be also: http://www.reportlab.com/software/opensource/rl-toolkit/
-
-        self._info['Text'] = []
-
-        if not (self.image_mime[1] == 'pdf'):
-            return
-
-        # poppler pdftotext/pdfimages
-        # (similar as in '_util_get_DataTags_EXIF' but with stderr and no json output)
-        # http://poppler.freedesktop.org/
-        # http://www.izzycode.com/bash/how-to-install-pdf2text-on-centos-fedora-redhat.html
-        # MIGHT BE BETTER TO USE AS PYTHON MODULE:
-        # https://launchpad.net/poppler-python/
-        # http://stackoverflow.com/questions/2732178/extracting-text-from-pdf-with-poppler-c
-        # http://stackoverflow.com/questions/25665/python-module-for-converting-pdf-to-text
-        #proc = Popen("pdftotext -layout %s %s" % (self.image_path, self.image_path+'.txt'), 
-        proc = Popen("pdftotext %s %s" % (self.image_path, self.image_path+'.txt'), 
-                     shell=True, stderr=PIPE)#.stderr.readlines()
-        proc.wait()
-        if proc.returncode:
-            raise ImportError("pdftotext not found!")
-        data = open(self.image_path+'.txt', 'r').readlines()
-        os.remove( self.image_path+'.txt' )
-
-#        self._content_text = data
-        (s1, l1) = (len(u''.join(data)), len(data))
-
-        tmp_path = os.path.join(os.environ.get('TMP', '/tmp'), 'DrTrigonBot/')
-        os.mkdir( tmp_path )
-# switch this part off since 'pdfimages' (on toolserver) is too old; TS-1449
-#        proc = Popen("pdfimages -p %s %s/" % (self.image_path, tmp_path), 
-        proc = Popen("pdfimages %s %s/" % (self.image_path, tmp_path), 
-                     shell=True, stderr=PIPE)#.stderr.readlines()
-        proc.wait()
-        if proc.returncode:
-            raise ImportError("pdfimages not found!")
-        images = os.listdir( tmp_path )
-#        pages  = set()
-        for f in images:
-#            pages.add( int(f.split('-')[1]) )
-            os.remove( os.path.join(tmp_path, f) )
-        os.rmdir( tmp_path )
-        
-        ## pdfminer (tools/pdf2txt.py)
-        ## http://denis.papathanasiou.org/?p=343 (for layout and images)
-        #debug = 0
-        #laparams = layout.LAParams()
-        ##
-        #pdfparser.PDFDocument.debug        = debug
-        #pdfparser.PDFParser.debug          = debug
-        #cmapdb.CMapDB.debug                = debug
-        #pdfinterp.PDFResourceManager.debug = debug
-        #pdfinterp.PDFPageInterpreter.debug = debug
-        #pdfdevice.PDFDevice.debug          = debug
-        ##
-        #rsrcmgr = pdfinterp.PDFResourceManager(caching=True)
-        #outfp = StringIO.StringIO()
-        #device = converter.TextConverter(rsrcmgr, outfp, codec='utf-8', laparams=laparams)
-        ##device = converter.XMLConverter(rsrcmgr, outfp, codec='utf-8', laparams=laparams, outdir=None)
-        ##device = converter.HTMLConverter(rsrcmgr, outfp, codec='utf-8', scale=1,
-        ##                       layoutmode='normal', laparams=laparams, outdir=None)
-        ##device = pdfdevice.TagExtractor(rsrcmgr, outfp, codec='utf-8')
-        #fp = file(self.image_path, 'rb')
-        #try:
-        #    pdfinterp.process_pdf(rsrcmgr, device, fp, set(), maxpages=0, password='',
-        #                caching=True, check_extractable=False)
-        #except AssertionError:
-        #    pywikibot.warning(u'pdfminer missed, may be corrupt [_detect_EmbeddedText_poppler]')
-        #    return
-        #except TypeError:
-        #    pywikibot.warning(u'pdfminer missed, may be corrupt [_detect_EmbeddedText_poppler]')
-        #    return
-        #fp.close()
-        #device.close()
-        #data = outfp.getvalue().splitlines(True)
-        #
-        #(s2, l2) = (len(u''.join(data)), len(data))
-
-        result = { 'Size':     s1,
-                   'Lines':    l1,
-                   #'Data':     data,
-                   #'Position': pos,
-#                   'Images':   u'%s (on %s page(s))' % (len(images), len(list(pages))),  # pages containing images
-                   'Images':   u'%s' % len(images),
-                   'Type':     u'-', }  # 'Type' could be u'OCR' above...
-
-        self._info['Text'] = [result]
-
+        self._features[info_desc] = result
         return
 
     def _recognize_OpticalCodes_dmtxNzbar(self):
@@ -1731,13 +1548,6 @@ class JpegFile(UnknownFile):
         # http://zbar.sourceforge.net/
         # http://pypi.python.org/pypi/zbar
         
-        self._info['OpticalCodes'] = []
-
-        # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
-           (self.image_mime[0] in ['audio']):
-            return
-
         # DataMatrix
         from pydmtx import DataMatrix   # linux distro package (fedora) / TS (debian)
 
@@ -1786,7 +1596,7 @@ class JpegFile(UnknownFile):
                             'Type':     u'DataMatrix',
                             'Quality':  10, })
         
-        self._info['OpticalCodes'] = result
+        self._features['OpticalCodes'] = result
 
         # supports many popular symbologies
         try:
@@ -1823,7 +1633,7 @@ class JpegFile(UnknownFile):
         
         # further detection ?
 
-        self._info['OpticalCodes'] = result
+        self._features['OpticalCodes'] = result
         return
 
     def _detect_Chessboard_CV(self):
@@ -1831,13 +1641,6 @@ class JpegFile(UnknownFile):
         # http://www.c-plusplus.de/forum/273920-full
         # http://www.youtube.com/watch?v=bV-jAnQ-tvw
         # http://nullege.com/codes/show/src%40o%40p%40opencvpython-HEAD%40samples%40chessboard.py/12/cv.FindChessboardCorners/python
-
-        self._info['Chessboard'] = []
-
-        # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg', 'pdf', 'vnd.djvu']) or \
-           (self.image_mime[0] in ['audio']):
-            return
 
         scale = 1.
         try:
@@ -1877,9 +1680,10 @@ class JpegFile(UnknownFile):
         ##cv2.imshow("win", im)
         ##cv2.waitKey()
 
+        result = {}
         if corners is not None:
-            self._info['Chessboard'] = [{ 'Corners': [tuple(item[0]) 
-                                                      for item in corners], }]
+            result = { 'Corners': [tuple(item[0]) for item in corners], }
+            self._features['Chessboard'] = [result]
 
 # TODO: improve chessboard detection (make it more tolerant)
 #        ## http://stackoverflow.com/questions/7624765/converting-an-opencv-image-to-black-and-white
@@ -2019,10 +1823,10 @@ class JpegFile(UnknownFile):
             pywikibot.output(u'result for calibrated camera:\n  rot=%s\n  perp=%s\n  perp2D=%s' % (rot.transpose()[0], perp[:,2], ortho))
             pywikibot.output(u'nice would be to do the same for uncalibrated/default cam settings')
 
-            self._info['Chessboard'][0].update({
-                                     'Rotation':    tuple(rot.transpose()[0]),
-                                     'Perp_Dir' :   tuple(perp[:,2]),
-                                     'Perp_Dir_2D': tuple(ortho), })
+            result.update({ 'Rotation':    tuple(rot.transpose()[0]),
+                            'Perp_Dir' :   tuple(perp[:,2]),
+                            'Perp_Dir_2D': tuple(ortho), })
+            self._features['Chessboard'] = [result]
 
         #cv2.imshow("win", im)
         #cv2.waitKey()
@@ -2331,12 +2135,10 @@ class JpegFile(UnknownFile):
 
         # (exclusion of duplicates is done later by '_util_merge_Regions')
 
-        self._info['Faces'] += data
+        self._features['Faces'] += data
         return
     
     def _detect_History_EXIF(self):
-        self._info['History'] = []
-
         res = self._util_get_DataTags_EXIF()
 
         #a = []
@@ -2372,41 +2174,8 @@ class JpegFile(UnknownFile):
                 pass
             i += 1
         
-        self._info['History'] = result
+        self._features['History'] = result
         return
-
-    def _util_get_DataStreams_FFMPEG(self):
-        if hasattr(self, '_buffer_FFMPEG'):
-            return self._buffer_FFMPEG
-
-        # (similar as in '_util_get_DataTags_EXIF')
-# switch this part off since 'ffprobe' (on toolserver) is too old; TS-1449
-#        data = Popen("ffprobe -v quiet -print_format json -show_format -show_streams %s" % self.image_path, 
-        proc = Popen("ffprobe -v quiet -show_format -show_streams %s" % self.image_path,#.replace('%', '%%'), 
-                     shell=True, stdout=PIPE)#.stdout.read()
-        proc.wait()
-        if proc.returncode == 127:
-            raise ImportError("ffprobe (ffmpeg) not found!")
-        data = proc.stdout.read().strip()
-#        self._buffer_FFMPEG = json.loads(data)
-        res, key, cur = {}, '', {}
-        for item in data.splitlines():
-            if (item[0] == '['):
-                if not (item[1] == '/'):
-                    key = item[1:-1]
-                    cur = {}
-                    if key not in res:
-                        res[key] = []
-                else:
-                    res[key].append( cur )
-            else:
-                val = item.split('=')
-                cur[val[0].strip()] = val[1].strip()
-        if res:
-            res = { 'streams': res['STREAM'], 'format': res['FORMAT'][0] }
-        self._buffer_FFMPEG = res
-        
-        return self._buffer_FFMPEG
 
     def _util_merge_Regions(self, regs, sub=False, overlap=False, close=False):
         # sub=False, overlap=False, close=False ; level 0 ; similar regions, similar position (default)
@@ -2508,23 +2277,21 @@ class XcfFile(JpegFile):
         self.image_size = Image.open(self.image_path_JPEG).size
 
     # MIME: 'image/x-xcf; charset=binary'
-    def _detect_Properties_PIL(self):
+    def _detect_Properties(self):
         """Retrieve as much file property info possible, especially the same
            as commons does in order to compare if those libraries (ImageMagick,
            ...) are buggy (thus explicitely use other software for independence)"""
-        #self.image_size = (None, None)
-        result = {'Format': u'-', 'Pages': 0}
 
-        result = { 'Format': u'%s' % self.image_mime[1].upper() }
+        result =      { 'Format':     u'%s' % self.image_mime[1].upper(),
         # DO NOT use ImageMagick (identify) instead of PIL to get these info !!
+                        'Pages':      0,
+                        'Dimensions': self.image_size,
+                        'Filesize':   os.path.getsize(self.filename),
+                        'MIME':       u'%s/%s' % tuple(self.image_mime[:2]), }
 
-        result['Dimensions'] = self.image_size
-        result['Filesize']   = os.path.getsize(self.image_path)
-        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
-
-        #self._info['Properties'] = [result]
-        self._info['Properties'][0].update(result)
-        return {'Properties': [result]}
+        #self._properties['Properties'] = [result]
+        self._properties['Properties'][0].update(result)
+        return
 
 
 class SvgFile(JpegFile):
@@ -2556,11 +2323,11 @@ class SvgFile(JpegFile):
             self.image_path_JPEG = self.image_path
 
     # MIME: 'application/xml; charset=utf-8'
-    def _detect_Properties_PIL(self):
+    def _detect_Properties(self):
         """Retrieve as much file property info possible, especially the same
            as commons does in order to compare if those libraries (ImageMagick,
            ...) are buggy (thus explicitely use other software for independence)"""
-        #self.image_size = (None, None)
+
         result = {'Format': u'-', 'Pages': 0}
 
         # similar to PDF page count OR use BeautifulSoup
@@ -2584,23 +2351,30 @@ class SvgFile(JpegFile):
 
         #self.image_size = (svg.props.width, svg.props.height)
 
-        result = { 'Format':     valid,
-                   'Mode':       u'-',
-                   'Palette':    u'-',
-                   'Pages':      pc, }
+        result.update({ 'Format':     valid,
+                        'Mode':       u'-',
+                        'Palette':    u'-',
+                        'Pages':      pc,
         # may be set {{validSVG}} also or do something in bot template to
         # recognize 'Format=SVG (valid)' ...
+                        'Dimensions': self.image_size,
+                        'Filesize':   os.path.getsize(self.filename),
+                        'MIME':       u'%s/%s' % tuple(self.image_mime[:2]), })
 
-        result['Dimensions'] = self.image_size
-        result['Filesize']   = os.path.getsize(self.image_path)
-        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
-
-        #self._info['Properties'] = [result]
-        self._info['Properties'][0].update(result)
-        return {'Properties': [result]}
+        #self._properties['Properties'] = [result]
+        self._properties['Properties'][0].update(result)
+        return
 
 
 class PdfFile(JpegFile):
+    def getFeatures(self):
+        # optical and other text recognition (tesseract & ocropus, ...)
+        self._detect_EmbeddedText_poppler()
+#        self._recognize_OpticalText_ocropus()
+        # (may be just classify as 'contains text', may be store text, e.g. to wikisource)
+
+        return self._features
+
     def _convert(self):
 #        self._wikidata = self.image._latestInfo # all info wikimedia got from content (mime, sha1, ...)
 
@@ -2613,30 +2387,178 @@ class PdfFile(JpegFile):
             pass
 
     # MIME: 'application/pdf; charset=binary'
-    def _detect_Properties_PIL(self):
+    def _detect_Properties(self):
         """Retrieve as much file property info possible, especially the same
            as commons does in order to compare if those libraries (ImageMagick,
            ...) are buggy (thus explicitely use other software for independence)"""
-        #self.image_size = (None, None)
-        result = {'Format': u'-', 'Pages': 0}
 
         # http://code.activestate.com/recipes/496837-count-pdf-pages/
         #rxcountpages = re.compile(r"$\s*/Type\s*/Page[/\s]", re.MULTILINE|re.DOTALL)
         rxcountpages = re.compile(r"/Type\s*/Page([^s]|$)", re.MULTILINE|re.DOTALL)    # PDF v. 1.3,1.4,1.5,1.6
         pc = len(rxcountpages.findall( file(self.image_path,"rb").read() ))
 
-        result = { 'Format':     u'PDF',
-                   'Mode':       u'-',
-                   'Palette':    u'-',
-                   'Pages':      pc, }
+        result =      { 'Format':     u'PDF',
+                        'Mode':       u'-',
+                        'Palette':    u'-',
+                        'Pages':      pc,
+                        'Dimensions': self.image_size,
+                        'Filesize':   os.path.getsize(self.filename),
+                        'MIME':       u'%s/%s' % tuple(self.image_mime[:2]), }
 
-        result['Dimensions'] = self.image_size
-        result['Filesize']   = os.path.getsize(self.image_path)
-        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
+        #self._properties['Properties'] = [result]
+        self._properties['Properties'][0].update(result)
+        return
 
-        #self._info['Properties'] = [result]
-        self._info['Properties'][0].update(result)
-        return {'Properties': [result]}
+    # ./run-test (ocropus/ocropy)
+    # (in fact all scripts/executables used here are pure python scripts!!!)
+    def _recognize_OpticalText_ocropus(self):
+        # optical text recognition (tesseract & ocropus, ...)
+        # (no full recognition but - at least - just classify as 'contains text')
+        # http://www.claraocr.org/de/ocr/ocr-software/open-source-ocr.html
+        # https://github.com/edsu/ocropy
+        # http://de.wikipedia.org/wiki/Benutzer:DrTrigonBot/Doku#Categorization
+        # Usage:tesseract imagename outputbase [-l lang] [configfile [[+|-]varfile]...]
+        # tesseract imagename.tif output
+
+        # (it's simpler to run the scripts/executables in own environment/interpreter...)
+
+        path = os.path.join(scriptdir, 'dtbext/_ocropus/ocropy')
+
+        curdir = os.path.abspath(os.curdir)
+        os.chdir(path)
+
+        # binarization
+        if os.path.exists(os.path.join(path, "temp")):
+            shutil.rmtree(os.path.join(path, "temp"))
+        if os.system("ocropus-nlbin %s -o %s" % (self.image_path_JPEG, os.path.join(path, "temp"))):
+            raise ImportError("ocropus not found!")
+        
+        # page level segmentation
+        if os.system("ocropus-gpageseg --minscale 6.0 '%s'" % os.path.join(path, "temp/????.bin.png")):
+            # detection error
+            return
+        
+        # raw text line recognition
+        if os.system("ocropus-lattices --writebestpath '%s'" % os.path.join(path, "temp/????/??????.bin.png")):
+            # detection error
+            return
+        
+        # language model application
+        # (optional - improve the raw results by applying a pretrained model)
+        os.environ['OCROPUS_DATA'] = os.path.join(path, "models/")
+        if os.system("ocropus-ngraphs '%s'" % os.path.join(path, "temp/????/??????.lattice")):
+            # detection error
+            return
+        
+        # create hOCR output
+        if os.system("ocropus-hocr '%s' -o %s" % (os.path.join(path, "temp/????.bin.png"), os.path.join(path, "temp.html"))):
+            # detection error
+            return
+        
+        ## 'create HTML for debugging (use "firefox temp/index.html" to view)'
+        ## (optional - generate human readable debug output)
+        #if os.system("ocropus-visualize-results %s" % os.path.join(path, "temp")):
+        #    # detection error
+        #    return
+        
+        # "to see recognition results, type: firefox temp.html"
+        # "to see details on the recognition process, type: firefox temp/index.html"
+        tmpfile = open(os.path.join(path, "temp.html"), 'r')
+        data = tmpfile.read()
+        tmpfile.close()
+
+        shutil.rmtree(os.path.join(path, "temp"))
+        os.remove(os.path.join(path, "temp.html"))
+
+        os.chdir(curdir)
+
+        #print data
+        pywikibot.output(data)
+ 
+    def _detect_EmbeddedText_poppler(self):
+        # may be also: http://www.reportlab.com/software/opensource/rl-toolkit/
+
+        # poppler pdftotext/pdfimages
+        # (similar as in '_util_get_DataTags_EXIF' but with stderr and no json output)
+        # http://poppler.freedesktop.org/
+        # http://www.izzycode.com/bash/how-to-install-pdf2text-on-centos-fedora-redhat.html
+        # MIGHT BE BETTER TO USE AS PYTHON MODULE:
+        # https://launchpad.net/poppler-python/
+        # http://stackoverflow.com/questions/2732178/extracting-text-from-pdf-with-poppler-c
+        # http://stackoverflow.com/questions/25665/python-module-for-converting-pdf-to-text
+        #proc = Popen("pdftotext -layout %s %s" % (self.image_path, self.image_path+'.txt'), 
+        proc = Popen("pdftotext %s %s" % (self.image_path, self.image_path+'.txt'), 
+                     shell=True, stderr=PIPE)#.stderr.readlines()
+        proc.wait()
+        if proc.returncode:
+            raise ImportError("pdftotext not found!")
+        data = open(self.image_path+'.txt', 'r').readlines()
+        os.remove( self.image_path+'.txt' )
+
+#        self._content_text = data
+        (s1, l1) = (len(u''.join(data)), len(data))
+
+        tmp_path = os.path.join(os.environ.get('TMP', '/tmp'), 'DrTrigonBot/')
+        os.mkdir( tmp_path )
+# switch this part off since 'pdfimages' (on toolserver) is too old; TS-1449
+#        proc = Popen("pdfimages -p %s %s/" % (self.image_path, tmp_path), 
+        proc = Popen("pdfimages %s %s/" % (self.image_path, tmp_path), 
+                     shell=True, stderr=PIPE)#.stderr.readlines()
+        proc.wait()
+        if proc.returncode:
+            raise ImportError("pdfimages not found!")
+        images = os.listdir( tmp_path )
+#        pages  = set()
+        for f in images:
+#            pages.add( int(f.split('-')[1]) )
+            os.remove( os.path.join(tmp_path, f) )
+        os.rmdir( tmp_path )
+        
+        ## pdfminer (tools/pdf2txt.py)
+        ## http://denis.papathanasiou.org/?p=343 (for layout and images)
+        #debug = 0
+        #laparams = layout.LAParams()
+        ##
+        #pdfparser.PDFDocument.debug        = debug
+        #pdfparser.PDFParser.debug          = debug
+        #cmapdb.CMapDB.debug                = debug
+        #pdfinterp.PDFResourceManager.debug = debug
+        #pdfinterp.PDFPageInterpreter.debug = debug
+        #pdfdevice.PDFDevice.debug          = debug
+        ##
+        #rsrcmgr = pdfinterp.PDFResourceManager(caching=True)
+        #outfp = StringIO.StringIO()
+        #device = converter.TextConverter(rsrcmgr, outfp, codec='utf-8', laparams=laparams)
+        ##device = converter.XMLConverter(rsrcmgr, outfp, codec='utf-8', laparams=laparams, outdir=None)
+        ##device = converter.HTMLConverter(rsrcmgr, outfp, codec='utf-8', scale=1,
+        ##                       layoutmode='normal', laparams=laparams, outdir=None)
+        ##device = pdfdevice.TagExtractor(rsrcmgr, outfp, codec='utf-8')
+        #fp = file(self.image_path, 'rb')
+        #try:
+        #    pdfinterp.process_pdf(rsrcmgr, device, fp, set(), maxpages=0, password='',
+        #                caching=True, check_extractable=False)
+        #except AssertionError:
+        #    pywikibot.warning(u'pdfminer missed, may be corrupt [_detect_EmbeddedText_poppler]')
+        #    return
+        #except TypeError:
+        #    pywikibot.warning(u'pdfminer missed, may be corrupt [_detect_EmbeddedText_poppler]')
+        #    return
+        #fp.close()
+        #device.close()
+        #data = outfp.getvalue().splitlines(True)
+        #
+        #(s2, l2) = (len(u''.join(data)), len(data))
+
+        result = { 'Size':     s1,
+                   'Lines':    l1,
+                   #'Data':     data,
+                   #'Position': pos,
+#                   'Images':   u'%s (on %s page(s))' % (len(images), len(list(pages))),  # pages containing images
+                   'Images':   u'%s' % len(images),
+                   'Type':     u'-', }  # 'Type' could be u'OCR' above...
+
+        self._features['Text'] = [result]
+        return
 
 
 #class DjvuFile(JpegFile):
@@ -2651,35 +2573,29 @@ class OggFile(JpegFile):
         # general audio feature extraction
 #        self._detect_AudioFeatures_YAAFE()
 
+        return self._features
+
     # MIME: 'application/ogg; charset=binary'
-    def _detect_Properties_PIL(self):
+    def _detect_Properties(self):
         """Retrieve as much file property info possible, especially the same
            as commons does in order to compare if those libraries (ImageMagick,
            ...) are buggy (thus explicitely use other software for independence)"""
-        #self.image_size = (None, None)
-        result = {'Format': u'-', 'Pages': 0}
 
         # 'ffprobe' (ffmpeg); audio and video streams files (ogv, oga, ...)
         d = self._util_get_DataStreams_FFMPEG()
         #print d
-        result['Format'] = u'%s' % d['format']['format_name'].upper()
 
-        result['Dimensions'] = self.image_size
-        result['Filesize']   = os.path.getsize(self.image_path)
-        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
+        result =      { 'Format':     u'%s' % d['format']['format_name'].upper(),
+                        'Pages':      0,
+                        'Dimensions': self.image_size,
+                        'Filesize':   os.path.getsize(self.filename),
+                        'MIME':       u'%s/%s' % tuple(self.image_mime[:2]), }
 
-        #self._info['Properties'] = [result]
-        self._info['Properties'][0].update(result)
-        return {'Properties': [result]}
+        #self._properties['Properties'] = [result]
+        self._properties['Properties'][0].update(result)
+        return
 
     def _detect_Streams_FFMPEG(self):
-        self._info['Streams'] = []
-
-        # skip file formats that interfere and can cause strange results (pdf is oga?!)
-        # or file formats not supported (yet?)
-        if (self.image_mime[1] in ['pdf']) or (self.image_fileext in [u'.svg']):
-            return
-
         # audio and video streams files (ogv, oga, ...)
         d = self._util_get_DataStreams_FFMPEG()
         if not d:
@@ -2707,9 +2623,43 @@ class OggFile(JpegFile):
                             'Dimensions': dim or (None, None),
                             })
 
-        if 'image' not in d["format"]["format_name"]:
-            self._info['Streams'] = result
+        if 'image' in d["format"]["format_name"]:
+            result = []
+        self._features['Streams'] = result
         return
+
+    def _util_get_DataStreams_FFMPEG(self):
+        if hasattr(self, '_buffer_FFMPEG'):
+            return self._buffer_FFMPEG
+
+        # (similar as in '_util_get_DataTags_EXIF')
+# switch this part off since 'ffprobe' (on toolserver) is too old; TS-1449
+#        data = Popen("ffprobe -v quiet -print_format json -show_format -show_streams %s" % self.image_path, 
+        proc = Popen("ffprobe -v quiet -show_format -show_streams %s" % self.image_path,#.replace('%', '%%'), 
+                     shell=True, stdout=PIPE)#.stdout.read()
+        proc.wait()
+        if proc.returncode == 127:
+            raise ImportError("ffprobe (ffmpeg) not found!")
+        data = proc.stdout.read().strip()
+#        self._buffer_FFMPEG = json.loads(data)
+        res, key, cur = {}, '', {}
+        for item in data.splitlines():
+            if (item[0] == '['):
+                if not (item[1] == '/'):
+                    key = item[1:-1]
+                    cur = {}
+                    if key not in res:
+                        res[key] = []
+                else:
+                    res[key].append( cur )
+            else:
+                val = item.split('=')
+                cur[val[0].strip()] = val[1].strip()
+        if res:
+            res = { 'streams': res['STREAM'], 'format': res['FORMAT'][0] }
+        self._buffer_FFMPEG = res
+        
+        return self._buffer_FFMPEG
 
     def _detect_AudioFeatures_YAAFE(self):
         # http://yaafe.sourceforge.net/manual/tools.html
@@ -2762,12 +2712,6 @@ class OggFile(JpegFile):
         #     1.7 $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/ursin/Desktop/yaafe-v0.64/src_cpp/yaafe-python/:/home/ursin/Desktop/yaafe-v0.64/src_cpp/yaafe-io/:/home/ursin/Desktop/yaafe-v0.64/src_cpp/yaafe-core/:/home/ursin/Desktop/yaafe-v0.64/src_cpp/yaafe-components/
         #         $ export YAAFE_PATH=/home/ursin/Desktop/yaafe-v0.64/src_python/
         #         $ export PYTHONPATH=/home/ursin/Desktop/yaafe-v0.64/src_python
-
-        # skip file formats not supported (yet?)
-        if (self.image_mime[1] in ['ogg']):#, 'midi']):
-            return
-
-        self._info['Audio'] = []
 
         import yaafelib as yaafe
 
@@ -2865,15 +2809,14 @@ class OggFile(JpegFile):
             os.remove(fn)
             # remove folder too...
 
-        self._info['Audio'] = [data]
+        self._features['Audio'] = [data]
         return
 
 
 class MidiFile(UnknownFile):
     def getFeatures(self):
-        result = {}
-        result.update( self._detect_AudioFeatures_MUSIC21() )   # Audio
-        return result
+        self._detect_AudioFeatures_MUSIC21()    # Audio
+        return self._features
 
     def _detect_HeaderAndMetadata(self):
         result = {}
@@ -2895,51 +2838,56 @@ class MidiFile(UnknownFile):
                 result[key].append(ba[i+3:e].decode('latin-1').strip())
             result[key] = u'\n'.join(result[key])
 
+        ## find specific info in extracted data
+        #print [item.strip() for item in re.findall('Generated .*?\n', result['Text'])]
+        ##u"Cr'eateur: GNU LilyPond 2.0.1"
+        #import dateutil.parser
+        #dates = []
+        #for line in result['Text'].splitlines():
+        #    # http://stackoverflow.com/questions/3276180/extracting-date-from-a-string-in-python
+        #    try:
+        #        dates.append(dateutil.parser.parse(line, fuzzy=True).isoformat(' ').decode('utf-8'))
+        #    except ValueError:
+        #        pass
+        #print dates
+
         import _music21 as music21
         try:
             s = music21.converter.parse(self.filename)
             if s.metadata:
                 pywikibot.output(unicode(s.metadata))
-                result['Metadata'].update(s.metadata)
+                result.update(s.metadata)
         except music21.midi.base.MidiException:
             pass
 
-        self._info['Metadata'] = [result]
-        return {'Metadata': [result]}
+        self._properties['Metadata'] = [result]
+        return
 
     # MIME: 'audio/midi; charset=binary'
-    def _detect_Properties_PIL(self):
+    def _detect_Properties(self):
         """Retrieve as much file property info possible, especially the same
            as commons does in order to compare if those libraries (ImageMagick,
            ...) are buggy (thus explicitely use other software for independence)"""
-        #self.image_size = (None, None)
-        result = {'Format': u'-', 'Pages': 0}
 
-        result['Format'] = u'%s' % self.image_mime[1].upper()
+        result =      { 'Format':     u'%s' % self.image_mime[1].upper(),
+                        'Pages':      0,
+                        'Dimensions': self.image_size,
+                        'Filesize':   os.path.getsize(self.filename),
+                        'MIME':       u'%s/%s' % tuple(self.image_mime[:2]), }
 
-        result['Dimensions'] = self.image_size
-        result['Filesize']   = os.path.getsize(self.image_path)
-        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
-
-        #self._info['Properties'] = [result]
-        self._info['Properties'][0].update(result)
-        return {'Properties': [result]}
+        #self._properties['Properties'] = [result]
+        self._properties['Properties'][0].update(result)
+        return
 
     # midi audio feature extraction
     def _detect_AudioFeatures_MUSIC21(self):
-        # skip file formats not supported
-        if (self.image_mime[1] not in ['midi']):
-            return
-
         import _music21 as music21
-
-        #audiofile = '/home/ursin/Desktop/3_Ships.mid'
-        audiofile = self.image_path
 
         #music21.features.jSymbolic.getCompletionStats()
         try:
-            #s = music21.midi.translate.midiFilePathToStream(audiofile)
-            s = music21.converter.parse(audiofile)
+            #audiofile = '/home/ursin/Desktop/3_Ships.mid'
+            #s = music21.midi.translate.midiFilePathToStream(self.filename)
+            s = music21.converter.parse(self.filename)
         except music21.midi.base.MidiException:
             pywikibot.warning(u'unknown file type [_detect_AudioFeatures_MUSIC21]')
             return
@@ -2979,8 +2927,8 @@ class MidiFile(UnknownFile):
         #print s.seconds
         #print s.secondsMap
 
-        self._info['Audio'] += [data]
-        return {'Audio': [data]}
+        self._features['Audio'] = [data]
+        return
 
 
 FILETYPES = {                        '*': UnknownFile,
@@ -3218,20 +3166,13 @@ class CatImages_Default(object):
 
         return (u'Graphics', bool(relevance))
 
-#    # Category:MIDI files created with GNU LilyPond
-#    def _cat_audio_MIDIfilescreatedwithGNULilyPond(self):
-#        # find metadata in extracted data
-#        print [item.strip() for item in re.findall('Generated .*?\n', u'\n'.join(result['Text']))]
-#        #u"Cr'eateur: GNU LilyPond 2.0.1"
-#        import dateutil.parser
-#        dates = []
-#        for line in result['Text']:
-#            # http://stackoverflow.com/questions/3276180/extracting-date-from-a-string-in-python
-#            try:
-#                dates.append(dateutil.parser.parse(line, fuzzy=True).isoformat(' ').decode('utf-8'))
-#            except ValueError:
-#                pass
-#        print dates
+    # Category:MIDI files created with GNU LilyPond
+    def _cat_meta_MIDIfilescreatedwithGNULilyPond(self):
+        result = self._info_filter['Metadata']
+        relevance = (u"Generated automatically by: GNU LilyPond" in
+                     result[0]['Text'])
+
+        return (u'MIDI files created with GNU LilyPond', bool(relevance))
 
     # Category:Categorized by DrTrigonBot
     def _addcat_BOT(self):
@@ -3611,7 +3552,7 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
 
     def log_output(self):
         # ColorRegions always applies here since there is at least 1 (THE average) color...
-        ignore = ['Properties', 'ColorAverage', 'ColorRegions', 'Geometry']
+        ignore = ['Properties', 'Metadata', 'ColorAverage', 'ColorRegions', 'Geometry']
         #if not self._existInformation(self._info):  # information available?
         # information available? AND/OR category available?
         if not (self._existInformation(self._info, ignore = ignore) or self._result_check):
@@ -3664,14 +3605,13 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         return u"\n".join( ret )
 
     def clean_cache(self):
-#        if os.path.exists(self.image_path):
-#            os.remove( self.image_path )
-#        if os.path.exists(self.image_path_JPEG):
-#            os.remove( self.image_path_JPEG )
-#        #image_path_new = self.image_path_JPEG.replace(u"cache/", u"cache/0_DETECTED_")
-#        #if os.path.exists(image_path_new):
-#        #    os.remove( image_path_new )
-        pass
+        if os.path.exists(self.image_path):
+            os.remove( self.image_path )
+        #if os.path.exists(self.image_path_JPEG):
+        #    os.remove( self.image_path_JPEG )
+        ##image_path_new = self.image_path_JPEG.replace(u"cache/", u"cache/0_DETECTED_")
+        ##if os.path.exists(image_path_new):
+        ##    os.remove( image_path_new )
 
     # LOOK ALSO AT: checkimages.CatImagesBot.report
     def report(self):
@@ -3799,40 +3739,19 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
 
     # gather data from all information interfaces
     def gatherFeatures(self):
-        self._info['Properties'] = [{'Format': u'-', 'Pages': 0}]
-        self._info['Metadata'] = []
-        self._info['ColorAverage'] = []
-        self._info['ColorRegions'] = []
-        self._info['Faces'] = []
-        self._info['OpticalCodes'] = []
-        self._info['People'] = []
-        self._info['Chessboard'] = []
-        self._info['Text'] = []
-        self._info['Streams'] = []
-        self._info['Audio'] = []
-        self._info['Legs'] = []
-        self._info['Hands'] = []
-        self._info['Torsos'] = []
-        self._info['Ears'] = []
-        self._info['Eyes'] = []
-        self._info['Automobiles'] = []
-
         # split detection and extraction according to file types; JpegFile, ...
         TypeFile = FILETYPES.get(tuple(self.image_mime[:2]), FILETYPES['*'])
-        with TypeFile(self.image_path, self.image_mime) as tf:
-            import copy
-            tf.__dict__.update(copy.deepcopy(self.__dict__))
+        with TypeFile(self.image_path) as tf:
+            tf.image_mime = self.image_mime
+            tf.image      = self.image
             for func in ['getProperties', 'getFeatures']:
                 result = getattr(tf, func)()
-                if result:
-                    self._info.update(result)
+                self._info.update(result)
             print self._info
-            print tf._info
             #print tf.__dict__
-            self._info      = tf._info
             self.image_size = tf.image_size
 
-    def _existInformation(self, info, ignore = ['Properties', 'ColorAverage']):
+    def _existInformation(self, info, ignore = ['Properties', 'Metadata', 'ColorAverage']):
         result = []
         for item in info:
             if item in ignore:
@@ -3845,6 +3764,11 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         # >>> never drop <<<
         result = self._info['Properties']
         return {'Properties': result}
+
+    def _filter_Metadata(self):
+        # >>> never drop <<<
+        result = self._info['Metadata']
+        return {'Metadata': result}
 
     def _filter_Faces(self):
         result = self._info['Faces']
