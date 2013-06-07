@@ -146,122 +146,34 @@ useGuesses = True        # Use guesses which are less reliable than true searche
 
 class UnknownFile(object):
     def __init__(self, filename, *args, **kwargs):
-        self.filename = filename
+        self.filename   = filename
+        self.image_size = (None, None)
+
         self._info = {}
 
-    def getProperties(self):
-        # check/look into the file by midnight commander (mc)
-        # https://pypi.python.org/pypi/hachoir-metadata
-        #self._detect_HeaderAndMetadata()
+    def __enter__(self):
+        return self
 
-        # get mime-type file-size, ...
+    def __exit__(self, type, value, traceback):
         pass
+
+    def getProperties(self):
+        result = {}
+        result.update( self._detect_HeaderAndMetadata() )   # Metadata
+        result.update( self._detect_Properties_PIL() )      # Properties
+        return result
 
     def getFeatures(self):
-        pass
+        pywikibot.warning(u"File format '%s/%s' not supported (yet)!" % tuple(self.image_mime[:2]))
+
+    def _detect_HeaderAndMetadata(self):
+        # check/look into the file by midnight commander (mc)
+        # https://pypi.python.org/pypi/hachoir-metadata
+        return {}
 
     def _detect_Properties_PIL(self):
-        """Retrieve as much file property info possible, especially the same
-           as commons does in order to compare if those libraries (ImageMagick,
-           ...) are buggy (thus explicitely use other software for independence)"""
-        #self.image_size = (None, None)
-        result = {'Format': u'-', 'Pages': 0}
-        if self.image_fileext == u'.svg':   # MIME: 'application/xml; charset=utf-8'
-            # similar to PDF page count OR use BeautifulSoup
-            svgcountpages = re.compile("<page>")
-            pc = len(svgcountpages.findall( file(self.image_path,"r").read() ))
-
-            #svg = rsvg.Handle(self.image_path)
-
-            # http://validator.w3.org/docs/api.html#libs
-            # http://pypi.python.org/pypi/py_w3c/
-            vld = HTMLValidator()
-            valid = u'SVG'
-            try:
-                vld.validate(self.image.fileUrl())
-                valid = (u'Valid SVG' if vld.result.validity == 'true' else u'Invalid SVG')
-            except urllib2.URLError:
-                pass
-            except ValidationFault:
-                pass
-            #print vld.errors, vld.warnings
-
-            #self.image_size = (svg.props.width, svg.props.height)
-
-            result = { 'Format':     valid,
-                       'Mode':       u'-',
-                       'Palette':    u'-',
-                       'Pages':      pc, }
-            # may be set {{validSVG}} also or do something in bot template to
-            # recognize 'Format=SVG (valid)' ...
-        elif self.image_mime[1] == 'pdf':   # MIME: 'application/pdf; charset=binary'
-            # http://code.activestate.com/recipes/496837-count-pdf-pages/
-            #rxcountpages = re.compile(r"$\s*/Type\s*/Page[/\s]", re.MULTILINE|re.DOTALL)
-            rxcountpages = re.compile(r"/Type\s*/Page([^s]|$)", re.MULTILINE|re.DOTALL)    # PDF v. 1.3,1.4,1.5,1.6
-            pc = len(rxcountpages.findall( file(self.image_path,"rb").read() ))
-
-            result = { 'Format':     u'PDF',
-                       'Mode':       u'-',
-                       'Palette':    u'-',
-                       'Pages':      pc, }
-        elif self.image_mime[1] == 'x-xcf': # MIME: 'image/x-xcf; charset=binary'
-            result = { 'Format': u'%s' % self.image_mime[1].upper() }
-            # DO NOT use ImageMagick (identify) instead of PIL to get these info !!
-        elif (self.image_mime[0] == 'image') and \
-             (self.image_mime[1] != 'vnd.djvu'):   # MIME: 'image/jpeg; charset=binary', ...
-            try:
-                i = Image.open(self.image_path)
-            except IOError:
-                pywikibot.warning(u'unknown (image) file type [_detect_Properties_PIL]')
-                return {'Properties': [result]}
-
-            # http://mail.python.org/pipermail/image-sig/1999-May/000740.html
-            pc=0         # count number of pages
-            while True:
-                try:
-                    i.seek(pc)
-                except EOFError:
-                    break
-                pc+=1
-            i.seek(0)    # restore default
-
-            # http://grokbase.com/t/python/image-sig/082psaxt6k/embedded-icc-profiles
-            # python-lcms (littlecms) may be freeimage library
-            #icc = i.app['APP2']     # jpeg
-            #icc = i.tag[34675]      # tiff
-            #icc = re.sub('[^%s]'%string.printable, ' ', icc)
-            ## more image formats and more post-processing needed...
-
-            #self.image_size = i.size
-
-            result = { #'bands':      i.getbands(),
-                       #'bbox':       i.getbbox(),
-                       'Format':     i.format,
-                       'Mode':       i.mode,
-                       #'info':       i.info,
-                       #'stat':       os.stat(self.image_path),
-                       'Palette':    str(len(i.palette.palette)) if i.palette else u'-',
-                       'Pages':      pc, }
-        elif self.image_mime[1] == 'ogg':   # MIME: 'application/ogg; charset=binary'
-            # 'ffprobe' (ffmpeg); audio and video streams files (ogv, oga, ...)
-            d = self._util_get_DataStreams_FFMPEG()
-            #print d
-            result['Format'] = u'%s' % d['format']['format_name'].upper()
-        elif self.image_mime[1] == 'midi': # MIME: 'audio/midi; charset=binary'
-            result['Format'] = u'%s' % self.image_mime[1].upper()
-        # djvu: python-djvulibre or python-djvu for djvu support
-        # http://pypi.python.org/pypi/python-djvulibre/0.3.9
-        else:
-            pywikibot.warning(u'unknown (generic) file type [_detect_Properties_PIL]')
-            return {'Properties': [result]}
-
-        result['Dimensions'] = self.image_size
-        result['Filesize']   = os.path.getsize(self.image_path)
-        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
-
-        #self._info['Properties'] = [result]
-        self._info['Properties'][0].update(result)
-        return {'Properties': [result]}
+        # get mime-type file-size, ...
+        return {}
 
 
 class JpegFile(UnknownFile):
@@ -280,11 +192,24 @@ class JpegFile(UnknownFile):
                      # ('Hands' does not behave very well, in fact it detects any kind of skin and other things...)
                      #(u'Aeroplanes', 'haarcascade_aeroplane.xml'),]      # e.g. for 'Category:Unidentified aircraft'
 
-    def getProperties(self):
-        pass
+    def __init__(self, filename, *args, **kwargs):
+        UnknownFile.__init__(self, filename)
 
-        # Image size
-        self._detect_Properties_PIL()
+        self.image_filename  = os.path.split(self.filename)[-1]
+        self.image_fileext   = os.path.splitext(self.image_filename)[1]
+        self.image_path      = os.path.join(scriptdir, ('cache/' + self.image_filename[-128:]))
+        self.image_path_JPEG = self.image_path + '.jpg'
+
+        self._convert()
+
+    def __exit__(self, type, value, traceback):
+        if os.path.exists(self.image_path):
+            os.remove( self.image_path )
+        if os.path.exists(self.image_path_JPEG):
+            os.remove( self.image_path_JPEG )
+        #image_path_new = self.image_path_JPEG.replace(u"cache/", u"cache/0_DETECTED_")
+        #if os.path.exists(image_path_new):
+        #    os.remove( image_path_new )
 
     def getFeatures(self):
         # Faces (extract EXIF data)
@@ -335,6 +260,87 @@ class JpegFile(UnknownFile):
 
         # general file EXIF history information
         self._detect_History_EXIF()
+
+    # supports a lot of different file types thanks to PIL
+    def _convert(self):
+        try:
+            im = Image.open(self.image_path) # might be png, gif etc, for instance
+            #im.thumbnail(size, Image.ANTIALIAS) # size is 640x480
+            im.convert('RGB').save(self.image_path_JPEG, "JPEG")
+
+            self.image_size = im.size
+        except IOError, e:
+            if 'image file is truncated' in str(e):
+                # im object has changed due to exception raised
+                im.convert('RGB').save(self.image_path_JPEG, "JPEG")
+
+                self.image_size = im.size
+            else:
+                try:
+                    # since opencv might still work, try this as fall-back
+                    img = cv2.imread( self.image_path, cv.CV_LOAD_IMAGE_COLOR )
+                    cv2.imwrite(self.image_path_JPEG, img)
+
+                    self.image_size = (img.shape[1], img.shape[0])
+                except:
+                    if os.path.exists(self.image_path_JPEG):
+                        os.remove(self.image_path_JPEG)
+                    self.image_path_JPEG = self.image_path
+        except:
+            self.image_path_JPEG = self.image_path
+
+        # FULL TIFF support (e.g. group4)
+        # http://code.google.com/p/pylibtiff/
+
+    # MIME: 'image/jpeg; charset=binary', ...
+    def _detect_Properties_PIL(self):
+        """Retrieve as much file property info possible, especially the same
+           as commons does in order to compare if those libraries (ImageMagick,
+           ...) are buggy (thus explicitely use other software for independence)"""
+        #self.image_size = (None, None)
+        result = {'Format': u'-', 'Pages': 0}
+
+        try:
+            i = Image.open(self.image_path)
+        except IOError:
+            pywikibot.warning(u'unknown file type [JpegFile]')
+            return {'Properties': [result]}
+
+        # http://mail.python.org/pipermail/image-sig/1999-May/000740.html
+        pc=0         # count number of pages
+        while True:
+            try:
+                i.seek(pc)
+            except EOFError:
+                break
+            pc+=1
+        i.seek(0)    # restore default
+
+        # http://grokbase.com/t/python/image-sig/082psaxt6k/embedded-icc-profiles
+        # python-lcms (littlecms) may be freeimage library
+        #icc = i.app['APP2']     # jpeg
+        #icc = i.tag[34675]      # tiff
+        #icc = re.sub('[^%s]'%string.printable, ' ', icc)
+        ## more image formats and more post-processing needed...
+
+        #self.image_size = i.size
+
+        result = { #'bands':      i.getbands(),
+                   #'bbox':       i.getbbox(),
+                   'Format':     i.format,
+                   'Mode':       i.mode,
+                   #'info':       i.info,
+                   #'stat':       os.stat(self.image_path),
+                   'Palette':    str(len(i.palette.palette)) if i.palette else u'-',
+                   'Pages':      pc, }
+
+        result['Dimensions'] = self.image_size
+        result['Filesize']   = os.path.getsize(self.image_path)
+        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
+
+        #self._info['Properties'] = [result]
+        self._info['Properties'][0].update(result)
+        return {'Properties': [result]}
 
     # .../opencv/samples/c/facedetect.cpp
     # http://opencv.willowgarage.com/documentation/python/genindex.html
@@ -2477,14 +2483,161 @@ class GifFile(JpegFile):
 class TiffFile(JpegFile):
     pass
 
+
 class XcfFile(JpegFile):
-    pass
+    def _convert(self):
+        # Very few programs other than GIMP read XCF files. This is by design
+        # from the GIMP developers, the format is not really documented or
+        # supported as a general-purpose file format.
+        # Commons uses ImageMagick, thus we have EXACTLY THE SAME support!
+        # (can also be a drawback, e.g. when the library is buggy...)
+        proc = Popen("convert %s %s" % (self.image_path, self.image_path_JPEG),
+                     shell=True, stderr=PIPE)#.stderr.read()
+        proc.wait()
+        if   proc.returncode != 0:
+            raise ImportError("convert (ImageMagick) not found (may be other error occured)!")
+        elif proc.returncode:
+            self.image_path_JPEG = self.image_path
+
+        #data = Popen("identify -verbose info: %s" % self.image_path,
+        #             shell=True, stderr=PIPE).stderr.read()
+        #print data
+        if not os.path.exists(self.image_path_JPEG):
+            # xcf can have more than 1 layer/page like gif, tiff, and movies...
+            self.image_path_JPEG = self.image_path_JPEG.replace('.jpg', '-0.jpg')
+        self.image_size = Image.open(self.image_path_JPEG).size
+
+    # MIME: 'image/x-xcf; charset=binary'
+    def _detect_Properties_PIL(self):
+        """Retrieve as much file property info possible, especially the same
+           as commons does in order to compare if those libraries (ImageMagick,
+           ...) are buggy (thus explicitely use other software for independence)"""
+        #self.image_size = (None, None)
+        result = {'Format': u'-', 'Pages': 0}
+
+        result = { 'Format': u'%s' % self.image_mime[1].upper() }
+        # DO NOT use ImageMagick (identify) instead of PIL to get these info !!
+
+        result['Dimensions'] = self.image_size
+        result['Filesize']   = os.path.getsize(self.image_path)
+        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
+
+        #self._info['Properties'] = [result]
+        self._info['Properties'][0].update(result)
+        return {'Properties': [result]}
+
 
 class SvgFile(JpegFile):
-    pass
+    def _convert(self):
+        # SVG: rasterize the SVG to bitmap (MAY BE GET FROM WIKI BY DOWNLOAD?...)
+        # (Mediawiki uses librsvg too: http://commons.wikimedia.org/wiki/SVG#SVGs_in_MediaWiki)
+        # http://stackoverflow.com/questions/6589358/convert-svg-to-png-in-python
+        # http://cairographics.org/pythoncairopil/
+        # http://cairographics.org/pyrsvg/
+        # http://stackoverflow.com/questions/9166400/convert-rgba-png-to-rgb-with-pil
+        try:
+            svg = rsvg.Handle(self.image_path)
+            img = cairo.ImageSurface(cairo.FORMAT_ARGB32, svg.props.width, svg.props.height)
+            ctx = cairo.Context(img)
+            svg.render_cairo(ctx)
+            #img.write_to_png("svg.png")
+            #Image.frombuffer("RGBA",( img.get_width(),img.get_height() ),
+            #             img.get_data(),"raw","RGBA",0,1).save(self.image_path_JPEG, "JPEG")
+            png = Image.frombuffer("RGBA",( img.get_width(),img.get_height() ),
+                               img.get_data(),"raw","RGBA",0,1)
+            background = Image.new("RGB", png.size, (255, 255, 255))
+            background.paste(png, mask=png.split()[3]) # 3 is the alpha channel
+            background.save(self.image_path_JPEG, "JPEG")
+
+            self.image_size = (svg.props.width, svg.props.height)
+        except MemoryError:
+            self.image_path_JPEG = self.image_path
+        except SystemError:
+            self.image_path_JPEG = self.image_path
+
+    # MIME: 'application/xml; charset=utf-8'
+    def _detect_Properties_PIL(self):
+        """Retrieve as much file property info possible, especially the same
+           as commons does in order to compare if those libraries (ImageMagick,
+           ...) are buggy (thus explicitely use other software for independence)"""
+        #self.image_size = (None, None)
+        result = {'Format': u'-', 'Pages': 0}
+
+        # similar to PDF page count OR use BeautifulSoup
+        svgcountpages = re.compile("<page>")
+        pc = len(svgcountpages.findall( file(self.image_path,"r").read() ))
+
+        #svg = rsvg.Handle(self.image_path)
+
+        # http://validator.w3.org/docs/api.html#libs
+        # http://pypi.python.org/pypi/py_w3c/
+        vld = HTMLValidator()
+        valid = u'SVG'
+        try:
+            vld.validate(self.image.fileUrl())
+            valid = (u'Valid SVG' if vld.result.validity == 'true' else u'Invalid SVG')
+        except urllib2.URLError:
+            pass
+        except ValidationFault:
+            pass
+        #print vld.errors, vld.warnings
+
+        #self.image_size = (svg.props.width, svg.props.height)
+
+        result = { 'Format':     valid,
+                   'Mode':       u'-',
+                   'Palette':    u'-',
+                   'Pages':      pc, }
+        # may be set {{validSVG}} also or do something in bot template to
+        # recognize 'Format=SVG (valid)' ...
+
+        result['Dimensions'] = self.image_size
+        result['Filesize']   = os.path.getsize(self.image_path)
+        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
+
+        #self._info['Properties'] = [result]
+        self._info['Properties'][0].update(result)
+        return {'Properties': [result]}
+
 
 class PdfFile(JpegFile):
-    pass
+    def _convert(self):
+#        self._wikidata = self.image._latestInfo # all info wikimedia got from content (mime, sha1, ...)
+
+        # PDF: support extract text and images
+        # (Mediawiki uses ghostscript: https://www.mediawiki.org/wiki/Extension:PdfHandler#Pre-requisites)
+        # http://vermeulen.ca/python-pdf.html
+        # http://code.activestate.com/recipes/511465-pure-python-pdf-to-text-converter/
+        # http://stackoverflow.com/questions/25665/python-module-for-converting-pdf-to-text
+        if self.image_fileext == u'.pdf':
+            pass
+
+    # MIME: 'application/pdf; charset=binary'
+    def _detect_Properties_PIL(self):
+        """Retrieve as much file property info possible, especially the same
+           as commons does in order to compare if those libraries (ImageMagick,
+           ...) are buggy (thus explicitely use other software for independence)"""
+        #self.image_size = (None, None)
+        result = {'Format': u'-', 'Pages': 0}
+
+        # http://code.activestate.com/recipes/496837-count-pdf-pages/
+        #rxcountpages = re.compile(r"$\s*/Type\s*/Page[/\s]", re.MULTILINE|re.DOTALL)
+        rxcountpages = re.compile(r"/Type\s*/Page([^s]|$)", re.MULTILINE|re.DOTALL)    # PDF v. 1.3,1.4,1.5,1.6
+        pc = len(rxcountpages.findall( file(self.image_path,"rb").read() ))
+
+        result = { 'Format':     u'PDF',
+                   'Mode':       u'-',
+                   'Palette':    u'-',
+                   'Pages':      pc, }
+
+        result['Dimensions'] = self.image_size
+        result['Filesize']   = os.path.getsize(self.image_path)
+        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
+
+        #self._info['Properties'] = [result]
+        self._info['Properties'][0].update(result)
+        return {'Properties': [result]}
+
 
 #class DjvuFile(JpegFile):
 #    pass
@@ -2497,6 +2650,27 @@ class OggFile(JpegFile):
 
         # general audio feature extraction
 #        self._detect_AudioFeatures_YAAFE()
+
+    # MIME: 'application/ogg; charset=binary'
+    def _detect_Properties_PIL(self):
+        """Retrieve as much file property info possible, especially the same
+           as commons does in order to compare if those libraries (ImageMagick,
+           ...) are buggy (thus explicitely use other software for independence)"""
+        #self.image_size = (None, None)
+        result = {'Format': u'-', 'Pages': 0}
+
+        # 'ffprobe' (ffmpeg); audio and video streams files (ogv, oga, ...)
+        d = self._util_get_DataStreams_FFMPEG()
+        #print d
+        result['Format'] = u'%s' % d['format']['format_name'].upper()
+
+        result['Dimensions'] = self.image_size
+        result['Filesize']   = os.path.getsize(self.image_path)
+        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
+
+        #self._info['Properties'] = [result]
+        self._info['Properties'][0].update(result)
+        return {'Properties': [result]}
 
     def _detect_Streams_FFMPEG(self):
         self._info['Streams'] = []
@@ -2696,12 +2870,6 @@ class OggFile(JpegFile):
 
 
 class MidiFile(UnknownFile):
-    def getProperties(self):
-        result = {}
-        result.update( self._detect_HeaderAndMetadata() )   # Metadata
-        result.update( self._detect_Properties_PIL() )      # Properties
-        return result
-
     def getFeatures(self):
         result = {}
         result.update( self._detect_AudioFeatures_MUSIC21() )   # Audio
@@ -2738,6 +2906,24 @@ class MidiFile(UnknownFile):
 
         self._info['Metadata'] = [result]
         return {'Metadata': [result]}
+
+    # MIME: 'audio/midi; charset=binary'
+    def _detect_Properties_PIL(self):
+        """Retrieve as much file property info possible, especially the same
+           as commons does in order to compare if those libraries (ImageMagick,
+           ...) are buggy (thus explicitely use other software for independence)"""
+        #self.image_size = (None, None)
+        result = {'Format': u'-', 'Pages': 0}
+
+        result['Format'] = u'%s' % self.image_mime[1].upper()
+
+        result['Dimensions'] = self.image_size
+        result['Filesize']   = os.path.getsize(self.image_path)
+        result['MIME']       = u'%s/%s' % tuple(self.image_mime[:2])
+
+        #self._info['Properties'] = [result]
+        self._info['Properties'][0].update(result)
+        return {'Properties': [result]}
 
     # midi audio feature extraction
     def _detect_AudioFeatures_MUSIC21(self):
@@ -2805,6 +2991,8 @@ FILETYPES = {                        '*': UnknownFile,
              (      'image',    'x-xcf'): XcfFile,
              (      'image',  'svg+xml'): SvgFile,
              ('application',      'pdf'): PdfFile,
+# djvu: python-djvulibre or python-djvu for djvu support
+# http://pypi.python.org/pypi/python-djvulibre/0.3.9
 #             (      'image', 'vnd.djvu'): DjvuFile,
              ('application',      'ogg'): OggFile,
              (      'audio',     'midi'): MidiFile,}
@@ -3257,12 +3445,10 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         #print self.image_path
         pywikibot.output(u'Processing media %s ...' % self.image.title(asLink=True))
 
-        self.image_filename  = os.path.split(self.image.fileUrl())[-1]
-        self.image_fileext   = os.path.splitext(self.image_filename)[1]
-        self.image_path      = urllib2.quote(os.path.join(scriptdir, ('cache/' + self.image_filename[-128:])))
-        
-        self.image_path_JPEG = self.image_path + u'.jpg'
-        
+        image_filename  = os.path.split(self.image.fileUrl())[-1]
+        image_fileext   = os.path.splitext(image_filename)[1]
+        self.image_path = urllib2.quote(os.path.join(scriptdir, ('cache/' + image_filename[-128:])))
+
         self._wikidata = self.image._latestInfo # all info wikimedia got from content (mime, sha1, ...)
         #print self._wikidata
         #print self._wikidata['mime']
@@ -3270,7 +3456,7 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         #print self._wikidata['metadata']
         #for item in self._wikidata['metadata']:
         #    print item['name'], item['value']
-        
+
         if not os.path.exists(self.image_path):
             pywikibot.get_throttle()
             f_url, data = self.site.getUrl(self.image.fileUrl(), no_hostname=True, 
@@ -3279,7 +3465,7 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
             # (allows to re-read from back_response)
             data = f_url.read()
             del f_url   # free some memory (no need to keep a copy...)
-    
+
             f = open(self.image_path, 'wb')
             f.write( data )
             f.close()
@@ -3290,94 +3476,8 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         self.image_mime = re.split('[/;\s]', m.file(self.image_path))
         #self.image_size = (None, None)
         mime = mimetypes.guess_all_extensions('%s/%s' % tuple(self.image_mime[0:2]))
-        if mime and (self.image_fileext.lower() not in mime):
+        if mime and (image_fileext.lower() not in mime):
             pywikibot.warning(u'File extension does not match MIME type! File extension should be %s.' % mime)
-
-        # SVG: rasterize the SVG to bitmap (MAY BE GET FROM WIKI BY DOWNLOAD?...)
-        # (Mediawiki uses librsvg too: http://commons.wikimedia.org/wiki/SVG#SVGs_in_MediaWiki)
-        # http://stackoverflow.com/questions/6589358/convert-svg-to-png-in-python
-        # http://cairographics.org/pythoncairopil/
-        # http://cairographics.org/pyrsvg/
-        # http://stackoverflow.com/questions/9166400/convert-rgba-png-to-rgb-with-pil
-        self.image_size = (None, None)
-        if   self.image_fileext == u'.svg':
-            try:
-                svg = rsvg.Handle(self.image_path)
-                img = cairo.ImageSurface(cairo.FORMAT_ARGB32, svg.props.width, svg.props.height)
-                ctx = cairo.Context(img)
-                svg.render_cairo(ctx)
-                #img.write_to_png("svg.png")
-                #Image.frombuffer("RGBA",( img.get_width(),img.get_height() ),
-                #             img.get_data(),"raw","RGBA",0,1).save(self.image_path_JPEG, "JPEG")
-                png = Image.frombuffer("RGBA",( img.get_width(),img.get_height() ),
-                                   img.get_data(),"raw","RGBA",0,1)
-                background = Image.new("RGB", png.size, (255, 255, 255))
-                background.paste(png, mask=png.split()[3]) # 3 is the alpha channel
-                background.save(self.image_path_JPEG, "JPEG")
-
-                self.image_size = (svg.props.width, svg.props.height)
-            except MemoryError:
-                self.image_path_JPEG = self.image_path
-            except SystemError:
-                self.image_path_JPEG = self.image_path
-        elif self.image_fileext == u'.xcf':
-            # Very few programs other than GIMP read XCF files. This is by design
-            # from the GIMP developers, the format is not really documented or
-            # supported as a general-purpose file format.
-            # Commons uses ImageMagick, thus we have EXACTLY THE SAME support!
-            # (can also be a drawback, e.g. when the library is buggy...)
-            proc = Popen("convert %s %s" % (self.image_path, self.image_path_JPEG),
-                         shell=True, stderr=PIPE)#.stderr.read()
-            proc.wait()
-            if   proc.returncode == 127:
-                raise ImportError("convert (ImageMagick) not found!")
-            elif proc.returncode:
-                self.image_path_JPEG = self.image_path
-
-            #data = Popen("identify -verbose info: %s" % self.image_path,
-            #             shell=True, stderr=PIPE).stderr.read()
-            #print data
-            if not os.path.exists(self.image_path_JPEG):
-                # xcf can have more than 1 layer/page like gif, tiff, and movies...
-                self.image_path_JPEG = self.image_path_JPEG.replace('.jpg', '-0.jpg')
-            self.image_size = Image.open(self.image_path_JPEG).size
-        else:
-            try:
-                im = Image.open(self.image_path) # might be png, gif etc, for instance
-                #im.thumbnail(size, Image.ANTIALIAS) # size is 640x480
-                im.convert('RGB').save(self.image_path_JPEG, "JPEG")
-
-                self.image_size = im.size
-            except IOError, e:
-                if 'image file is truncated' in str(e):
-                    # im object has changed due to exception raised
-                    im.convert('RGB').save(self.image_path_JPEG, "JPEG")
-
-                    self.image_size = im.size
-                else:
-                    try:
-                        # since opencv might still work, try this as fall-back
-                        img = cv2.imread( self.image_path, cv.CV_LOAD_IMAGE_COLOR )
-                        cv2.imwrite(self.image_path_JPEG, img)
-
-                        self.image_size = (img.shape[1], img.shape[0])
-                    except:
-                        if os.path.exists(self.image_path_JPEG):
-                            os.remove(self.image_path_JPEG)
-                        self.image_path_JPEG = self.image_path
-            except:
-                self.image_path_JPEG = self.image_path
-
-        # PDF: support extract text and images
-        # (Mediawiki uses ghostscript: https://www.mediawiki.org/wiki/Extension:PdfHandler#Pre-requisites)
-        # http://vermeulen.ca/python-pdf.html
-        # http://code.activestate.com/recipes/511465-pure-python-pdf-to-text-converter/
-        # http://stackoverflow.com/questions/25665/python-module-for-converting-pdf-to-text
-        if self.image_fileext == u'.pdf':
-            pass
-        
-        # FULL TIFF support (e.g. group4)
-        # http://code.google.com/p/pylibtiff/
 
     # LOOK ALSO AT: checkimages.CatImagesBot.checkStep
     # (and category scripts/bots too...)
@@ -3564,13 +3664,14 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
         return u"\n".join( ret )
 
     def clean_cache(self):
-        if os.path.exists(self.image_path):
-            os.remove( self.image_path )
-        if os.path.exists(self.image_path_JPEG):
-            os.remove( self.image_path_JPEG )
-        #image_path_new = self.image_path_JPEG.replace(u"cache/", u"cache/0_DETECTED_")
-        #if os.path.exists(image_path_new):
-        #    os.remove( image_path_new )
+#        if os.path.exists(self.image_path):
+#            os.remove( self.image_path )
+#        if os.path.exists(self.image_path_JPEG):
+#            os.remove( self.image_path_JPEG )
+#        #image_path_new = self.image_path_JPEG.replace(u"cache/", u"cache/0_DETECTED_")
+#        #if os.path.exists(image_path_new):
+#        #    os.remove( image_path_new )
+        pass
 
     # LOOK ALSO AT: checkimages.CatImagesBot.report
     def report(self):
@@ -3718,17 +3819,18 @@ class CatImagesBot(checkimages.checkImagesBot, CatImages_Default):
 
         # split detection and extraction according to file types; JpegFile, ...
         TypeFile = FILETYPES.get(tuple(self.image_mime[:2]), FILETYPES['*'])
-        tf = TypeFile(self.image_path)
-        import copy
-        tf.__dict__.update(copy.deepcopy(self.__dict__))
-        for func in ['getProperties', 'getFeatures']:
-            result = getattr(tf, func)()
-            if result:
-                self._info.update(result)
-#        print self._info
-#        print tf._info
-        #print tf.__dict__
-        self._info = tf._info
+        with TypeFile(self.image_path, self.image_mime) as tf:
+            import copy
+            tf.__dict__.update(copy.deepcopy(self.__dict__))
+            for func in ['getProperties', 'getFeatures']:
+                result = getattr(tf, func)()
+                if result:
+                    self._info.update(result)
+            print self._info
+            print tf._info
+            #print tf.__dict__
+            self._info      = tf._info
+            self.image_size = tf.image_size
 
     def _existInformation(self, info, ignore = ['Properties', 'ColorAverage']):
         result = []
