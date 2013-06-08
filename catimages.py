@@ -189,157 +189,192 @@ class _UnknownFile(object):
 
     def _detect_HeaderAndMetadata(self):
         # check/look into the file by midnight commander (mc)
-        # https://pypi.python.org/pypi/hachoir-metadata
+        # use exif as first hint - in fact gives also image-size, streams, ...
 
-#### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-#try:
-#    from hachoir_core.error import error, HachoirError
-#    from hachoir_core.cmd_line import unicodeFilename
-#    from hachoir_core.i18n import getTerminalCharset, _
-#    from hachoir_core.benchmark import Benchmark
-#    from hachoir_core.stream import InputStreamError
-#    from hachoir_core.tools import makePrintable
-#    from hachoir_parser import createParser, ParserList
-#    import hachoir_core.config as hachoir_config
-#    from hachoir_metadata import config
-#except ImportError, err:
-#    raise
-#    print >>sys.stderr, "Unable to import an Hachoir module: %s" % err
-#    sys.exit(1)
-#from optparse import OptionGroup, OptionParser
-#from hachoir_metadata import extractMetadata
-#from hachoir_metadata.metadata import extractors as metadata_extractors
-#
-#
-#def parseOptions():
-#    parser = OptionParser(usage="%prog [options] files")
-#    parser.add_option("--type", help=_("Only display file type (description)"),
-#        action="store_true", default=False)
-#    parser.add_option("--mime", help=_("Only display MIME type"),
-#        action="store_true", default=False)
-#    parser.add_option("--level",
-#        help=_("Quantity of information to display from 1 to 9 (9 is the maximum)"),
-#        action="store", default="9", type="choice",
-#        choices=[ str(choice) for choice in xrange(1,9+1) ])
-#    parser.add_option("--raw", help=_("Raw output"),
-#        action="store_true", default=False)
-#    parser.add_option("--bench", help=_("Run benchmark"),
-#        action="store_true", default=False)
-#    parser.add_option("--force-parser",help=_("List all parsers then exit"),
-#        type="str")
-#    parser.add_option("--profiler", help=_("Run profiler"),
-#        action="store_true", default=False)
-#    parser.add_option("--quality", help=_("Information quality (0.0=fastest, 1.0=best, and default is 0.5)"),
-#        action="store", type="float", default="0.5")
-#    parser.add_option("--maxlen", help=_("Maximum string length in characters, 0 means unlimited (default: %s)" % config.MAX_STR_LENGTH),
-#        type="int", default=config.MAX_STR_LENGTH)
-#    parser.add_option("--verbose", help=_("Verbose mode"),
-#        default=False, action="store_true")
-#    parser.add_option("--debug", help=_("Debug mode"),
-#        default=False, action="store_true")
-#
-#    values, filename = parser.parse_args()
-#    if len(filename) == 0:
-#        parser.print_help()
-#        sys.exit(1)
-#
-#    # Update limits
-#    config.MAX_STR_LENGTH = values.maxlen
-#    if values.raw:
-#        config.RAW_OUTPUT = True
-#
-#    return values, filename
-#
-#def processFile(values, filename,
-#display_filename=False, priority=None, human=True, display=True):
-#    charset = getTerminalCharset()
-#    filename, real_filename = unicodeFilename(filename, charset), filename
-#
-#    # Create parser
-#    try:
-#        if values.force_parser:
-#            tags = [ ("id", values.force_parser), None ]
-#        else:
-#            tags = None
-#        parser = createParser(filename, real_filename=real_filename, tags=tags)
-#        help(parser)
-#        print parser.getParserTags()
-#        print parser.PARSER_TAGS
-#        for i, item in enumerate(parser.createFields()):
-#            print item
-#            if i > 5:
-#                break
-#    except InputStreamError, err:
-#        error(unicode(err))
-#        return False
-#    if not parser:
-#        error(_("Unable to parse file: %s") % filename)
-#        return False
-#
-#    # Extract metadata
-#    extract_metadata = not(values.mime or values.type)
-#    if extract_metadata:
-#        try:
-#            metadata = extractMetadata(parser, values.quality)
-#        except HachoirError, err:
-#            error(unicode(err))
-#            metadata = None
-#        if not metadata:
-#            parser.error(_("Hachoir can't extract metadata, but is able to parse: %s")
-#                % filename)
-#            return False
-#
-#    if display:
-#        # Display metadatas on stdout
-#        if extract_metadata:
-#            text = metadata.exportPlaintext(priority=priority, human=human)
-#            if not text:
-#                text = [_("(no metadata, priority may be too small)")]
-#            if display_filename:
-#                for line in text:
-#                    line = "%s: %s" % (filename, line)
-#                    print makePrintable(line, charset)
-#            else:
-#                for line in text:
-#                    print makePrintable(line, charset)
-#        else:
-#            if values.type:
-#                text = parser.description
-#            else:
-#                text = parser.mime_type
-#            if display_filename:
-#                text = "%s: %s" % (filename, text)
-#            print text
-#    return True
-#
-#### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-#
-#        def processFiles(values, filenames, display=True):
-#            human = not(values.raw)
-#            ok = True
-#            priority = int(values.level)*100 + 99
-#            display_filename = (1 < len(filenames))
-#            for filename in filenames:
-#                ok &= processFile(values, filename, display_filename, priority, human, display)
-#            return ok
-#
-#        try:
-#            # Parser options and initialize Hachoir
-#            values, filenames = parseOptions()
-#
-#            ok = processFiles(values, filenames)
-#        except KeyboardInterrupt:
-#            print _("Program interrupted (CTRL+C).")
-#            ok = False
-#        sys.exit(int(not ok))
-#
-#### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+        exif = self._util_get_DataTags_EXIF()
+        #print exif
+        result = { 'Software':         exif['Software'] if 'Software' in exif else u'-',
+                   'Output_Extension': exif['Output_extension'] if 'Output_extension' in exif else u'-',
+                   'Desc':             exif['Desc'] if 'Desc' in exif else u'-',
+                   'DescProducer':     exif['DescProducer'] if 'DescProducer' in exif else u'-',
+                   'DescCreator':      exif['DescCreator'] if 'DescCreator' in exif else u'-',
+                   'Comment':          exif['Comment'] if 'Comment' in exif else u'-',
+                   'Producer':         exif['Producer'] if 'Producer' in exif else u'-',}
+                   #'Comments':         exif['Comments'] if 'Comments' in exif else u'-',
+                   #'WorkDesc':         exif['WorkDescription'] if 'WorkDescription' in exif else u'-',
+                   ##'Dimensions':       tuple(map(int, exif['ImageSize'].split(u'x'))),}
+                   #'Dimensions':       tuple(exif['ImageSize'].split(u'x')) if 'ImageSize' in exif else (None, None),}
+                   #'Mode':             exif['ColorType'], }
 
-        pass
+# TODO: vvv
+#* metadata template in commons has to be worked out and code adopted
+#* like in 'Streams' a nice content listing of MIDI (exif or music21 - if needed at all?)
+#* docu all this stuff in commons
+#* docu and do all open things on "commons TODO list"
+#
+#
+#
+#(* initial audio midi support (music21))
+#[TODO: docu on Commons ... / template ...]
+
+# TODO: if '_detect_History' is not needed here, moveit back into _JpegFile !!!
+        #print "self._detect_History()"
+        #print self._detect_History()
+
+        # https://pypi.python.org/pypi/hachoir-metadata (needs 'core' and 'parser')
+        #
+        #from hachoir_core.error import HachoirError
+        #from hachoir_core.stream import InputStreamError
+        #from hachoir_parser import createParser
+        #import hachoir_core.config as hachoir_config
+        #
+        #from hachoir_metadata import extractMetadata
+        #
+        #hachoir_config.debug = True
+        #hachoir_config.verbose = True
+        #hachoir_config.quiet = True
+        #
+        ## Create parser
+        #try:
+        #    parser = createParser(self.file_name.decode('utf-8'),
+        #                          real_filename=self.file_name.encode('utf-8'),
+        #                          tags=None)
+        #    #print [val for val in enumerate(parser.createFields())]
+        #    desc  = parser.description
+        #    ptags = parser.getParserTags()
+        #except (InputStreamError, AttributeError):
+        #    desc  = u'-'
+        #    ptags = {}
+        #
+        ## Extract metadata
+        #try:
+        #    # quality: 0.0 fastest, 1.0 best, and default is 0.5
+        #    metadata = extractMetadata(parser, 0.5)
+        #    #mtags = dict([(key, metadata.getValues(key))
+        #    mtags = dict([(key, metadata.getValues(key))    # get, getItem, getItems, getText
+        #                  for key in metadata._Metadata__data.keys()#])
+        #                  if metadata.getValues(key)])
+        #except (HachoirError, AttributeError):
+        #    mtags = {}
+        #
+        ##result = {'parser_desc': desc, 'parserdata': ptags, 'metadata': mtags}
+        ##print result
+        #print {'parser_desc': desc, 'parserdata': ptags, 'metadata': mtags}
+        #
+        ### Display metadatas on stdout
+        ##text = metadata.exportPlaintext(priority=None, human=False)
+        ##if not text:
+        ##    text = [u"(no metadata, priority may be too small, try priority=999)"]
+        ##print u'\n'.join(text)
+
+        self._properties['Metadata'] = [result]
+        #print self._properties['Metadata']
+        return
 
     def _detect_Properties(self):
         # get mime-type file-size, ...
         pass
+
+    def _util_get_DataTags_EXIF(self):
+        # http://tilloy.net/dev/pyexiv2/tutorial.html
+        # (is UNFORTUNATELY NOT ABLE to handle all tags, e.g. 'FacesDetected', ...)
+        
+        if hasattr(self, '_buffer_EXIF'):
+            return self._buffer_EXIF
+
+        res = {}
+        enable_recovery()   # enable recovery from hard crash
+        try:
+            if hasattr(pyexiv2, 'ImageMetadata'):
+                metadata = pyexiv2.ImageMetadata(self.file_name)
+                metadata.read()
+            
+                for key in metadata.exif_keys:
+                    res[key] = metadata[key]
+                    
+                for key in metadata.iptc_keys:
+                    res[key] = metadata[key]
+                    
+                for key in metadata.xmp_keys:
+                    res[key] = metadata[key]
+            else:
+                image = pyexiv2.Image(self.file_name)
+                image.readMetadata()
+            
+                for key in image.exifKeys():
+                    res[key] = image[key]
+                    
+                for key in image.iptcKeys():
+                    res[key] = image[key]
+                    
+                #for key in image.xmpKeys():
+                #    res[key] = image[key]
+        except IOError:
+            pass
+        except RuntimeError:
+            pass
+        disable_recovery()  # disable since everything worked out fine
+        
+        
+        # http://www.sno.phy.queensu.ca/~phil/exiftool/
+        # MIGHT BE BETTER TO USE AS PYTHON MODULE; either by wrapper or perlmodule:
+        # http://search.cpan.org/~gaas/pyperl-1.0/perlmodule.pod
+        # (or use C++ with embbedded perl to write a python module)
+        data = Popen("exiftool -j %s" % self.file_name, 
+                     shell=True, stdout=PIPE).stdout.read()
+        if not data:
+            raise ImportError("exiftool not found!")
+        try:   # work-a-round for badly encoded exif data (from pywikibot/comms/http.py)
+            data = unicode(data, 'utf-8', errors = 'strict')
+        except UnicodeDecodeError:
+            data = unicode(data, 'utf-8', errors = 'replace')
+        #res  = {}
+        data = re.sub("(?<!\")\(Binary data (?P<size>\d*) bytes\)", "\"(Binary data \g<size> bytes)\"", data)  # work-a-round some issue
+        for item in json.loads(data):
+            res.update( item )
+        #print res
+        self._buffer_EXIF = res
+        
+        return self._buffer_EXIF
+
+    def _detect_History(self):
+        res = self._util_get_DataTags_EXIF()
+
+        #a = []
+        #for k in res.keys():
+        #    if 'history' in k.lower():
+        #        a.append( k )
+        #for item in sorted(a):
+        #    print item
+        # http://tilloy.net/dev/pyexiv2/api.html#pyexiv2.xmp.XmpTag
+        #print [getattr(res['Xmp.xmpMM.History'], item) for item in ['key', 'type', 'name', 'title', 'description', 'raw_value', 'value', ]]
+        result = []
+        i = 1
+        while (('Xmp.xmpMM.History[%i]' % i) in res):
+            data = { 'ID':        i,
+                     'Software':  u'-',
+                     'Timestamp': u'-',
+                     'Action':    u'-',
+                     'Info':      u'-', }
+            if   ('Xmp.xmpMM.History[%i]/stEvt:softwareAgent'%i) in res:
+                data['Software']  = res['Xmp.xmpMM.History[%i]/stEvt:softwareAgent'%i].value
+                data['Timestamp'] = res['Xmp.xmpMM.History[%i]/stEvt:when'%i].value
+                data['Action']    = res['Xmp.xmpMM.History[%i]/stEvt:action'%i].value
+                if ('Xmp.xmpMM.History[%i]/stEvt:changed'%i) in res:
+                    data['Info']  = res['Xmp.xmpMM.History[%i]/stEvt:changed'%i].value
+                #print res['Xmp.xmpMM.History[%i]/stEvt:instanceID'%i].value
+                result.append( data )
+            elif ('Xmp.xmpMM.History[%i]/stEvt:parameters'%i) in res:
+                data['Action']    = res['Xmp.xmpMM.History[%i]/stEvt:action'%i].value
+                data['Info']      = res['Xmp.xmpMM.History[%i]/stEvt:parameters'%i].value
+                #data['Action']    = data['Info'].split(' ')[0]
+                result.append( data )
+            else:
+                pass
+            i += 1
+        
+        self._features['History'] = result
+        return
 
 
 class _JpegFile(_UnknownFile):
@@ -1965,6 +2000,7 @@ class _JpegFile(_UnknownFile):
             #self._util_drawAxes(mat, 250, 350, im)
             #self._util_drawAxes(mat, 50, 50, im)
 
+# TODO: compare face and chessboard pose estimations and unify them, then document everything (template in wiki, ...)
             pywikibot.output(u'result for calibrated camera:\n  rot=%s\n  perp=%s\n  perp2D=%s' % (rot.transpose()[0], perp[:,2], ortho))
             pywikibot.output(u'nice would be to do the same for uncalibrated/default cam settings')
 
@@ -2044,68 +2080,6 @@ class _JpegFile(_UnknownFile):
 #            D2norm = 40*mat[:,i]
 #            cv2.line(im, (x,y), (x+D2norm[0].astype(int),y+D2norm[1].astype(int)), color[i], 1)
 #            cv2.putText(im, label[i], (x+D2norm[0].astype(int),y+D2norm[1].astype(int)), cv2.FONT_HERSHEY_PLAIN, 1., color[i])
-
-    def _util_get_DataTags_EXIF(self):
-        # http://tilloy.net/dev/pyexiv2/tutorial.html
-        # (is UNFORTUNATELY NOT ABLE to handle all tags, e.g. 'FacesDetected', ...)
-        
-        if hasattr(self, '_buffer_EXIF'):
-            return self._buffer_EXIF
-
-        res = {}
-        enable_recovery()   # enable recovery from hard crash
-        try:
-            if hasattr(pyexiv2, 'ImageMetadata'):
-                metadata = pyexiv2.ImageMetadata(self.image_path)
-                metadata.read()
-            
-                for key in metadata.exif_keys:
-                    res[key] = metadata[key]
-                    
-                for key in metadata.iptc_keys:
-                    res[key] = metadata[key]
-                    
-                for key in metadata.xmp_keys:
-                    res[key] = metadata[key]
-            else:
-                image = pyexiv2.Image(self.image_path)
-                image.readMetadata()
-            
-                for key in image.exifKeys():
-                    res[key] = image[key]
-                    
-                for key in image.iptcKeys():
-                    res[key] = image[key]
-                    
-                #for key in image.xmpKeys():
-                #    res[key] = image[key]
-        except IOError:
-            pass
-        except RuntimeError:
-            pass
-        disable_recovery()  # disable since everything worked out fine
-        
-        
-        # http://www.sno.phy.queensu.ca/~phil/exiftool/
-        # MIGHT BE BETTER TO USE AS PYTHON MODULE; either by wrapper or perlmodule:
-        # http://search.cpan.org/~gaas/pyperl-1.0/perlmodule.pod
-        # (or use C++ with embbedded perl to write a python module)
-        data = Popen("exiftool -j %s" % self.image_path, 
-                     shell=True, stdout=PIPE).stdout.read()
-        if not data:
-            raise ImportError("exiftool not found!")
-        try:   # work-a-round for badly encoded exif data (from pywikibot/comms/http.py)
-            data = unicode(data, 'utf-8', errors = 'strict')
-        except UnicodeDecodeError:
-            data = unicode(data, 'utf-8', errors = 'replace')
-        #res  = {}
-        data = re.sub("(?<!\")\(Binary data (?P<size>\d*) bytes\)", "\"(Binary data \g<size> bytes)\"", data)  # work-a-round some issue
-        for item in json.loads(data):
-            res.update( item )
-        #print res
-        self._buffer_EXIF = res
-        
-        return self._buffer_EXIF
 
     def _detect_Faces_EXIF(self):
         res = self._util_get_DataTags_EXIF()
@@ -2281,45 +2255,6 @@ class _JpegFile(_UnknownFile):
         # (exclusion of duplicates is done later by '_util_merge_Regions')
 
         self._features['Faces'] += data
-        return
-    
-    def _detect_History(self):
-        res = self._util_get_DataTags_EXIF()
-
-        #a = []
-        #for k in res.keys():
-        #    if 'history' in k.lower():
-        #        a.append( k )
-        #for item in sorted(a):
-        #    print item
-        # http://tilloy.net/dev/pyexiv2/api.html#pyexiv2.xmp.XmpTag
-        #print [getattr(res['Xmp.xmpMM.History'], item) for item in ['key', 'type', 'name', 'title', 'description', 'raw_value', 'value', ]]
-        result = []
-        i = 1
-        while (('Xmp.xmpMM.History[%i]' % i) in res):
-            data = { 'ID':        i,
-                     'Software':  u'-',
-                     'Timestamp': u'-',
-                     'Action':    u'-',
-                     'Info':      u'-', }
-            if   ('Xmp.xmpMM.History[%i]/stEvt:softwareAgent'%i) in res:
-                data['Software']  = res['Xmp.xmpMM.History[%i]/stEvt:softwareAgent'%i].value
-                data['Timestamp'] = res['Xmp.xmpMM.History[%i]/stEvt:when'%i].value
-                data['Action']    = res['Xmp.xmpMM.History[%i]/stEvt:action'%i].value
-                if ('Xmp.xmpMM.History[%i]/stEvt:changed'%i) in res:
-                    data['Info']  = res['Xmp.xmpMM.History[%i]/stEvt:changed'%i].value
-                #print res['Xmp.xmpMM.History[%i]/stEvt:instanceID'%i].value
-                result.append( data )
-            elif ('Xmp.xmpMM.History[%i]/stEvt:parameters'%i) in res:
-                data['Action']    = res['Xmp.xmpMM.History[%i]/stEvt:action'%i].value
-                data['Info']      = res['Xmp.xmpMM.History[%i]/stEvt:parameters'%i].value
-                #data['Action']    = data['Info'].split(' ')[0]
-                result.append( data )
-            else:
-                pass
-            i += 1
-        
-        self._features['History'] = result
         return
 
     def _util_merge_Regions(self, regs, sub=False, overlap=False, close=False):
@@ -2964,15 +2899,19 @@ class _MidiFile(_UnknownFile):
         return self._features
 
     def _detect_HeaderAndMetadata(self):
-        result = {}
+        #_UnknownFile._detect_HeaderAndMetadata(self)
+        #result = {'Desc': self._properties['Metadata'][0]['Desc'].splitlines()}
+
+        result = {'Desc': []}
 
         # extract data from midi file
         # http://valentin.dasdeck.com/midi/midifile.htm
         # http://stackoverflow.com/questions/3943149/reading-and-interpreting-data-from-a-binary-file-in-python
         ba = bytearray(open(self.file_name, 'rb').read())
         i = -1
-        for key, data in [('Text', '\x01'), ('Copyright', '\x02'), ('Lyrics', '\x05')]:
-            result[key] = []
+        for key, data in [('Text', '\x01'), ('Copyright', '\x02')]:#, ('Lyrics', '\x05')]:
+            key = 'Desc'
+            #result[key] = []
             while True:
                 i = ba.find('\xff%s' % data, i+1)
                 if i < 0:       # something found?
@@ -2981,7 +2920,10 @@ class _MidiFile(_UnknownFile):
                 if ba[e] != 0:  # length match with string end (00)?
                     e = ba.find('\x00', (i+3+ba[i+2]))
                 result[key].append(ba[i+3:e].decode('latin-1').strip())
-            result[key] = u'\n'.join(result[key])
+            #result[key] = u'\n'.join(result[key])
+        result[key] = u'\n'.join(result[key])
+        if not result['Desc']:
+            result['Desc'] = u'-'
 
         ## find specific info in extracted data
         #print [item.strip() for item in re.findall('Generated .*?\n', result['Text'])]
@@ -3076,19 +3018,22 @@ class _MidiFile(_UnknownFile):
         return
 
 
+# http://commons.wikimedia.org/wiki/File_formats
 _FILETYPES = {                        '*': _UnknownFile,
               (      'image',     'jpeg'): _JpegFile,
               (      'image',      'png'): _PngFile,
               (      'image',      'gif'): _GifFile,
               (      'image',     'tiff'): _TiffFile,
               (      'image',    'x-xcf'): _XcfFile,
-              (      'image',  'svg+xml'): _SvgFile,
+              (      'image',  'svg+xml'): _SvgFile,    # unify/merge them?
+              ('application',      'xml'): _SvgFile,    #
               ('application',      'pdf'): _PdfFile,
 # djvu: python-djvulibre or python-djvu for djvu support
 # http://pypi.python.org/pypi/python-djvulibre/0.3.9
 #              (      'image', 'vnd.djvu'): DjvuFile,
-              ('application',      'ogg'): _OggFile,
-              (      'audio',     'midi'): _MidiFile,}
+              (      'audio',     'midi'): _MidiFile,
+              ('application',      'ogg'): _OggFile,}
+#              (          '?',        '?'): _WebMFile,}
 
 def GenericFile(file_name):
     # 'magic' (libmagic)
@@ -3327,10 +3272,256 @@ class CatImages_Default(object):
     # Category:MIDI files created with GNU LilyPond
     def _cat_meta_MIDIfilescreatedwithGNULilyPond(self):
         result = self._info_filter['Metadata']
-        relevance = (u"Generated automatically by: GNU LilyPond" in
-                     result[0]['Text'])
+        relevance = len(result) and ('Desc' in result[0]) and \
+                    (u"Generated automatically by: GNU LilyPond" in
+                     result[0]['Desc'])
 
         return (u'MIDI files created with GNU LilyPond', bool(relevance))
+
+    # Category:Bitmap_from_Inkscape (png)
+    def _cat_meta_BitmapfromInkscape(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Software' in result[0]) and \
+                    (u"www.inkscape.org" in
+                     result[0]['Software'].lower())
+
+        return (u'Bitmap from Inkscape', bool(relevance))
+
+    # Category:Created_with_Inkscape (svg)
+    def _cat_meta_CreatedwithInkscape(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Output_Extension' in result[0]) and \
+                    (u"org.inkscape.output.svg.inkscape" in
+                     result[0]['Output_Extension'].lower())
+
+        return (u'Created with Inkscape', bool(relevance))
+
+    # Category:Created_with_MATLAB (png)
+    # Category:Created_with_MATLAB (svg)
+    def _cat_meta_CreatedwithMATLAB(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and \
+                    ((('Software' in result[0]) and \
+                    (u"MATLAB, The Mathworks, Inc." in 
+                     result[0]['Software'])) \
+                    or \
+                     (('Desc' in result[0]) and \
+                    (u"Matlab Figure" in 
+                     result[0]['Desc'])) )
+
+        return (u'Created with MATLAB', bool(relevance))
+
+    # Category:Created_with_PLOT2SVG (svg) [new]
+    def _cat_meta_CreatedwithPLOT2SVG(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Desc' in result[0]) and \
+                    (u"Converted by PLOT2SVG" in
+                     result[0]['Desc'])
+
+        return (u'Created with PLOT2SVG', bool(relevance))
+
+    # Category:Created_with_ImageMagick (jpg)
+    def _cat_meta_CreatedwithImageMagick(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Software' in result[0]) and \
+                    (u"ImageMagick" in
+                     result[0]['Software'])
+
+        return (u'Created with ImageMagick', bool(relevance))
+
+    # Category:Created_with_Adobe_ImageReady (png)
+    def _cat_meta_CreatedwithAdobeImageReady(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Software' in result[0]) and \
+                    (u"Adobe ImageReady" in
+                     result[0]['Software'])
+
+        return (u'Created with Adobe ImageReady', bool(relevance))
+
+    # Category:Created_with_Adobe_Photoshop (jpg)
+    def _cat_meta_CreatedwithAdobePhotoshop(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Software' in result[0]) and \
+                    (u"Adobe Photoshop" in
+                     result[0]['Software'])
+
+        return (u'Created with Adobe Photoshop', bool(relevance))
+
+    # Category:Created_with_Picasa (jpg)
+    def _cat_meta_CreatedwithPicasa(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Software' in result[0]) and \
+                    (u"Picasa" in
+                     result[0]['Software'])
+
+        return (u'Created with Picasa', bool(relevance))
+
+    # Category:Created_with_Qtpfsgui (jpg)
+    def _cat_meta_CreatedwithQtpfsgui(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Software' in result[0]) and \
+                    (u"Created with opensource tool Qtpfsgui" in
+                     result[0]['Software'])
+
+        return (u'Created with Qtpfsgui', bool(relevance))
+
+    # Category:Created_with_Autopano (jpg)
+    def _cat_meta_CreatedwithAutopano(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Software' in result[0]) and \
+                    (u"Autopano" in
+                     result[0]['Software'])
+
+        return (u'Created with Autopano', bool(relevance))
+
+    # Category:Created_with_Xmgrace (png)
+    def _cat_meta_CreatedwithXmgrace(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Software' in result[0]) and \
+                    (u"Grace" in
+                     result[0]['Software'])
+
+        return (u'Created with Xmgrace', bool(relevance))
+
+    # Category:Created_with_darktable (jpg)
+    def _cat_meta_Createdwithdarktable(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Software' in result[0]) and \
+                    (u"darktable" in
+                     result[0]['Software'].lower())
+
+        return (u'Created with darktable', bool(relevance))
+
+    # Category:Created_with_easyHDR (jpg)
+    def _cat_meta_CreatedwitheasyHDR(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and \
+                    ((('Software' in result[0]) and \
+                    (u"easyHDR" in
+                     result[0]['Software'])) \
+                    or \
+                     (('Comment' in result[0]) and \
+                    (u"easyHDR" in
+                     result[0]['Comment'])) )
+
+        return (u'Created with easyHDR', bool(relevance))
+
+    # Category:Created_with_GIMP (jpg) [new]
+    def _cat_meta_CreatedwithGIMP(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and \
+                    ((('Software' in result[0]) and \
+                    (u"GIMP" in
+                     result[0]['Software'])) \
+                    or \
+                     (('Comment' in result[0]) and \
+                    (u"Created with GIMP" in
+                     result[0]['Comment'])) )
+
+        return (u'Created with GIMP', bool(relevance))
+
+    # Category:Created_with_R (svg)
+    def _cat_meta_CreatedwithR(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Desc' in result[0]) and \
+                    (u"R SVG" in
+                     result[0]['Desc'])
+
+        return (u'Created with R', bool(relevance))
+
+    # Category:Created_with_VectorFieldPlot (svg)
+    def _cat_meta_CreatedwithVectorFieldPlot(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Desc' in result[0]) and \
+                    (u"created with VectorFieldPlot" in
+                     result[0]['Desc'])
+
+        return (u'Created with VectorFieldPlot', bool(relevance))
+
+    # Category:Created_with_Chemtool (svg)
+    def _cat_meta_CreatedwithChemtool(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Desc' in result[0]) and \
+                    (u"Created with Chemtool" in
+                     result[0]['Desc'])
+
+        return (u'Created with Chemtool', bool(relevance))
+
+    # Category:Created_with_GNU_Octave (svg)
+    def _cat_meta_CreatedwithGNUOctave(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Desc' in result[0]) and \
+                    (u"Produced by GNUPLOT" in
+                     result[0]['Desc'])
+
+        return (u'Created with GNU Octave', bool(relevance))
+
+    # Category:Created_with_GeoGebra (svg)
+    def _cat_meta_CreatedwithGeoGebra(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('DescProducer' in result[0]) and \
+                    (u"geogebra.d.W" in
+                     result[0]['DescProducer']) #and \
+                    #(u"FreeHEP Graphics2D Driver" in
+                    # result[0]['DescCreator'])
+
+        return (u'Created with GeoGebra', bool(relevance))
+
+    # Category:Created_with_Stella (png)
+    def _cat_meta_CreatedwithStella(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Comment' in result[0]) and \
+                    (u"Created using Stella4D" in
+                     result[0]['Comment'])
+
+        return (u'Created with Stella', bool(relevance))
+
+    # Category:Created_with_PhotoStitch (jpg)
+    def _cat_meta_CreatedwithPhotoStitch(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Comment' in result[0]) and \
+                    (u"LEAD Technologies Inc." in
+                     result[0]['Comment'])
+
+        return (u'Created with PhotoStitch', bool(relevance))
+
+    # Category:Created_with_Scribus (pdf)
+    def _cat_meta_CreatedwithScribus(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Producer' in result[0]) and \
+                    (u"Scribus PDF Library" in
+                     result[0]['Producer'])
+
+        return (u'Created with Scribus', bool(relevance))
+
+    # Category:Created_with_OpenOffice.org (pdf)
+    def _cat_meta_CreatedwithOpenOfficeorg(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Producer' in result[0]) and \
+                    (u"OpenOffice.org" in
+                     result[0]['Producer'])
+
+        return (u'Created with OpenOffice.org', bool(relevance))
+
+    # Category:Created_with_Tux_Paint (pdf)
+    def _cat_meta_CreatedwithTuxPaint(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Software' in result[0]) and \
+                    (u"Tux Paint" in
+                     result[0]['Software'])
+
+        return (u'Created with Tux Paint', bool(relevance))
+
+    # Category:Created_with_Microsoft_Image_Composite_Editor (jpg)
+    def _cat_meta_CreatedwithMicrosoftImageCompositeEditor(self):
+        result = self._info_filter['Metadata']
+        relevance = len(result) and ('Software' in result[0]) and \
+                    (u"Microsoft ICE" in
+                     result[0]['Software'])
+
+        return (u'Created with Microsoft Image Composite Editor', bool(relevance))
+
+# TODO: make '_cat_meta_general(self)'
 
     # Category:Categorized by DrTrigonBot
     def _addcat_BOT(self):
