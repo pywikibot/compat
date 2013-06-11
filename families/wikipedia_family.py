@@ -1003,12 +1003,16 @@ class Family(family.WikimediaFamily):
 
         self.namespaces[446] = {
             'en': u'Education Program',
+            'he': u'Education Program',
             'mk': u'Education Program',
+            'sv': u'Education Program',
         }
 
         self.namespaces[447] = {
             'en': u'Education Program talk',
+            'he': u'Education Program talk',
             'mk': u'Education Program talk',
+            'sv': u'Education Program talk',
         }
 
         self.namespaces[710] = {
