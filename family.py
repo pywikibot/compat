@@ -769,7 +769,7 @@ class Family(object):
                 'dv': u'މެމްބަރު',
                 'el': u'Χρήστης',
                 'eml': u'Utente',
-                'eo': [u'Uzanto', u'Vikipediisto', u'Uzulo'],
+                'eo': [u'Uzanto', u'Vikipediisto', u'Uzulo', u'Uzantino'],
                 'es': [u'Usuario', u'Usuaria'],
                 'et': u'Kasutaja',
                 'eu': u'Lankide',
@@ -992,7 +992,7 @@ class Family(object):
                 'dv': u'މެމްބަރުގެ ވާހަކަ',
                 'el': u'Συζήτηση χρήστη',
                 'eml': u'Discussioni utente',
-                'eo': [u'Uzanto-Diskuto', u'Vikipediista diskuto', u'Uzula diskuto', u'Uzanta diskuto'],
+                'eo': [u'Uzanto-Diskuto', u'Vikipediista diskuto', u'Uzula diskuto', u'Uzanta diskuto', u'Uzantino-Diskuto'],
                 'es': [u'Usuario discusión', u'Usuario Discusión', u'Usuaria Discusión'],
                 'et': u'Kasutaja arutelu',
                 'eu': u'Lankide eztabaida',
@@ -4569,7 +4569,8 @@ class WikimediaFamily(Family):
             'xmf': u'მოდული',
             'yi': u'יחידה',
             'za': u'模块',
-            'zh': u'模組',
+            'zh': u'模块',
+            'zh-yue': u'模組',
         }
 
         self.namespaces[829] = {
@@ -4695,6 +4696,7 @@ class WikimediaFamily(Family):
             'za': u'模块讨论',
             'zea': u'Overleg module',
             'zh': u'模块讨论',
+            'zh-yue': u'模組討論',
         }
 
         self.namespacesWithSubpage.extend([4, 12])
